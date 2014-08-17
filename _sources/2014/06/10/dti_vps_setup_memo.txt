@@ -1,0 +1,174 @@
+﻿DTIのVPSでDebian6の区画を借りたあとにやったこと
+===============================================
+
+
+ホスト名の変更
+--------------
+
+.. highlight:: none
+
+::
+
+    # echo hostname.domainame > /etc/hostname
+
+``/etc/hosts`` にレコードを追加する。
+
+::
+
+    nnn.nnn.nnn.nnn hostname.domainname
+    hh:hh:hh:hh:hh:hh:hh:hh hostname.domainname 
+
+
+使わないパッケージの削除
+------------------------
+
+::
+
+    # apt-get -y purge ajaxterm
+    # apt-get -y purge samba-common
+    # apt-get -y purge xinetd
+    # apt-get -y purge sasl2-bin
+    # for f in `dpkg -l | grep apache | awk '{ print $2 ; }'` ; do
+    > apt-get -y purge $f
+    > done
+    # for f in `dpkg -l | grep sendmail | awk '{ print $2 ; }'` ; do
+    > apt-get -y purge $f
+    > done
+    # rm -r /etc/mail
+
+
+jessieへのアップグレード
+------------------------
+
+Debian6 (squeeze) を最新の状態にする
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+    # apt-get update
+    # yes N | apt-get -y upgrade
+
+Debian7 (Wheezy) へアップグレードする
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``/etc/apt/sources.list`` を次のとおりに変更する。
+
+::
+
+    deb http://ftp.jp.debian.org/debian wheezy main contrib non-free
+    deb http://security.debian.org wheezy/updates main contrib non-free
+
+アップグレードを実行。
+
+::
+
+    # apt-get update
+    # yes N | apt-get -y upgrade
+    # yes N | apt-get -y dist-upgrade
+
+
+Debian jessie へアップグレードする
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``/etc/apt/sources.list`` を次のとおりに変更する。
+
+::
+
+    deb http://ftp.jp.debian.org/debian jessie main contrib non-free
+    deb http://security.debian.org jessie/updates main contrib non-free
+
+アップグレードを実行する。
+
+::
+
+    # apt-get update
+    # yes N | apt-get -y upgrade
+    # yes N | apt-get -y dist-upgrade
+
+不要となったパッケージを削除する。
+
+::
+
+    # apt-get -y purge python2.6
+    # apt-get -y purge python2.6-minimal
+    # apt-get -y purge gcc-4.4-base
+    # apt-get -y purge gcc-4.7-base
+    # apt-get -y purge libffi5
+    # apt-get -y purge libdb4.7
+    # apt-get -y purge libdb4.8
+    # apt-get -y purge liblzma2
+    # apt-get -y purge libmpc2
+    # apt-get -y purge libsqlite0
+    # apt-get -y purge libssl0.9.8
+    # for f in `dpkg -l | grep ^rc | awk '{ print $2 ; }'` ; do
+    > apt-get -y purge $f
+    > done
+    # apt-get -y autoremove
+    # apt-get clean
+
+
+設定ファイルのアップデートをする
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+    # for f in `find / -name *.dpkg-dist | sed s/\.dpkg-dist$//` ; do
+    > mv $f.dpkg-dist $f
+    > done
+
+ユーザーアカウントの作成
+------------------------
+
+::
+
+    # useradd -s /bin/bash -d /home/user -m -G sudo user
+    # passwd user
+    # su - user
+    $ mkdir ~/.ssh
+    $ vi ~/.ssh/authorized_keys
+    $ chmod 700 ~/.ssh
+    $ chmod 600 ~/.ssh/authorized_keys
+    $ exit
+
+
+sshの設定を変更
+---------------
+
+::
+
+    # vi /etc/ssh/sshd_config
+
+次の2箇所を修正。
+
+::
+
+    PermitRootLogin no
+    PasswordAuthentication no
+
+sshdを再起動する。
+
+::
+
+    # /etc/init.d/ssh restart
+
+ここでsshの接続テストをする。
+
+
+再起動
+------
+
+::
+
+    # sync; sync; sync; shutdown -r now
+
+
+所要時間
+--------
+
+MyDTIで区画を初期化する処理を含めて、大体45分～50分くらい。
+
+
+.. author:: default
+.. categories:: none
+.. tags:: debian
+.. comments::

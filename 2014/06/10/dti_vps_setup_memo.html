@@ -1,0 +1,258 @@
+<!DOCTYPE html><!--[if lt IE 7]>      <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+        <title>DTIのVPSでDebian6の区画を借りたあとにやったこと &mdash; 実験メモとかいろいろ</title>
+            <link rel="stylesheet" href="../../../_static/normalize.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/sphinx.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/main.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/modern5.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+            <link rel="stylesheet" href="../../../_static/font-awesome.min.css" type="text/css">
+        <link rel="shortcut icon" href="../../../_static/tinkerer.ico" /><!-- Load modernizr and JQuery -->
+        <script src="../../../_static/vendor/modernizr-2.6.2.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
+        <script src="../../../_static/plugins.js"></script>
+        <script src="../../../_static/main.js"></script>
+        <link rel="next" title="#idcon mini vol.3 参加前にモヤモヤしとくメモ" href="../../05/18/idcon_mini_vol3_memo.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.4.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // Adjusts document height if sidebar is taller
+            var documentwrapper = document.getElementsByTagName("article")[0];
+            var sidebar = document.getElementsByClassName("sidebar")[0];
+
+            if (sidebar.offsetHeight > documentwrapper.offsetHeight)
+            {
+                var mainwrapper = document.getElementsByClassName("main")[0];
+                documentwrapper.style.minHeight = mainwrapper.offsetHeight + "px";
+            }
+
+            // Scroll to content if on small screen
+            if (screen.width < 480)
+            {
+                $(document).scrollTop(document.getElementsByTagName("article")[0].offsetTop - 44);
+            }
+        });
+    </script></head>
+    <body role="document">
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+
+      <div id="container"><header role="banner">
+            <hgroup>
+              <h1><a href="../../../index.html">実験メモとかいろいろ</a></h1><h2>python, xperia, debian, oidc 辺りを中心に</h2></hgroup>
+          </header>
+      <nav role="navigation">
+            <ul><li class="quicklink"><div class="rss">
+        <a href="../../../rss.html" title="Subscribe via RSS"><span class="fa fa-lg fa-rss"></span></a>
+    </div></li><li class="main-nav">
+                  <a href="../../../index.html">ホーム</a>
+                </li>
+              </ul>
+          </nav><div class="main-container" role="main"><div class="main wrapper clearfix"><article role="article"><ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="../../05/18/idcon_mini_vol3_memo.html">#idcon mini vol.3 参加前にモヤモヤしとくメモ</a> &raquo; </li>
+        </ul><div class="timestamp postmeta">
+            <span>June 10, 2014</span>
+        </div>
+    <div class="section" id="dtivpsdebian6">
+<h1>DTIのVPSでDebian6の区画を借りたあとにやったこと</h1>
+<div class="section" id="id1">
+<h2>ホスト名の変更</h2>
+<div class="highlight-none"><div class="highlight"><pre># echo hostname.domainame &gt; /etc/hostname
+</pre></div>
+</div>
+<p><span class="docutils literal"><span class="pre">/etc/hosts</span></span> にレコードを追加する。</p>
+<div class="highlight-none"><div class="highlight"><pre>nnn.nnn.nnn.nnn hostname.domainname
+hh:hh:hh:hh:hh:hh:hh:hh hostname.domainname
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h2>使わないパッケージの削除</h2>
+<div class="highlight-none"><div class="highlight"><pre># apt-get -y purge ajaxterm
+# apt-get -y purge samba-common
+# apt-get -y purge xinetd
+# apt-get -y purge sasl2-bin
+# for f in `dpkg -l | grep apache | awk &#39;{ print $2 ; }&#39;` ; do
+&gt; apt-get -y purge $f
+&gt; done
+# for f in `dpkg -l | grep sendmail | awk &#39;{ print $2 ; }&#39;` ; do
+&gt; apt-get -y purge $f
+&gt; done
+# rm -r /etc/mail
+</pre></div>
+</div>
+</div>
+<div class="section" id="jessie">
+<h2>jessieへのアップグレード</h2>
+<div class="section" id="debian6-squeeze">
+<h3>Debian6 (squeeze) を最新の状態にする</h3>
+<div class="highlight-none"><div class="highlight"><pre># apt-get update
+# yes N | apt-get -y upgrade
+</pre></div>
+</div>
+</div>
+<div class="section" id="debian7-wheezy">
+<h3>Debian7 (Wheezy) へアップグレードする</h3>
+<p><span class="docutils literal"><span class="pre">/etc/apt/sources.list</span></span> を次のとおりに変更する。</p>
+<div class="highlight-none"><div class="highlight"><pre>deb http://ftp.jp.debian.org/debian wheezy main contrib non-free
+deb http://security.debian.org wheezy/updates main contrib non-free
+</pre></div>
+</div>
+<p>アップグレードを実行。</p>
+<div class="highlight-none"><div class="highlight"><pre># apt-get update
+# yes N | apt-get -y upgrade
+# yes N | apt-get -y dist-upgrade
+</pre></div>
+</div>
+</div>
+<div class="section" id="debian-jessie">
+<h3>Debian jessie へアップグレードする</h3>
+<p><span class="docutils literal"><span class="pre">/etc/apt/sources.list</span></span> を次のとおりに変更する。</p>
+<div class="highlight-none"><div class="highlight"><pre>deb http://ftp.jp.debian.org/debian jessie main contrib non-free
+deb http://security.debian.org jessie/updates main contrib non-free
+</pre></div>
+</div>
+<p>アップグレードを実行する。</p>
+<div class="highlight-none"><div class="highlight"><pre># apt-get update
+# yes N | apt-get -y upgrade
+# yes N | apt-get -y dist-upgrade
+</pre></div>
+</div>
+<p>不要となったパッケージを削除する。</p>
+<div class="highlight-none"><div class="highlight"><pre># apt-get -y purge python2.6
+# apt-get -y purge python2.6-minimal
+# apt-get -y purge gcc-4.4-base
+# apt-get -y purge gcc-4.7-base
+# apt-get -y purge libffi5
+# apt-get -y purge libdb4.7
+# apt-get -y purge libdb4.8
+# apt-get -y purge liblzma2
+# apt-get -y purge libmpc2
+# apt-get -y purge libsqlite0
+# apt-get -y purge libssl0.9.8
+# for f in `dpkg -l | grep ^rc | awk &#39;{ print $2 ; }&#39;` ; do
+&gt; apt-get -y purge $f
+&gt; done
+# apt-get -y autoremove
+# apt-get clean
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h3>設定ファイルのアップデートをする</h3>
+<div class="highlight-none"><div class="highlight"><pre># for f in `find / -name *.dpkg-dist | sed s/\.dpkg-dist$//` ; do
+&gt; mv $f.dpkg-dist $f
+&gt; done
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>ユーザーアカウントの作成</h2>
+<div class="highlight-none"><div class="highlight"><pre># useradd -s /bin/bash -d /home/user -m -G sudo user
+# passwd user
+# su - user
+$ mkdir ~/.ssh
+$ vi ~/.ssh/authorized_keys
+$ chmod 700 ~/.ssh
+$ chmod 600 ~/.ssh/authorized_keys
+$ exit
+</pre></div>
+</div>
+</div>
+<div class="section" id="ssh">
+<h2>sshの設定を変更</h2>
+<div class="highlight-none"><div class="highlight"><pre># vi /etc/ssh/sshd_config
+</pre></div>
+</div>
+<p>次の2箇所を修正。</p>
+<div class="highlight-none"><div class="highlight"><pre>PermitRootLogin no
+PasswordAuthentication no
+</pre></div>
+</div>
+<p>sshdを再起動する。</p>
+<div class="highlight-none"><div class="highlight"><pre># /etc/init.d/ssh restart
+</pre></div>
+</div>
+<p>ここでsshの接続テストをする。</p>
+</div>
+<div class="section" id="id5">
+<h2>再起動</h2>
+<div class="highlight-none"><div class="highlight"><pre># sync; sync; sync; shutdown -r now
+</pre></div>
+</div>
+</div>
+<div class="section" id="id6">
+<h2>所要時間</h2>
+<p>MyDTIで区画を初期化する処理を含めて、大体45分～50分くらい。</p>
+</div>
+</div>
+
+    <div class="postmeta">
+        <div class="author">
+            <span>投稿者 @paoneJP</span>
+        </div>
+        
+        <div class="tags">
+            <span>
+                タグ:
+                <a href="../../../tags/debian.html">debian</a></span>
+        </div>
+        </div>
+    <ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="../../05/18/idcon_mini_vol3_memo.html">#idcon mini vol.3 参加前にモヤモヤしとくメモ</a> &raquo; </li>
+        </ul></article><aside class="sidebar"><section><div class="widget">
+  <h1>書いてる人</h1>
+  Takashi Yahata
+  (<a href="https://twitter.com/paoneJP">@paoneJP</a>)
+</div></section><section><div class="widget">
+    <h1>最近の投稿</h1>
+    <ul><li>
+            <a href="#">DTIのVPSでDebian6の区画を借りたあとにやったこと</a>
+        </li><li>
+            <a href="../../05/18/idcon_mini_vol3_memo.html">#idcon mini vol.3 参加前にモヤモヤしとくメモ</a>
+        </li></ul>
+</div>
+</section><section><div class="widget" id="searchbox" role="search">
+    <h1>Search</h1>
+    <form action="../../../search.html" method="get">
+        <input type="text" name="q" />
+        <button type="submit"><span class="fa fa-search"></span></button>
+    </form>
+</div></section></aside></div> <!-- #main --></div> <!-- #main-container -->
+
+        <div class="footer-container" role="contentinfo"><footer class="wrapper">&copy; Copyright 2014, @paoneJP. Powered by <a href="http://www.tinkerer.me/">Tinkerer</a> and <a href="http://sphinx.pocoo.org/">Sphinx</a>.</footer></div> <!-- footer-container -->
+
+      </div> <!--! end of #container --><!--[if lt IE 7 ]>
+          <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+          <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+        <![endif]-->
+    </body>
+</html>
