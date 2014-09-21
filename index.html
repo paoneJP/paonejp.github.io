@@ -36,7 +36,7 @@
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
       };
-    </script><script type="text/javascript" src="_static/underscore.js"></script><script type="text/javascript" src="_static/doctools.js"></script>
+    </script><script type="text/javascript" src="_static/underscore.js"></script><script type="text/javascript" src="_static/doctools.js"></script><script type="text/javascript" src="_static/google_analytics.js"></script>
 
     <script type="text/javascript">
         $(document).ready(function () {
@@ -77,137 +77,15 @@
             <span>June 10, 2014</span>
         </div>
         <h1><a href="2014/06/10/dti_vps_setup_memo.html">DTIのVPSでDebian6の区画を借りたあとにやったこと</a></h1>
-<div class="section" id="id1">
-<h2>ホスト名の変更</h2>
-<div class="highlight-none"><div class="highlight"><pre># echo hostname.domainame &gt; /etc/hostname
-</pre></div>
-</div>
-<p><span class="docutils literal"><span class="pre">/etc/hosts</span></span> にレコードを追加する。</p>
-<div class="highlight-none"><div class="highlight"><pre>nnn.nnn.nnn.nnn hostname.domainname
-hh:hh:hh:hh:hh:hh:hh:hh hostname.domainname
-</pre></div>
-</div>
-</div>
-<div class="section" id="id2">
-<h2>使わないパッケージの削除</h2>
-<div class="highlight-none"><div class="highlight"><pre># apt-get -y purge ajaxterm
-# apt-get -y purge samba-common
-# apt-get -y purge xinetd
-# apt-get -y purge sasl2-bin
-# for f in `dpkg -l | grep apache | awk '{ print $2 ; }'` ; do
-&gt; apt-get -y purge $f
-&gt; done
-# for f in `dpkg -l | grep sendmail | awk '{ print $2 ; }'` ; do
-&gt; apt-get -y purge $f
-&gt; done
-# rm -r /etc/mail
-</pre></div>
-</div>
-</div>
-<div class="section" id="jessie">
-<h2>jessieへのアップグレード</h2>
-<div class="section" id="debian6-squeeze">
-<h3>Debian6 (squeeze) を最新の状態にする</h3>
-<div class="highlight-none"><div class="highlight"><pre># apt-get update
-# yes N | apt-get -y upgrade
-</pre></div>
-</div>
-</div>
-<div class="section" id="debian7-wheezy">
-<h3>Debian7 (Wheezy) へアップグレードする</h3>
-<p><span class="docutils literal"><span class="pre">/etc/apt/sources.list</span></span> を次のとおりに変更する。</p>
-<div class="highlight-none"><div class="highlight"><pre>deb http://ftp.jp.debian.org/debian wheezy main contrib non-free
-deb http://security.debian.org wheezy/updates main contrib non-free
-</pre></div>
-</div>
-<p>アップグレードを実行。</p>
-<div class="highlight-none"><div class="highlight"><pre># apt-get update
-# yes N | apt-get -y upgrade
-# yes N | apt-get -y dist-upgrade
-</pre></div>
-</div>
-</div>
-<div class="section" id="debian-jessie">
-<h3>Debian jessie へアップグレードする</h3>
-<p><span class="docutils literal"><span class="pre">/etc/apt/sources.list</span></span> を次のとおりに変更する。</p>
-<div class="highlight-none"><div class="highlight"><pre>deb http://ftp.jp.debian.org/debian jessie main contrib non-free
-deb http://security.debian.org jessie/updates main contrib non-free
-</pre></div>
-</div>
-<p>アップグレードを実行する。</p>
-<div class="highlight-none"><div class="highlight"><pre># apt-get update
-# yes N | apt-get -y upgrade
-# yes N | apt-get -y dist-upgrade
-</pre></div>
-</div>
-<p>不要となったパッケージを削除する。</p>
-<div class="highlight-none"><div class="highlight"><pre># apt-get -y purge python2.6
-# apt-get -y purge python2.6-minimal
-# apt-get -y purge gcc-4.4-base
-# apt-get -y purge gcc-4.7-base
-# apt-get -y purge libffi5
-# apt-get -y purge libdb4.7
-# apt-get -y purge libdb4.8
-# apt-get -y purge liblzma2
-# apt-get -y purge libmpc2
-# apt-get -y purge libsqlite0
-# apt-get -y purge libssl0.9.8
-# for f in `dpkg -l | grep ^rc | awk '{ print $2 ; }'` ; do
-&gt; apt-get -y purge $f
-&gt; done
-# apt-get -y autoremove
-# apt-get clean
-</pre></div>
-</div>
-</div>
-<div class="section" id="id3">
-<h3>設定ファイルのアップデートをする</h3>
-<div class="highlight-none"><div class="highlight"><pre># for f in `find / -name *.dpkg-dist | sed s/\.dpkg-dist$//` ; do
-&gt; mv $f.dpkg-dist $f
-&gt; done
-</pre></div>
-</div>
-</div>
-</div>
-<div class="section" id="id4">
-<h2>ユーザーアカウントの作成</h2>
-<div class="highlight-none"><div class="highlight"><pre># useradd -s /bin/bash -d /home/user -m -G sudo user
-# passwd user
-# su - user
-$ mkdir ~/.ssh
-$ vi ~/.ssh/authorized_keys
-$ chmod 700 ~/.ssh
-$ chmod 600 ~/.ssh/authorized_keys
-$ exit
-</pre></div>
-</div>
-</div>
-<div class="section" id="ssh">
-<h2>sshの設定を変更</h2>
-<div class="highlight-none"><div class="highlight"><pre># vi /etc/ssh/sshd_config
-</pre></div>
-</div>
-<p>次の2箇所を修正。</p>
-<div class="highlight-none"><div class="highlight"><pre>PermitRootLogin no
-PasswordAuthentication no
-</pre></div>
-</div>
-<p>sshdを再起動する。</p>
-<div class="highlight-none"><div class="highlight"><pre># /etc/init.d/ssh restart
-</pre></div>
-</div>
-<p>ここでsshの接続テストをする。</p>
-</div>
-<div class="section" id="id5">
-<h2>再起動</h2>
-<div class="highlight-none"><div class="highlight"><pre># sync; sync; sync; shutdown -r now
-</pre></div>
-</div>
-</div>
-<div class="section" id="id6">
-<h2>所要時間</h2>
-<p>MyDTIで区画を初期化する処理を含めて、大体45分～50分くらい。</p>
-</div>
+<p>DITでVPSの契約をしてみた。
+実験用にDebianの環境をセットアップしたので、そのときのメモ。</p>
+<p class="readmorewrapper"><a class="readmore" href="2014/06/10/dti_vps_setup_memo.html#more">続きを読む...</a></p> 
+ 
+ 
+ 
+ 
+ 
+ 
 
         <div class="postmeta">
         <div class="author">
@@ -223,104 +101,11 @@ PasswordAuthentication no
             <span>May 18, 2014</span>
         </div>
         <h1><a href="2014/05/18/idcon_mini_vol3_memo.html">#idcon mini vol.3 参加前にモヤモヤしとくメモ</a></h1>
-<div class="section" id="id1">
-<h2>最近やってること</h2>
-<blockquote>
-<div><ul class="simple">
-<li>OAuth2, OpenID Connect のお勉強</li>
-<li>Python で OAuth2, OIDC のライブラリっぽいものを作ってみる<ul>
-<li><a class="reference external" href="https://github.com/paoneJP/oauth2-oidc-experiment">https://github.com/paoneJP/oauth2-oidc-experiment</a></li>
-</ul>
-</li>
-</ul>
-</div></blockquote>
-</div>
-<div class="section" id="id2">
-<h2>最近のモヤモヤ</h2>
-<div class="section" id="id3">
-<h3>セッション管理＆再認証どのくらいやる？</h3>
-<blockquote>
-<div><ul class="simple">
-<li>○○でログインしたあとのセッション管理<ul>
-<li>アプリ単体でセッション管理？ (Cookie)</li>
-<li>Access Token, ID Tokenまでチェックすべき？</li>
-</ul>
-</li>
-<li>アプリセッションが開始しああと、OP側でアカウントがrevokeされたら？<ul>
-<li>アプリ単体でセッション管理なら気づけない</li>
-<li>Access Token, ID Tokenまでチェックすれば気づける<ul>
-<li>定期的に再認証？（1hごととか？）</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>再認証は明示的？裏側で勝手に？<ul>
-<li>Refresh Token を使って（裏側で勝手に）<ul>
-<li>セッションのベリファイルーチン内で処理できそう。特別な検討は要
-らない。</li>
-</ul>
-</li>
-<li>Authorization Endpoint へリダイレクト（明示的）<ul>
-<li>認証画面にリダイレクト、アプリ画面へリダイレクトで復帰</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>アプリ利用中の再認証<ul>
-<li>再認証後に戻ってくるページをどう指定する？<ul>
-<li>クエリパラメータに指定<ul>
-<li>redirect_uriを完全マッチさせられない問題が発生</li>
-</ul>
-</li>
-<li>アプリセッションに戻り先URLを保存。特定のアプリURLを呼び出すと、
-真の戻り先へリダイレクト<ul>
-<li>これなら完全？ホント？</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>リダイレクトで処理している限り、POSTデータの保存は難しい</li>
-</ul>
-</li>
-</ul>
-</div></blockquote>
-</div>
-<div class="section" id="access-token">
-<h3>Access Token のライフタイムはどのくらいがベスト？</h3>
-<blockquote>
-<div><ul class="simple">
-<li>Access Token にどんな意味を持たせる？<ul>
-<li>APIを1回だけ呼んでいいよって意味<ul>
-<li>短めの時間で発行</li>
-</ul>
-</li>
-<li>ClientにAPIを（ずっと）使っていいよって意味<ul>
-<li>長めの時間で発行。だけどRefreshを併用して</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>TechNight Vol.13で @_nat さんが言ってたアレは？<ul>
-<li><a class="reference external" href="https://twitter.com/paoneJP/status/441897363813056512">https://twitter.com/paoneJP/status/441897363813056512</a></li>
-<li>短めの Access Token を使っているから常に明示的に同意が取れる？</li>
-<li>再度同意が必要なときは prompt=consent で Authorization Endpoint
-を呼びなおす？</li>
-</ul>
-</li>
-</ul>
-</div></blockquote>
-</div>
-</div>
-<div class="section" id="id4">
-<h2>まとめ</h2>
-<blockquote>
-<div><ul class="simple">
-<li>こうやって書き出すと、やっぱり Covert Redirect の手前のところのモヤ
-モヤのような気がする。</li>
-<li>こんな私ですが、当日よろしくお願いします。</li>
-</ul>
-</div></blockquote>
-</div>
+<p>参加前にみんなモヤモヤしておこうということで、
+自分のモヤモヤを書き出してみた。</p>
+<p class="readmorewrapper"><a class="readmore" href="2014/05/18/idcon_mini_vol3_memo.html#more">続きを読む...</a></p> 
+ 
+ 
 
         <div class="postmeta">
         <div class="author">
