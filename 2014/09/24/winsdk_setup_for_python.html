@@ -1,0 +1,302 @@
+<!DOCTYPE html><!--[if lt IE 7]>      <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+        <title>Pythonのモジュールインストール用にWindows SDKをセットアップする &mdash; 実験メモとかいろいろ</title>
+            <link rel="stylesheet" href="../../../_static/normalize.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/sphinx.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/main.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/modern5.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+            <link rel="stylesheet" href="../../../_static/font-awesome.min.css" type="text/css">
+        <link rel="shortcut icon" href="../../../_static/tinkerer.ico" /><!-- Load modernizr and JQuery -->
+        <script src="../../../_static/vendor/modernizr-2.6.2.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
+        <script src="../../../_static/plugins.js"></script>
+        <script src="../../../_static/main.js"></script>
+        <link rel="next" title="DTIのVPSでDebian6の区画を借りたあとにやったこと" href="../../06/10/dti_vps_setup_memo.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.4.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // Adjusts document height if sidebar is taller
+            var documentwrapper = document.getElementsByTagName("article")[0];
+            var sidebar = document.getElementsByClassName("sidebar")[0];
+
+            if (sidebar.offsetHeight > documentwrapper.offsetHeight)
+            {
+                var mainwrapper = document.getElementsByClassName("main")[0];
+                documentwrapper.style.minHeight = mainwrapper.offsetHeight + "px";
+            }
+
+            // Scroll to content if on small screen
+            if (screen.width < 480)
+            {
+                $(document).scrollTop(document.getElementsByTagName("article")[0].offsetTop - 44);
+            }
+        });
+    </script></head>
+    <body role="document">
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+
+      <div id="container"><header role="banner">
+            <hgroup>
+              <h1><a href="../../../index.html">実験メモとかいろいろ</a></h1><h2>python, xperia, debian, oidc 辺りを中心に</h2></hgroup>
+          </header>
+      <nav role="navigation">
+            <ul><li class="quicklink"><div class="rss">
+        <a href="../../../rss.html" title="Subscribe via RSS"><span class="fa fa-lg fa-rss"></span></a>
+    </div></li><li class="main-nav">
+                  <a href="../../../index.html">ホーム</a>
+                </li>
+              </ul>
+          </nav><div class="main-container" role="main"><div class="main wrapper clearfix"><article role="article"><ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="../../06/10/dti_vps_setup_memo.html">DTIのVPSでDebian6の区画を借りたあとにやったこと</a> &raquo; </li>
+        </ul><div class="timestamp postmeta">
+            <span>September 24, 2014</span>
+        </div>
+    <div class="section" id="pythonwindows-sdk">
+<h1>Pythonのモジュールインストール用にWindows SDKをセットアップする</h1>
+<p>WindowsでPythonのC/C++拡張モジュールをインストールするときに必要となる
+ビルド環境を作ったときのメモ。</p>
+<div id="more"> </div><div class="section" id="id1">
+<h2>前提環境</h2>
+<p>実験した環境は次のとおり。</p>
+<blockquote>
+<div><ul class="simple">
+<li>Windows 7 Home Premium Service Pack 1 (64bit)</li>
+<li>Python 3.4.1 (32bit)</li>
+</ul>
+</div></blockquote>
+<p>最初はMinGWを使って、と思っていたのだが pywin32 のビルドの実験をしているうちに
+Windows SDKの環境ができてしまったので、それ用の手順をまとめておくことにする。</p>
+</div>
+<div class="section" id="windows-sdk">
+<h2>Windows SDKのインストール</h2>
+<p>Python 3.4.1はVC++10.0でコンパイルされているので、それに対応する
+Windows SDKをインストールする。</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="http://www.microsoft.com/en-us/download/details.aspx?id=8279">Windows 7 および .NET Framework 4 用 Windows SDK</a></li>
+</ul>
+</div></blockquote>
+<p>ページの [Download] をクリックしてダウンロードされるインストーラ
+(winsdk_web.exe) を実行する。</p>
+<img alt="../../../_images/20140924_winsdk_setup_for_python_1.png" src="../../../_images/20140924_winsdk_setup_for_python_1.png" />
+<p>[Next&gt;] をクリック。</p>
+<img alt="../../../_images/20140924_winsdk_setup_for_python_2.png" src="../../../_images/20140924_winsdk_setup_for_python_2.png" />
+<p>License Agreement 確認して、[I Agree] を選んで [Next&gt;] をクリック。</p>
+<img alt="../../../_images/20140924_winsdk_setup_for_python_3.png" src="../../../_images/20140924_winsdk_setup_for_python_3.png" />
+<p>インストールパスはこのままでOK。[Next&gt;] をクリック。</p>
+<img alt="../../../_images/20140924_winsdk_setup_for_python_4.png" src="../../../_images/20140924_winsdk_setup_for_python_4.png" />
+<p>インストールするものを選ぶ。</p>
+<blockquote>
+<div><ul class="simple">
+<li>Windows Headers</li>
+<li>x86 Libraries</li>
+<li>x64 Libraries</li>
+<li>Tools</li>
+<li>Visual C++ Compilers</li>
+</ul>
+</div></blockquote>
+<p>の5つだけを選んで、[Next&gt;] をクリック。</p>
+<img alt="../../../_images/20140924_winsdk_setup_for_python_5.png" src="../../../_images/20140924_winsdk_setup_for_python_5.png" />
+<p>[Next&gt;] をクリック。</p>
+<img alt="../../../_images/20140924_winsdk_setup_for_python_6.png" src="../../../_images/20140924_winsdk_setup_for_python_6.png" />
+<p>インストールが始まる。</p>
+<img alt="../../../_images/20140924_winsdk_setup_for_python_7.png" src="../../../_images/20140924_winsdk_setup_for_python_7.png" />
+<p>[Finish] をクリックして、インストール終了。</p>
+</div>
+<div class="section" id="id2">
+<h2>Windows SDKの不具合にパッチする</h2>
+<p>このバージョンのWindows SDKには2つ不具合があるらしいので、
+パッチしておく。</p>
+<div class="section" id="vcvar32-bat">
+<h3>vcvar32.batへのパッチ</h3>
+<p>vcvarsall.batを実行しても、エラーが出て正しく動作しない。</p>
+<div class="highlight-python"><div class="highlight"><pre>C:\&gt; C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat
+Setting environment for using Microsoft Visual Studio 2010 x86 tools.
+ERROR: Cannot determine the location of the VS Common Tools folder.
+</pre></div>
+</div>
+<p><span class="docutils literal"><span class="pre">C:\Program</span> <span class="pre">Files</span> <span class="pre">(x86)\Microsoft</span> <span class="pre">Visual</span> <span class="pre">Studio</span> <span class="pre">10.0\VC\bin\vcvars32.bat</span></span>
+に次のパッチを当てる。</p>
+<div class="highlight-bat"><div class="highlight"><pre>--- vcvars<span class="m">32</span>.bat.installed      <span class="m">2009-11-15</span> <span class="m">19</span><span class="nl">:52:58</span>.<span class="m">000000000</span> +<span class="m">0900</span>
++++ vcvars<span class="m">32</span>.bat        <span class="m">2014-09-23</span> <span class="m">21</span><span class="nl">:39:10</span>.<span class="m">844720400</span> +<span class="m">0900</span>
+<span class="p">@</span>@ <span class="m">-5</span><span class="p">,</span><span class="m">7</span> +<span class="m">5</span><span class="p">,</span><span class="m">8</span> @@
+
+<span class="p"> @</span><span class="k">call</span> <span class="s2">&quot;%VS100COMNTOOLS%VCVarsQueryRegistry.bat&quot;</span> <span class="m">32</span>bit No<span class="m">64</span>bit
+
+-@<span class="k">if</span> <span class="s2">&quot;%VSINSTALLDIR%&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> <span class="k">goto</span> <span class="nl">error_no_VSINSTALLDIR</span>
++@<span class="k">if</span> <span class="s2">&quot;%VCINSTALLDIR%&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> <span class="k">goto</span> <span class="nl">error_no_VSINSTALLDIR</span>
++@<span class="k">set</span> &quot;VSINSTALLDIR<span class="o">=</span><span class="nv">%VCINSTALLDIR:~0</span><span class="p">,</span><span class="m">-3</span>%
+<span class="p"> @</span><span class="k">if</span> <span class="s2">&quot;%FrameworkDir32%&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> <span class="k">goto</span> <span class="nl">error_no_FrameworkDIR32</span>
+<span class="p"> @</span><span class="k">if</span> <span class="s2">&quot;%FrameworkVersion32%&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> <span class="k">goto</span> <span class="nl">error_no_FrameworkVer32</span>
+<span class="p"> @</span><span class="k">if</span> <span class="s2">&quot;%Framework35Version%&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> <span class="k">goto</span> <span class="nl">error_no_Framework35Version</span>
+<span class="p">@</span>@ <span class="m">-75</span><span class="p">,</span><span class="m">22</span> +<span class="m">76</span><span class="p">,</span><span class="m">24</span> @@
+<span class="p"> @</span>exit <span class="n">/B</span> <span class="m">0</span>
+
+ <span class="nl">:GetVSCommonToolsDirHelper32</span>
+-@<span class="k">for</span> <span class="n">/F</span> <span class="s2">&quot;tokens=1,2*&quot;</span> <span class="nv">%%i</span> in (<span class="s1">&#39;reg query &quot;%1\SOFTWARE\Microsoft\VisualStudio\SxS\VS7&quot; /v &quot;10.0&quot;&#39;</span>) <span class="k">DO</span> (
++@<span class="k">for</span> <span class="n">/F</span> <span class="s2">&quot;tokens=1,2*&quot;</span> <span class="nv">%%i</span> in (<span class="s1">&#39;reg query &quot;%1\SOFTWARE\Microsoft\VisualStudio\SxS\VC7&quot; /v &quot;10.0&quot;&#39;</span>) <span class="k">DO</span> (
+<span class="p">        @</span><span class="k">if</span> <span class="s2">&quot;%%i&quot;</span><span class="o">==</span><span class="s2">&quot;10.0&quot;</span> (
+<span class="p">                @</span><span class="k">SET</span> <span class="s2">&quot;VS100COMNTOOLS=%%k&quot;</span>
+        )
+ )
+<span class="p"> @</span><span class="k">if</span> <span class="s2">&quot;%VS100COMNTOOLS%&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> exit <span class="n">/B</span> <span class="m">1</span>
++@<span class="k">SET</span> &quot;VS<span class="m">100</span>COMNTOOLS<span class="o">=</span><span class="nv">%VS100COMNTOOLS:~0</span><span class="p">,</span><span class="m">-3</span>%
+<span class="p"> @</span><span class="k">SET</span> <span class="s2">&quot;VS100COMNTOOLS=%VS100COMNTOOLS%Common7\Tools\&quot;</span>
+<span class="p"> @</span>exit <span class="n">/B</span> <span class="m">0</span>
+
+ <span class="nl">:GetVSCommonToolsDirHelper64</span>
+-@<span class="k">for</span> <span class="n">/F</span> <span class="s2">&quot;tokens=1,2*&quot;</span> <span class="nv">%%i</span> in (<span class="s1">&#39;reg query &quot;%1\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\SxS\VS7&quot; /v &quot;10.0&quot;&#39;</span>) <span class="k">DO</span> (
++@<span class="k">for</span> <span class="n">/F</span> <span class="s2">&quot;tokens=1,2*&quot;</span> <span class="nv">%%i</span> in (<span class="s1">&#39;reg query &quot;%1\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\SxS\VC7&quot; /v &quot;10.0&quot;&#39;</span>) <span class="k">DO</span> (
+<span class="p">        @</span><span class="k">if</span> <span class="s2">&quot;%%i&quot;</span><span class="o">==</span><span class="s2">&quot;10.0&quot;</span> (
+<span class="p">                @</span><span class="k">SET</span> <span class="s2">&quot;VS100COMNTOOLS=%%k&quot;</span>
+        )
+ )
+<span class="p"> @</span><span class="k">if</span> <span class="s2">&quot;%VS100COMNTOOLS%&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> exit <span class="n">/B</span> <span class="m">1</span>
++@<span class="k">SET</span> &quot;VS<span class="m">100</span>COMNTOOLS<span class="o">=</span><span class="nv">%VS100COMNTOOLS:~0</span><span class="p">,</span><span class="m">-3</span>%
+<span class="p"> @</span><span class="k">SET</span> <span class="s2">&quot;VS100COMNTOOLS=%VS100COMNTOOLS%Common7\Tools\&quot;</span>
+<span class="p"> @</span>exit <span class="n">/B</span> <span class="m">0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="cvtres-exe">
+<h3>cvtres.exeの置き換え</h3>
+<dl class="docutils">
+<dt>このあたり <a class="footnote-reference" href="#cvtres" id="id3">[1]</a> の情報によると、このバージョンのWindows SDKに付属している</dt>
+<dd>cvtres.exe には不具合があるらしい。</dd>
+</dl>
+<p>.NET Frameworkに付属するものと置き換えておく。</p>
+<blockquote>
+<div><ul class="simple">
+<li><span class="docutils literal"><span class="pre">C:\Windows\Microsoft.NET\Framework\v4.0.30319\cvtres.exe</span></span> を
+<span class="docutils literal"><span class="pre">C:\Program</span> <span class="pre">Files</span> <span class="pre">(x86)\Microsoft</span> <span class="pre">Visual</span> <span class="pre">Studio</span> <span class="pre">10.0\VC\bin</span></span>
+へコピーする</li>
+<li><span class="docutils literal"><span class="pre">C:\Windows\Microsoft.NET\Framework64\v4.0.30319\cvtres.exe</span></span> を
+<span class="docutils literal"><span class="pre">C:\Program</span> <span class="pre">Files</span> <span class="pre">(x86)\Microsoft</span> <span class="pre">Visual</span> <span class="pre">Studio</span> <span class="pre">10.0\VC\bin\amd64</span></span>
+へコピーする</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>環境変数の設定</h2>
+<p>Pythonモジュールをインストールするときに、distutils経由で
+<span class="docutils literal"><span class="pre">vcvarsall.bat</span></span> (<span class="docutils literal"><span class="pre">vcvars32.bat</span></span>) が呼び出される。
+これで VC++ 関係の環境変数は自動的に設定される。</p>
+<p>しかし、実際のコンパイルには <span class="docutils literal"><span class="pre">C:\Program</span> <span class="pre">Files\Microsoft</span> <span class="pre">SDKs</span></span>
+以下のファイルも必要なため、以下の環境変数設定をする。</p>
+<div class="highlight-bat"><div class="highlight"><pre><span class="k">set</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">%PATH%</span>;C:\Program Files\Microsoft SDKs\Windows\v<span class="m">7</span>.<span class="m">1</span>\Bin
+<span class="k">set</span> <span class="nv">INCLUDE</span><span class="o">=</span>C:\Program Files\Microsoft SDKs\Windows\v<span class="m">7</span>.<span class="m">1</span>\Include
+<span class="k">set</span> <span class="nv">LIB</span><span class="o">=</span>C:\Program Files\Microsoft SDKs\Windows\v<span class="m">7</span>.<span class="m">1</span>\Lib
+</pre></div>
+</div>
+</div>
+<div class="section" id="id5">
+<h2>動作確認</h2>
+<p>PyCrypto 2.6.1 をインストールしてみる。</p>
+<div class="highlight-python"><div class="highlight"><pre>C:\&gt; pip install pycrypto
+
+C:\Users\paone&gt;pip install pycrypto
+Downloading/unpacking pycrypto
+  Running setup.py (path:C:\Users\paone\AppData\Local\Temp\pip_build_paone\pycrypto\setup.py) egg_info for package pycrypto
+
+Installing collected packages: pycrypto
+  Running setup.py install for pycrypto
+
+...
+
+Successfully installed pycrypto
+Cleaning up...
+
+C:\Users\paone&gt;
+</pre></div>
+</div>
+<p>うまくインストールできた。</p>
+</div>
+<div class="section" id="id6">
+<h2>おまけ</h2>
+<p>冒頭に書いていた pywin32 のビルドの実験は、見事に失敗。
+ビルド中に MFC 関連のファイルを要求されたので、
+(Exrepss版じゃない) Visual Studio がないとダメみたい。</p>
+<p class="rubric">脚注</p>
+<table class="docutils footnote" frame="void" id="cvtres" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[1]</a></td><td><a class="reference external" href="http://social.msdn.microsoft.com/Forums/vstudio/en-US/825669b6-01db-4bba-a315-21890a341a6d/updated-cvtresexe-breaks-build-with-link-fatal-error-lnk1123-failure-during-conversion-to-coff?forum=visualstudiogeneral">updated cvtres.exe breaks build with LINK : fatal error
+LNK1123: failure during conversion to COFF: file invalid or corrupt</a></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+    <div class="postmeta">
+        <div class="author">
+            <span>投稿者 @paoneJP</span>
+        </div>
+        
+        <div class="tags">
+            <span>
+                タグ:
+                <a href="../../../tags/python.html">python</a></span>
+        </div>
+        </div>
+    <ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="../../06/10/dti_vps_setup_memo.html">DTIのVPSでDebian6の区画を借りたあとにやったこと</a> &raquo; </li>
+        </ul></article><aside class="sidebar"><section><div class="widget">
+  <h1>書いてる人</h1>
+  Takashi Yahata
+  (<a href="https://twitter.com/paoneJP">@paoneJP</a>)
+</div></section><section><div class="widget">
+    <h1>最近の投稿</h1>
+    <ul><li>
+            <a href="#">Pythonのモジュールインストール用にWindows SDKをセットアップする</a>
+        </li><li>
+            <a href="../../06/10/dti_vps_setup_memo.html">DTIのVPSでDebian6の区画を借りたあとにやったこと</a>
+        </li><li>
+            <a href="../../05/18/idcon_mini_vol3_memo.html">#idcon mini vol.3 参加前にモヤモヤしとくメモ</a>
+        </li></ul>
+</div>
+</section><section><div class="widget" id="searchbox" role="search">
+    <h1>Search</h1>
+    <form action="../../../search.html" method="get">
+        <input type="text" name="q" />
+        <button type="submit"><span class="fa fa-search"></span></button>
+    </form>
+</div></section></aside></div> <!-- #main --></div> <!-- #main-container -->
+
+        <div class="footer-container" role="contentinfo"><footer class="wrapper">&copy; Copyright 2014, @paoneJP. Powered by <a href="http://www.tinkerer.me/">Tinkerer</a> and <a href="http://sphinx.pocoo.org/">Sphinx</a>.</footer></div> <!-- footer-container -->
+
+      </div> <!--! end of #container --><!--[if lt IE 7 ]>
+          <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+          <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+        <![endif]-->
+    </body>
+</html>
