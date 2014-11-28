@@ -31,7 +31,7 @@
         <link rel="next" title="#idcon mini vol.3 参加前にモヤモヤしとくメモ" href="../../05/18/idcon_mini_vol3_memo.html" /><link rel="prev" title="Pythonのモジュールインストール用にWindows SDKをセットアップする" href="../../09/24/winsdk_setup_for_python.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.4.2',
+        VERSION:     '1.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -73,7 +73,7 @@
                   <a href="../../../index.html">ホーム</a>
                 </li>
               </ul>
-          </nav><div class="main-container" role="main"><div class="main wrapper clearfix"><article role="article"><ul class="related clearfix">
+          </nav><div class="main-container" role="main"><div class="main wrapper body clearfix"><article role="article"><ul class="related clearfix">
             <li class="left"> &laquo; <a href="../../09/24/winsdk_setup_for_python.html">Pythonのモジュールインストール用にWindows SDKをセットアップする</a></li>
             <li class="right"><a href="../../05/18/idcon_mini_vol3_memo.html">#idcon mini vol.3 参加前にモヤモヤしとくメモ</a> &raquo; </li>
         </ul><div class="timestamp postmeta">
@@ -82,8 +82,36 @@
     <div class="section" id="dtivpsdebian6">
 <h1>DTIのVPSでDebian6の区画を借りたあとにやったこと</h1>
 <p>DITでVPSの契約をしてみた。
-実験用にDebianの環境をセットアップしたので、そのときのメモ。</p>
+実験用にDebian(64bit)の環境をセットアップしたので、そのときのメモ。</p>
+<p>(2014/11/29更新)</p>
 <div id="more"> </div><div class="section" id="id1">
+<h2>更新履歴</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="86%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">日付</th>
+<th class="head">更新内容</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>2014/11/29</td>
+<td><ul class="first last simple">
+<li>systemdへ移行すると起動できなくなる問題への対応手順を追加。</li>
+<li>jessieへのdist-upgrade後の不要パッケージ削除手順の見直し。</li>
+<li>rootアカウントのパスワードをロックする手順を追加。</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td>2014/6/10</td>
+<td>最初の投稿</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id2">
 <h2>ホスト名の変更</h2>
 <div class="highlight-none"><div class="highlight"><pre># echo hostname.domainame &gt; /etc/hostname
 </pre></div>
@@ -94,7 +122,7 @@ hh:hh:hh:hh:hh:hh:hh:hh hostname.domainname
 </pre></div>
 </div>
 </div>
-<div class="section" id="id2">
+<div class="section" id="id3">
 <h2>使わないパッケージの削除</h2>
 <div class="highlight-none"><div class="highlight"><pre># apt-get -y purge ajaxterm
 # apt-get -y purge samba-common
@@ -135,6 +163,14 @@ deb http://security.debian.org wheezy/updates main contrib non-free
 </div>
 <div class="section" id="debian-jessie">
 <h3>Debian jessie へアップグレードする</h3>
+<p>systemdへの移行を抑制するための設定を入れる。このサイト <a class="footnote-reference" href="#pere" id="id4">[1]</a>
+に書かれている方法を使う。</p>
+<p><span class="docutils literal"><span class="pre">/etc/apt/preferences.d/use-sysvinit</span></span> として次のファイルを作る。</p>
+<div class="highlight-none"><div class="highlight"><pre>Package: systemd-sysv
+Pin: release o=Debian
+Pin-Priority: -1
+</pre></div>
+</div>
 <p><span class="docutils literal"><span class="pre">/etc/apt/sources.list</span></span> を次のとおりに変更する。</p>
 <div class="highlight-none"><div class="highlight"><pre>deb http://ftp.jp.debian.org/debian jessie main contrib non-free
 deb http://security.debian.org jessie/updates main contrib non-free
@@ -147,27 +183,27 @@ deb http://security.debian.org jessie/updates main contrib non-free
 </pre></div>
 </div>
 <p>不要となったパッケージを削除する。</p>
-<div class="highlight-none"><div class="highlight"><pre># apt-get -y purge python2.6
-# apt-get -y purge python2.6-minimal
-# apt-get -y purge gcc-4.4-base
-# apt-get -y purge gcc-4.7-base
-# apt-get -y purge libffi5
-# apt-get -y purge libdb4.7
-# apt-get -y purge libdb4.8
-# apt-get -y purge liblzma2
-# apt-get -y purge libmpc2
-# apt-get -y purge libsqlite0
-# apt-get -y purge libssl0.9.8
+<div class="highlight-none"><div class="highlight"><pre># apt-get -y autoremove
+# apt-get -y autoclean
 # for f in `dpkg -l | grep ^rc | awk &#39;{ print $2 ; }&#39;` ; do
 &gt; apt-get -y purge $f
 &gt; done
-# apt-get -y autoremove
+# apt-get -y purge python2.6
+# apt-get -y purge python2.6-minimal
+# apt-get -y purge gcc-4.4-base
+# apt-get -y purge gcc-4.7-base
+# apt-get -y purge tcl8.4
+# apt-get -y purge libdb4.7
+# apt-get -y purge libdb4.8
+# apt-get -y purge libdb5.1
+# apt-get -y purge liblzma2
+# apt-get -y purge libsqlite0
+# apt-get -y purge libssl0.9.8
+# apt-get -y purge libboost-iostreams1.42.0
 # apt-get clean
 </pre></div>
 </div>
-</div>
-<div class="section" id="id3">
-<h3>設定ファイルのアップデートをする</h3>
+<p>設定ファイルをアップデートする。</p>
 <div class="highlight-none"><div class="highlight"><pre># for f in `find / -name *.dpkg-dist | sed s/\.dpkg-dist$//` ; do
 &gt; mv $f.dpkg-dist $f
 &gt; done
@@ -175,7 +211,7 @@ deb http://security.debian.org jessie/updates main contrib non-free
 </div>
 </div>
 </div>
-<div class="section" id="id4">
+<div class="section" id="id5">
 <h2>ユーザーアカウントの作成</h2>
 <div class="highlight-none"><div class="highlight"><pre># useradd -s /bin/bash -d /home/user -m -G sudo user
 # passwd user
@@ -204,15 +240,29 @@ PasswordAuthentication no
 </div>
 <p>ここでsshの接続テストをする。</p>
 </div>
-<div class="section" id="id5">
+<div class="section" id="root">
+<h2>rootのパスワードをロック</h2>
+<p>sudoを使うので、rootのパスワードをロックしておく。</p>
+<div class="highlight-none"><div class="highlight"><pre># usermod -L root
+</pre></div>
+</div>
+</div>
+<div class="section" id="id6">
 <h2>再起動</h2>
 <div class="highlight-none"><div class="highlight"><pre># sync; sync; sync; shutdown -r now
 </pre></div>
 </div>
 </div>
-<div class="section" id="id6">
+<div class="section" id="id7">
 <h2>所要時間</h2>
 <p>MyDTIで区画を初期化する処理を含めて、大体45分～50分くらい。</p>
+<p class="rubric">脚注</p>
+<table class="docutils footnote" frame="void" id="pere" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id4">[1]</a></td><td><a class="reference external" href="http://people.skolelinux.org/pere/blog/How_to_stay_with_sysvinit_in_Debian_Jessie.html">Petter Reinholdtsen / How to stay with sysvinit in Debian Jessie</a></td></tr>
+</tbody>
+</table>
 </div>
 </div>
 
@@ -224,7 +274,7 @@ PasswordAuthentication no
         <div class="tags">
             <span>
                 タグ:
-                <a href="../../../tags/debian.html">debian</a></span>
+                <a href="../../../tags/debian.html">debian</a>, <a href="../../../tags/vps.html">vps</a></span>
         </div>
         </div>
     <ul class="related clearfix">
@@ -237,6 +287,8 @@ PasswordAuthentication no
 </div></section><section><div class="widget">
     <h1>最近の投稿</h1>
     <ul><li>
+            <a href="../../11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
+        </li><li>
             <a href="../../09/24/winsdk_setup_for_python.html">Pythonのモジュールインストール用にWindows SDKをセットアップする</a>
         </li><li>
             <a href="#">DTIのVPSでDebian6の区画を借りたあとにやったこと</a>
@@ -245,7 +297,7 @@ PasswordAuthentication no
         </li></ul>
 </div>
 </section><section><div class="widget" id="searchbox" role="search">
-    <h1>Search</h1>
+    <h1><a href="#searchbox">Search</a></h1>
     <form action="../../../search.html" method="get">
         <input type="text" name="q" />
         <button type="submit"><span class="fa fa-search"></span></button>

@@ -28,10 +28,10 @@
         <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
         <script src="../../../_static/plugins.js"></script>
         <script src="../../../_static/main.js"></script>
-        <link rel="next" title="DTIのVPSでDebian6の区画を借りたあとにやったこと" href="../../06/10/dti_vps_setup_memo.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+        <link rel="next" title="DTIのVPSでDebian6の区画を借りたあとにやったこと" href="../../06/10/dti_vps_setup_memo.html" /><link rel="prev" title="DTIのVPS上にデスクトップ環境を作るという試み" href="../../11/28/dti_vps_as_vdi_memo.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.4.2',
+        VERSION:     '1.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -73,8 +73,8 @@
                   <a href="../../../index.html">ホーム</a>
                 </li>
               </ul>
-          </nav><div class="main-container" role="main"><div class="main wrapper clearfix"><article role="article"><ul class="related clearfix">
-            <li class="left"></li>
+          </nav><div class="main-container" role="main"><div class="main wrapper body clearfix"><article role="article"><ul class="related clearfix">
+            <li class="left"> &laquo; <a href="../../11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a></li>
             <li class="right"><a href="../../06/10/dti_vps_setup_memo.html">DTIのVPSでDebian6の区画を借りたあとにやったこと</a> &raquo; </li>
         </ul><div class="timestamp postmeta">
             <span>September 24, 2014</span>
@@ -190,10 +190,8 @@ ERROR: Cannot determine the location of the VS Common Tools folder.
 <h3>cvtres.exeの置き換え</h3>
 <dl class="docutils">
 <dt>このあたり <a class="footnote-reference" href="#cvtres" id="id3">[1]</a> の情報によると、このバージョンのWindows SDKに付属している</dt>
-<dd>cvtres.exe には不具合があるらしい。</dd>
-</dl>
-<p>.NET Frameworkに付属するものと置き換えておく。</p>
-<blockquote>
+<dd><p class="first">cvtres.exe には不具合があるらしい。.NET Frameworkに付属するものと置き換えておく。</p>
+<blockquote class="last">
 <div><ul class="simple">
 <li><span class="docutils literal"><span class="pre">C:\Windows\Microsoft.NET\Framework\v4.0.30319\cvtres.exe</span></span> を
 <span class="docutils literal"><span class="pre">C:\Program</span> <span class="pre">Files</span> <span class="pre">(x86)\Microsoft</span> <span class="pre">Visual</span> <span class="pre">Studio</span> <span class="pre">10.0\VC\bin</span></span>
@@ -203,6 +201,8 @@ ERROR: Cannot determine the location of the VS Common Tools folder.
 へコピーする</li>
 </ul>
 </div></blockquote>
+</dd>
+</dl>
 </div>
 </div>
 <div class="section" id="id4">
@@ -268,7 +268,7 @@ LNK1123: failure during conversion to COFF: file invalid or corrupt</a></td></tr
         </div>
         </div>
     <ul class="related clearfix">
-            <li class="left"></li>
+            <li class="left"> &laquo; <a href="../../11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a></li>
             <li class="right"><a href="../../06/10/dti_vps_setup_memo.html">DTIのVPSでDebian6の区画を借りたあとにやったこと</a> &raquo; </li>
         </ul></article><aside class="sidebar"><section><div class="widget">
   <h1>書いてる人</h1>
@@ -277,6 +277,8 @@ LNK1123: failure during conversion to COFF: file invalid or corrupt</a></td></tr
 </div></section><section><div class="widget">
     <h1>最近の投稿</h1>
     <ul><li>
+            <a href="../../11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
+        </li><li>
             <a href="#">Pythonのモジュールインストール用にWindows SDKをセットアップする</a>
         </li><li>
             <a href="../../06/10/dti_vps_setup_memo.html">DTIのVPSでDebian6の区画を借りたあとにやったこと</a>
@@ -285,7 +287,7 @@ LNK1123: failure during conversion to COFF: file invalid or corrupt</a></td></tr
         </li></ul>
 </div>
 </section><section><div class="widget" id="searchbox" role="search">
-    <h1>Search</h1>
+    <h1><a href="#searchbox">Search</a></h1>
     <form action="../../../search.html" method="get">
         <input type="text" name="q" />
         <button type="submit"><span class="fa fa-search"></span></button>

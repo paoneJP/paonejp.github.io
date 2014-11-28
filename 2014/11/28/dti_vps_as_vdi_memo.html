@@ -1,0 +1,391 @@
+<!DOCTYPE html><!--[if lt IE 7]>      <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+        <title>DTIのVPS上にデスクトップ環境を作るという試み &mdash; 実験メモとかいろいろ</title>
+            <link rel="stylesheet" href="../../../_static/normalize.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/sphinx.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/main.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/modern5.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+            <link rel="stylesheet" href="../../../_static/font-awesome.min.css" type="text/css">
+        <link rel="shortcut icon" href="../../../_static/tinkerer.ico" /><!-- Load modernizr and JQuery -->
+        <script src="../../../_static/vendor/modernizr-2.6.2.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
+        <script src="../../../_static/plugins.js"></script>
+        <script src="../../../_static/main.js"></script>
+        <link rel="next" title="Pythonのモジュールインストール用にWindows SDKをセットアップする" href="../../09/24/winsdk_setup_for_python.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // Adjusts document height if sidebar is taller
+            var documentwrapper = document.getElementsByTagName("article")[0];
+            var sidebar = document.getElementsByClassName("sidebar")[0];
+
+            if (sidebar.offsetHeight > documentwrapper.offsetHeight)
+            {
+                var mainwrapper = document.getElementsByClassName("main")[0];
+                documentwrapper.style.minHeight = mainwrapper.offsetHeight + "px";
+            }
+
+            // Scroll to content if on small screen
+            if (screen.width < 480)
+            {
+                $(document).scrollTop(document.getElementsByTagName("article")[0].offsetTop - 44);
+            }
+        });
+    </script></head>
+    <body role="document">
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+
+      <div id="container"><header role="banner">
+            <hgroup>
+              <h1><a href="../../../index.html">実験メモとかいろいろ</a></h1><h2>python, xperia, debian, oidc 辺りを中心に</h2></hgroup>
+          </header>
+      <nav role="navigation">
+            <ul><li class="quicklink"><div class="rss">
+        <a href="../../../rss.html" title="Subscribe via RSS"><span class="fa fa-lg fa-rss"></span></a>
+    </div></li><li class="main-nav">
+                  <a href="../../../index.html">ホーム</a>
+                </li>
+              </ul>
+          </nav><div class="main-container" role="main"><div class="main wrapper body clearfix"><article role="article"><ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="../../09/24/winsdk_setup_for_python.html">Pythonのモジュールインストール用にWindows SDKをセットアップする</a> &raquo; </li>
+        </ul><div class="timestamp postmeta">
+            <span>November 28, 2014</span>
+        </div>
+    <div class="section" id="dtivps">
+<h1>DTIのVPS上にデスクトップ環境を作るという試み</h1>
+<p>普段、会社で提供されているVDI (仮想デスクトップ) の環境を使って
+仕事をしている。もうかれこれ2年以上が過ぎた。</p>
+<p>時々画面のレスポンスがアレな時があるけど、この環境、とても気に入っている。
+いつ、どこにいてもデスクトップにアクセスできるし、何より前に作業して
+いた状態をそのまま引き継いで使えるところが特にいい。</p>
+<p>Linxuのデスクトップ環境でも作っておくか、と思い立ったので、ついでに
+VDIっぽく仕立ててみた。その手順をまとめておく。</p>
+<div id="more"> </div><div class="section" id="id1">
+<h2>作るデスクトップ環境のイメージ</h2>
+<p>基本的な方針を「できるだけコンパクトに、できるだけ少ない手順で、
+Linuxの環境を作る」としてやってみた。</p>
+<p>作るデスクトップ環境のイメージは次のとおり。</p>
+<ol class="arabic simple">
+<li>VNCを使ったデスクトップアクセス</li>
+<li>認証はSSHで公開鍵認証</li>
+<li>LightDM + Xfce4 のデスクトップ</li>
+<li>SCIM Anthy で日本語入力</li>
+<li>VNCを切断しても再接続すれば切断前の状態から再開</li>
+</ol>
+<p>特に 5. の特徴は重要。</p>
+</div>
+<div class="section" id="id2">
+<h2>構成</h2>
+<p>大まかな構成は下図のとおり。</p>
+<img alt="../../../_images/20141129_dti_vps_as_vdi_memo_1.png" src="../../../_images/20141129_dti_vps_as_vdi_memo_1.png" />
+<ul class="simple">
+<li>VPSにはディスプレイが無いので、Xvfb (仮想フレームバッファ)
+を使って X を起動。</li>
+<li>Xvfb上でデスクトップ環境を実行したままにする。</li>
+<li>X11vncをVNCのサーバとし、Xvfbにアタッチすることで、実行中の
+デスクトップ環境へのVNCアクセスを実現。</li>
+<li>認証はSSHの公開鍵認証を利用。</li>
+<li>SSHのポートフォワーディング使うことで、VNCセッションの認証と
+暗号化を実施。</li>
+<li>WindowsとAndroidを使ってデスクトップへアクセス。</li>
+</ul>
+</div>
+<div class="section" id="vps">
+<h2>VPSをセットアップ</h2>
+<p>今回もDTIのServersMan&#64;VPSのDebianの環境を使う。
+先のエントリに書いた手順で、Debian jessieの環境にする。</p>
+<p><a class="reference internal" href="../../06/10/dti_vps_setup_memo.html"><em>DTIのVPSでDebian6の区画を借りたあとにやったこと</em></a></p>
+</div>
+<div class="section" id="id3">
+<h2>日本語ロケールへ切り替える</h2>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo localedef -i ja_JP -f UTF-8 ja_JP.UTF-8
+$ sudo update-locale LANG=ja_JP.UTF-8
+</pre></div>
+</div>
+<p>設定後に再起動をしておく。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo shutdown -r now
+</pre></div>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>デスクトップ関係のパッケージをインストール</h2>
+<div class="highlight-none"><div class="highlight"><pre>$ sudo apt install fonts-ipafont
+$ sudo apt install lightdm
+$ sudo apt install xfce4 xfce4-terminal scim-anthy
+$ sudo apt install xvfb
+$ sudo apt install x11vnc
+</pre></div>
+</div>
+</div>
+<div class="section" id="lightdmxvfb">
+<h2>LightDMをXvfb上で動作するように構成</h2>
+<p><span class="docutils literal"><span class="pre">/etc/lightdm/Xvfb.sh</span></span> として次のファイルを作る。
+用意するデスクトップのサイズと色数は、1024x768x24のところで指定している。</p>
+<div class="highlight-none"><div class="highlight"><pre>#! /bin/sh
+
+exec /usr/bin/Xvfb -screen 0 1024x768x24 -nolisten tcp
+</pre></div>
+</div>
+<p>パーミッション等を調整。</p>
+<div class="highlight-none"><div class="highlight"><pre>$ sudo chown root:root /etc/lightdm/Xvfb.sh
+$ sudo chmod 755 /etc/lightdm/Xvfb.sh
+</pre></div>
+</div>
+<p><span class="docutils literal"><span class="pre">/etc/lightdm/lightdm.conf</span></span> の <span class="docutils literal"><span class="pre">[SeatDefaults]</span></span> セクションの
+<span class="docutils literal"><span class="pre">xserver-command</span></span> を設定する。</p>
+<div class="highlight-none"><div class="highlight"><pre>[SeatDefaults]
+xserver-command=/etc/lightdm/Xvfb.sh
+</pre></div>
+</div>
+<p>LightDMを再起動する。</p>
+<div class="highlight-none"><div class="highlight"><pre>$ sudo /etc/init.d/lightdm restart
+</pre></div>
+</div>
+</div>
+<div class="section" id="x11vnc">
+<h2>X11vncの設定</h2>
+<p><span class="docutils literal"><span class="pre">/etc/init.d/x11vnc</span></span> として自動起動スクリプトを作る。
+このスクリプトは、このサイト <a class="footnote-reference" href="#linux-org" id="id5">[1]</a> に投稿されているものをベースに、
+実際はx11vncはpidファイルを作らないので、その辺を修正したもの。</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="c">#! /bin/sh</span>
+
+<span class="c">### BEGIN INIT INFO</span>
+<span class="c"># Provides:             x11vnc</span>
+<span class="c"># Required-Start:       $syslog $local_fs lightdm</span>
+<span class="c"># Required-Stop:        $syslog $local_fs</span>
+<span class="c"># Default-Start:        2 3 4 5</span>
+<span class="c"># Default-Stop:         0 1 6</span>
+<span class="c"># Short-Description:    x11vnc</span>
+<span class="c"># Description:          x11vnc</span>
+<span class="c">### END INIT INFO</span>
+
+<span class="nv">DAEMON</span><span class="o">=</span>/usr/bin/x11vnc
+<span class="nb">test</span> -x <span class="nv">$DAEMON</span> <span class="o">||</span> <span class="nb">exit </span>0
+
+<span class="nv">DAEMON_OPTS</span><span class="o">=</span><span class="s2">&quot;-loop -reopen -shared -auth /var/run/lightdm/root/:0 -logappend /var/log/x11vnc.log -localhost -rfbport 5900 -rfbportv6 -1 -repeat&quot;</span>
+<span class="nv">NAME</span><span class="o">=</span>x11vnc
+<span class="nv">DESC</span><span class="o">=</span>X11vnc
+
+<span class="nb">set</span> -e
+
+<span class="k">case</span> <span class="s2">&quot;$1&quot;</span> in
+    start<span class="o">)</span>
+        <span class="nb">echo</span> -n <span class="s2">&quot;Starting $DESC: &quot;</span>
+        start-stop-daemon -b --start --quiet --exec <span class="nv">$DAEMON</span> -- <span class="nv">$DAEMON_OPTS</span>
+        <span class="nb">echo</span> <span class="s2">&quot;$NAME.&quot;</span>
+        ;;
+    stop<span class="o">)</span>
+        <span class="nb">echo</span> -n <span class="s2">&quot;Stopping $DESC: &quot;</span>
+        start-stop-daemon --stop --oknodo --quiet --exec <span class="nv">$DAEMON</span>
+        <span class="nb">echo</span> <span class="s2">&quot;$NAME.&quot;</span>
+        ;;
+    restart<span class="o">)</span>
+        <span class="nb">echo</span> -n <span class="s2">&quot;Restarting $DESC: &quot;</span>
+        start-stop-daemon --stop --oknodo --quiet --exec <span class="nv">$DAEMON</span>
+        sleep 1
+        start-stop-daemon -b --start --quiet --exec <span class="nv">$DAEMON</span> -- <span class="nv">$DAEMON_OPTS</span>
+        <span class="nb">echo</span> <span class="s2">&quot;$NAME.&quot;</span>
+        ;;
+    *<span class="o">)</span>
+        <span class="nv">N</span><span class="o">=</span>/etc/init.d/<span class="nv">$NAME</span>
+        <span class="nb">echo</span> <span class="s2">&quot;Usage: $N {start|stop|restart}&quot;</span> &gt;&amp;2
+        <span class="nb">exit </span>1
+        ;;
+    <span class="k">esac</span>
+<span class="nb">exit </span>0
+</pre></div>
+</div>
+<p>パーミッション等を調整して、自動起動を設定する。</p>
+<div class="highlight-none"><div class="highlight"><pre>$ sudo chown root:root /etc/init.d/x11vnc
+$ sudo chmod 755 /etc/init.d/x11vnc
+$ sudo update-rc.d x11vnc defaults
+</pre></div>
+</div>
+<p>X11vncを起動する。</p>
+<div class="highlight-none"><div class="highlight"><pre>$ sudo /etc/init.d/x11vnc start
+</pre></div>
+</div>
+<div class="section" id="id6">
+<h3>X11vncの引数の解説</h3>
+<p>自動起動スクリプトのDAEMON_OPTSで設定されているx11vncのオプションについて
+解説しておく。</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="38%" />
+<col width="62%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">引数</th>
+<th class="head">説明</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>-loop</td>
+<td>x11vncが停止したときも、新しいx11vncを起動して
+動作し続ける。本来は-foreverで良いが、
+クライアントを切断する際にx11vncが異常終了する
+ケースがあるため、-loopを使っている。
+-loopを使うとx11vncはフォアグラウンドで動作する
+ので、起動スクリプトで <span class="docutils literal"><span class="pre">start-stop-daemon</span></span>
+の引数に <span class="docutils literal"><span class="pre">-b</span></span> をつけて対応している。</td>
+</tr>
+<tr class="row-odd"><td>-reopen</td>
+<td>Xvfbが停止したときに、再接続をする。
+デスクトップからログアウトした後、
+LightDMへ移るときにXvfbも再起動されることに
+ことに対応するもの。</td>
+</tr>
+<tr class="row-even"><td>-shared</td>
+<td>複数の同時接続を許可する。複数のデバイスを使い
+分けるときとか、Androidで通信方式が3G/4G/WiFi
+で切替わったときに、前のセッションが残っていて
+繋がらないで困らないようにする。</td>
+</tr>
+<tr class="row-odd"><td>-auth /var/run/lightdm/root/:0</td>
+<td>LightDMが起動したXvfbへ接続する。</td>
+</tr>
+<tr class="row-even"><td>-logappned /var/log/x11vnc.log</td>
+<td>ログファイルを/var/log/x11vnc.logへ出力する。</td>
+</tr>
+<tr class="row-odd"><td>-localhost</td>
+<td>TCPの接続待受けについて、localhostだけでの
+LISTENに制限する。</td>
+</tr>
+<tr class="row-even"><td>-rfbport 5900 -rfbportv6 -1</td>
+<td>-localhostの設定がIPv4にしか効かないため、
+そのワークアラウンド。このあたり <a class="footnote-reference" href="#bugs-deb" id="id7">[2]</a> を
+参考に。</td>
+</tr>
+<tr class="row-odd"><td>-repeat</td>
+<td>VNCクライアントで接続をした際にキーリピートが
+使えるようにする。</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="id8">
+<h2>ログファイルのローテーションを設定する</h2>
+<p><span class="docutils literal"><span class="pre">/etc/logrotate.d/x11vnc</span></span> として次のファイルを作る。</p>
+<div class="highlight-none"><div class="highlight"><pre>/var/log/x11vnc.log {
+  daily
+  rotate 14
+  delaycompress
+  compress
+  notifempty
+  missingok
+  postrotate
+    /etc/init.d/x11vnc restart &gt; /dev/null
+  endscript
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="id9">
+<h2>再起動して完成</h2>
+<div class="highlight-none"><div class="highlight"><pre>$ sudo shutdown -r now
+</pre></div>
+</div>
+</div>
+<div class="section" id="id10">
+<h2>つないでみる</h2>
+<div class="section" id="windows-cygwin-ssh-vnc-viewer">
+<h3>Windows + Cygwin SSH + VNC Viewer</h3>
+<img alt="../../../_images/20141129_dti_vps_as_vdi_memo_2.png" src="../../../_images/20141129_dti_vps_as_vdi_memo_2.png" />
+<img alt="../../../_images/20141129_dti_vps_as_vdi_memo_3.png" src="../../../_images/20141129_dti_vps_as_vdi_memo_3.png" />
+</div>
+<div class="section" id="xperia-z-ultra-bvnc-pro">
+<h3>Xperia Z Ultra + bVNC Pro</h3>
+<img alt="../../../_images/20141129_dti_vps_as_vdi_memo_4.png" src="../../../_images/20141129_dti_vps_as_vdi_memo_4.png" />
+<p class="rubric">脚注</p>
+<table class="docutils footnote" frame="void" id="linux-org" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[1]</a></td><td><a class="reference external" href="http://www.linux.org/threads/lubuntu-13-10-script-di-x11vnc-at-the-startup.5774/">Linux.org / [Lubuntu 13.10] Script di x11vnc at the startup</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="bugs-deb" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id7">[2]</a></td><td><a class="reference external" href="https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=672435">Debian Bug report logs - #672435 /
+x11vnc: Option -localhost seems to fail to restrict ipv6 access</a></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+    <div class="postmeta">
+        <div class="author">
+            <span>投稿者 @paoneJP</span>
+        </div>
+        
+        <div class="tags">
+            <span>
+                タグ:
+                <a href="../../../tags/debian.html">debian</a>, <a href="../../../tags/vps.html">vps</a></span>
+        </div>
+        </div>
+    <ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="../../09/24/winsdk_setup_for_python.html">Pythonのモジュールインストール用にWindows SDKをセットアップする</a> &raquo; </li>
+        </ul></article><aside class="sidebar"><section><div class="widget">
+  <h1>書いてる人</h1>
+  Takashi Yahata
+  (<a href="https://twitter.com/paoneJP">@paoneJP</a>)
+</div></section><section><div class="widget">
+    <h1>最近の投稿</h1>
+    <ul><li>
+            <a href="#">DTIのVPS上にデスクトップ環境を作るという試み</a>
+        </li><li>
+            <a href="../../09/24/winsdk_setup_for_python.html">Pythonのモジュールインストール用にWindows SDKをセットアップする</a>
+        </li><li>
+            <a href="../../06/10/dti_vps_setup_memo.html">DTIのVPSでDebian6の区画を借りたあとにやったこと</a>
+        </li><li>
+            <a href="../../05/18/idcon_mini_vol3_memo.html">#idcon mini vol.3 参加前にモヤモヤしとくメモ</a>
+        </li></ul>
+</div>
+</section><section><div class="widget" id="searchbox" role="search">
+    <h1><a href="#searchbox">Search</a></h1>
+    <form action="../../../search.html" method="get">
+        <input type="text" name="q" />
+        <button type="submit"><span class="fa fa-search"></span></button>
+    </form>
+</div></section></aside></div> <!-- #main --></div> <!-- #main-container -->
+
+        <div class="footer-container" role="contentinfo"><footer class="wrapper">&copy; Copyright 2014, @paoneJP. Powered by <a href="http://www.tinkerer.me/">Tinkerer</a> and <a href="http://sphinx.pocoo.org/">Sphinx</a>.</footer></div> <!-- footer-container -->
+
+      </div> <!--! end of #container --><!--[if lt IE 7 ]>
+          <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+          <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+        <![endif]-->
+    </body>
+</html>
