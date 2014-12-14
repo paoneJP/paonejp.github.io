@@ -1,0 +1,381 @@
+<!DOCTYPE html><!--[if lt IE 7]>      <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+        <title>DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順] &mdash; 実験メモとかいろいろ</title>
+            <link rel="stylesheet" href="../../../_static/normalize.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/sphinx.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/main.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/modern5plus.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+            <link rel="stylesheet" href="../../../_static/font-awesome.min.css" type="text/css">
+        <link rel="shortcut icon" href="../../../_static/tinkerer.ico" /><!-- Load modernizr and JQuery -->
+        <script src="../../../_static/vendor/modernizr-2.6.2.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
+        <script src="../../../_static/plugins.js"></script>
+        <script src="../../../_static/main.js"></script>
+        <link rel="next" title="DTIのVPS上でiptablesを設定しておく" href="iptables_setup_memo.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // Adjusts document height if sidebar is taller
+            var documentwrapper = document.getElementsByTagName("article")[0];
+            var sidebar = document.getElementsByClassName("sidebar")[0];
+
+            if (sidebar.offsetHeight > documentwrapper.offsetHeight)
+            {
+                var mainwrapper = document.getElementsByClassName("main")[0];
+                documentwrapper.style.minHeight = mainwrapper.offsetHeight + "px";
+            }
+
+            // Scroll to content if on small screen
+            if (screen.width < 480)
+            {
+                $(document).scrollTop(document.getElementsByTagName("article")[0].offsetTop - 44);
+            }
+        });
+    </script></head>
+    <body role="document">
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+
+      <div id="container"><header role="banner">
+            <hgroup>
+              <h1><a href="../../../index.html">実験メモとかいろいろ</a></h1><h2>python, xperia, debian, oidc 辺りを中心に</h2></hgroup>
+          </header>
+      <nav role="navigation">
+            <ul><li class="quicklink"><div class="rss">
+        <a href="../../../rss.html" title="Subscribe via RSS"><span class="fa fa-lg fa-rss"></span></a>
+    </div></li><li class="main-nav">
+                  <a href="../../../index.html">ホーム</a>
+                </li>
+              </ul>
+          </nav><div class="main-container" role="main"><div class="main wrapper body clearfix"><article role="article"><ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a> &raquo; </li>
+        </ul><div class="timestamp postmeta">
+            <span>December 14, 2014</span>
+        </div>
+    <div class="section" id="dtivpsopenam">
+<h1>DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</h1>
+<p>OpenAMの環境を作っておこうと思って、DTIのVPS上のDebian jessieな環境で
+あれこれやってみたことをまとめておく。</p>
+<div id="more"> </div><div class="section" id="id1">
+<h2>セットアップする環境の概要</h2>
+<ul class="simple">
+<li>OpenAM Nightly Buildを使う。(OpenAM-13.0.0-SNAPSHOT_nightly_20141129.zip)</li>
+<li>Tomcat8上にデプロイ。</li>
+<li>JavaはTomcat8とともにインストールされるopenjdk-7-jreを使う。</li>
+<li>httpsの待ちうけはApacheのmod_sslで処理。</li>
+<li>ApacheとTomcat8はAJP 1.3 (mod_proxy_ajp) で接続。</li>
+</ul>
+<p>また、セットアップを実行するサーバは、次のような環境であるとします。</p>
+<ul class="simple">
+<li>Debian jessie を使う。</li>
+<li>www.example.com という名前でアクセスできる。</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">今回の手順をDTIのVPS上で実行すると、メモリ1GBのEntryプランではOpenAM
+の設定の途中でメモリ不足となり、セットアップが止まることがありました。
+2GB以上の物理メモリを持つサーバーを使うのがお勧めです。</p>
+</div>
+</div>
+<div class="section" id="tomcat8">
+<h2>Tomcat8のセットアップ</h2>
+<p>tomcat8をインストールする。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo apt install tomcat8
+</pre></div>
+</div>
+<p>JavaVMへのメモリ割り当ては、デフォルトの128MBのままだと、OpenAMの設定の途中で
+メモリ不足で止まることがあるので、256MBへ増やしておく。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo vi /etc/default/tomcat8
+</pre></div>
+</div>
+<p>21行目のJAVA_OPTSの行の <span class="docutils literal"><span class="pre">-Xmx128m</span></span> の箇所を、 <span class="docutils literal"><span class="pre">-Xmx256m</span></span> へ書き換える。</p>
+<div class="highlight-sh"><div class="highlight"><pre><span class="c">#JAVA_OPTS=&quot;-Djava.awt.headless=true -Xmx128m -XX:+UseConcMarkSweepGC&quot;</span>
+<span class="nv">JAVA_OPTS</span><span class="o">=</span><span class="s2">&quot;-Djava.awt.headless=true -Xmx256m -XX:+UseConcMarkSweepGC&quot;</span>
+</pre></div>
+</div>
+<p>Tomcat8へは、Apache経由でAJPを使ってアクセスするため、<span class="docutils literal"><span class="pre">server.xml</span></span> を
+編集して、HTTP Connectorの設定をコメントアウトし、
+AJP 1.3 Connectrの設定はコメントアウトを解除する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo vi /etc/tomcat8/server.xml
+</pre></div>
+</div>
+<p>95行目から始まるAJP 1.3 Connectorの設定がコメントアウトされているので、
+コメントアウトを解除する。(前後の行の <span class="docutils literal"><span class="pre">&lt;!--</span></span> と <span class="docutils literal"><span class="pre">--&gt;</span></span> を削除する)</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="c">&lt;!-- Define an AJP 1.3 Connector on port 8009 --&gt;</span>
+<span class="nt">&lt;Connector</span> <span class="na">port=</span><span class="s">&quot;8009&quot;</span> <span class="na">protocol=</span><span class="s">&quot;AJP/1.3&quot;</span> <span class="na">redirectPort=</span><span class="s">&quot;8443&quot;</span> <span class="nt">/&gt;</span>
+</pre></div>
+</div>
+<p>71行目から始まるHTTP Connectorの設定をコメントアウトする。
+(<span class="docutils literal"><span class="pre">&lt;!--</span></span> と <span class="docutils literal"><span class="pre">--&gt;</span></span> で囲む)</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="c">&lt;!--</span>
+<span class="c">&lt;Connector port=&quot;8080&quot; protocol=&quot;HTTP/1.1&quot;</span>
+<span class="c">           connectionTimeout=&quot;20000&quot;</span>
+<span class="c">           URIEncoding=&quot;UTF-8&quot;</span>
+<span class="c">           redirectPort=&quot;8443&quot; /&gt;</span>
+<span class="c">--&gt;</span>
+</pre></div>
+</div>
+<p>Tomcat8を再起動する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo service tomcat8 restart
+</pre></div>
+</div>
+</div>
+<div class="section" id="apache">
+<h2>Apacheのセットアップ</h2>
+<p>apache2をインストールする。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo apt install apache2
+</pre></div>
+</div>
+<p>SSL用のサーバ設定を有効にする。mod_proxy_ajpも有効にしておく。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo a2enmod ssl proxy_ajp
+$ sudo a2ensite default-ssl
+$ sudo service apache2 restart
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">サーバ証明書の設定手順はここでは省いています。
+そのまま動かすと、apache2のインストール過程で自動生成される
+自己署名サーバ証明書が使われます。</p>
+</div>
+<p><a class="reference external" href="https://www.example.com/openam/">https://www.example.com/openam/</a> へアクセスしたときに、AJPを使ってTomcat8上の
+OpenAMへ中継されるように構成する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo vi /etc/apache2/sites-available/default-ssl.conf
+</pre></div>
+</div>
+<p>140行付近、<span class="docutils literal"><span class="pre">&lt;/VirtualHost&gt;</span></span> の直前に次の3行を書き足す。</p>
+<div class="highlight-python"><div class="highlight"><pre>&lt;Location /openam&gt;
+        ProxyPass ajp://localhost:8009/openam
+&lt;/Location&gt;
+</pre></div>
+</div>
+<p>書き足した後は、こんな感じになる。</p>
+<div class="highlight-python"><div class="highlight"><pre>                BrowserMatch &quot;MSIE [17-9]&quot; ssl-unclean-shutdown
+
+                &lt;Location /openam&gt;
+                        ProxyPass ajp://localhost:8009/openam
+                &lt;/Location&gt;
+        &lt;/VirtualHost&gt;
+&lt;/IfModule&gt;
+</pre></div>
+</div>
+</div>
+<div class="section" id="openam">
+<h2>OpenAMのデプロイ</h2>
+<p>OpenAM Nightly Builds <a class="footnote-reference" href="#download" id="id2">[2]</a> から [Nightly Build] をダウンロードする。</p>
+<img alt="../../../_images/20141214_easy_setup_instructions_for_openam_1.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_1.png" />
+<p>ダウンロードしたzipファイルを展開する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo apt install unzip
+$ unzip OpenAM-13.0.0-SNAPSHOT_nightly_20141129.zip
+$ ls openam
+ClientSDK-13.0.0-SNAPSHOT.jar
+ExampleClientSDK-CLI-13.0.0-SNAPSHOT.zip
+ExampleClientSDK-WAR-13.0.0-SNAPSHOT.war
+Fedlet-13.0.0-SNAPSHOT.zip
+IDPDiscovery-13.0.0-SNAPSHOT.war
+OpenAM-13.0.0-SNAPSHOT.war
+OpenAM-DistAuth-13.0.0-SNAPSHOT.war
+OpenAM-ServerOnly-13.0.0-SNAPSHOT.war
+SSOAdminTools-13.0.0-SNAPSHOT.zip
+SSOConfiguratorTools-13.0.0-SNAPSHOT.zip
+ldif
+legal-notices
+$
+</pre></div>
+</div>
+<p>OpenAMのwarファイルをデプロイする。デプロイ先のファイル名は <span class="docutils literal"><span class="pre">openam.war</span></span>
+にする。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo cp openam/OpenAM-13.0.0-SNAPSHOT.war /var/lib/tomcat8/webapps/openam.war
+$ chown tomcat8:tomcat8 /var/lib/tomcat8/webapps/openam.war
+</pre></div>
+</div>
+<p>Tomcat8がデプロイを完了するのを待つ。Tomcat8のログファイルを見て、
+<span class="docutils literal"><span class="pre">Deployment</span> <span class="pre">of</span> <span class="pre">...</span> <span class="pre">openam.war</span> <span class="pre">has</span> <span class="pre">finished</span> <span class="pre">...</span></span> が表示されたらデプロイ完了。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo tail -f /var/log/tomcat8/catalina.out
+...
+Dec 14, 2014 8:53:00 PM org.apache.catalina.startup.HostConfig deployWAR
+INFO: Deploying web application archive /var/lib/tomcat8/webapps/openam.war
+...
+Dec 14, 2014 8:54:23 PM org.apache.catalina.startup.HostConfig deployWAR
+INFO: Deployment of web application archive /var/lib/tomcat8/webapps/openam.war has finished in 83,701 ms
+^C$
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>OpenAMのセットアップ</h2>
+<p>セットアップを行なう前に、OpenAMをセットアップするサーバ自身で、
+www.example.comの名前解決ができていることを確認する。
+(名前解決ができないとセットアップが途中でエラーとなる)</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo ping -c 1 www.example.com
+PING debian.example.com (nnn.nnn.nnn.nnn) 56(84) bytes of data.
+64 bytes from debian.example.com (nnn.nnn.nnn.nnn): icmp_seq=1 ttl=64 time=0.305 ms
+
+--- debian.example.com ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.305/0.305/0.305/0.000 ms
+$
+</pre></div>
+</div>
+<p>この後のセットアップで必要となるディレクトリを作成する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo mkdir /usr/share/tomcat8/openam
+$ sudo chown tomcat8:tomcat8 /usr/share/tomcat8/openam
+$ sudo mkdir /usr/share/tomcat8/.openamcfg
+$ sudo chown tomcat8:tomcat8 /usr/share/tomcat8/.openamcfg
+</pre></div>
+</div>
+<p><a class="reference external" href="https://www.example.com/openam">https://www.example.com/openam</a> にアクセスする。</p>
+<img alt="../../../_images/20141214_easy_setup_instructions_for_openam_2.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_2.png" />
+<p>「/usr/share/tomcat8への書き込みアクセスができない」という警告が出るが、
+処置済みなので、そのまま [設定ページに進みます。] をクリックする。</p>
+<img alt="../../../_images/20141214_easy_setup_instructions_for_openam_3.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_3.png" />
+<p>[デフォルト設定の作成] をクリックする。</p>
+<img alt="../../../_images/20141214_easy_setup_instructions_for_openam_4.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_4.png" />
+<p>ライセンス条件 (CDDL Version1.0) が表示される。内容を確認する。</p>
+<img alt="../../../_images/20141214_easy_setup_instructions_for_openam_5.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_5.png" />
+<p>最後に [I accept the license agreement] にチェックを入れて、
+[Continue] をクリックする。</p>
+<img alt="../../../_images/20141214_easy_setup_instructions_for_openam_6.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_6.png" />
+<p>管理用ユーザのパスワードと、エージェントアクセスの認証に使うパスワードを
+それぞれ設定する。いずれも16文字程度のパスワードにしておくのがよい。</p>
+<p>入力ができ、右側に「了解」のチェックが表示されたら、[設定の作成]
+をクリックする。</p>
+<img alt="../../../_images/20141214_easy_setup_instructions_for_openam_7.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_7.png" />
+<p>インストールが始まるので、しばらく待つ。</p>
+<img alt="../../../_images/20141214_easy_setup_instructions_for_openam_8.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_8.png" />
+<p>「設定が完了しました」が表示されたら [ログインに進む] をクリックする。</p>
+<img alt="../../../_images/20141214_easy_setup_instructions_for_openam_9.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_9.png" />
+<p>「ユーザー名」に amadmin と入力、パスワードに先に設定した管理用ユーザの
+パスワードを入力して、[Log in] をクリックする。</p>
+<img alt="../../../_images/20141214_easy_setup_instructions_for_openam_10.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_10.png" />
+<p>管理画面が表示される。
+以降の手順で、デフォルトで設定されているユーザを削除しておく。
+[アクセス制御] をクリックする。</p>
+<img alt="../../../_images/20141214_easy_setup_instructions_for_openam_11.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_11.png" />
+<p>[最上位のレルム] をクリックする。</p>
+<img alt="../../../_images/20141214_easy_setup_instructions_for_openam_12.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_12.png" />
+<p>anonymousとdemoにチェックを入れ、[削除] をクリックする。</p>
+<img alt="../../../_images/20141214_easy_setup_instructions_for_openam_13.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_13.png" />
+<p>[ログアウト] してセットアップ完了。</p>
+</div>
+<div class="section" id="id4">
+<h2>最後に注意点などを。</h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">ここでまとめた手順は、できるだけ少ない手数でOpenAMを動かすことを
+目指しているので、OpenAM Installation Guide <a class="footnote-reference" href="#guide" id="id5">[1]</a> にある推奨手順の
+いくつかを省いています。
+きちんとセットアップしたい方は Installation Guide に従って
+セットアップしてください。</p>
+</div>
+<div class="admonition caution">
+<p class="first admonition-title">Caution</p>
+<p class="last">ここにある手順を実行すると、8009/tcp, 50389/tcp, 4444/tcp, 1689/tcp と、
+起動ごとに動的に決まる1ポート、合計5つのポートが Listen する状態になります。
+VPS上でセットアップする場合は、これらのポートへのアクセス制御を適切に設定
+してください。</p>
+</div>
+<p class="rubric">脚注</p>
+<table class="docutils footnote" frame="void" id="guide" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[1]</a></td><td><a class="reference external" href="http://openam.forgerock.org/openam-documentation/openam-doc-source/doc/install-guide/index.html">OpenAM Installation Guide</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="download" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td><a class="reference external" href="https://forgerock.org/downloads/openam-builds/">OpenAM Nightly Builds</a></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+    <div class="postmeta">
+        <div class="author">
+            <span>投稿者 @paoneJP</span>
+        </div>
+        
+        <div class="tags">
+            <span>
+                タグ:
+                <a href="../../../tags/openam.html">OpenAM</a>, <a href="../../../tags/debian.html">debian</a>, <a href="../../../tags/vps.html">vps</a></span>
+        </div>
+        </div>
+    <ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a> &raquo; </li>
+        </ul></article><aside class="sidebar"><section><div class="widget">
+  <h1>書いてる人</h1>
+  <img src="https://pbs.twimg.com/profile_images/440050792179847168/4OhPuelv.jpeg" width="96" height="96"><br>
+  Takashi Yahata
+  (<a href="https://twitter.com/paoneJP">@paoneJP</a>)
+</div></section><section><div class="widget">
+    <h1>最近の投稿</h1>
+    <ul><li>
+            <a href="#">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</a>
+        </li><li>
+            <a href="iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a>
+        </li><li>
+            <a href="../../11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
+        </li><li>
+            <a href="../../09/24/winsdk_setup_for_python.html">Pythonのモジュールインストール用にWindows SDKをセットアップする</a>
+        </li><li>
+            <a href="../../06/10/dti_vps_setup_memo.html">DTIのVPSでDebian6の区画を借りたあとにやったこと</a>
+        </li><li>
+            <a href="../../05/18/idcon_mini_vol3_memo.html">#idcon mini vol.3 参加前にモヤモヤしとくメモ</a>
+        </li></ul>
+</div>
+</section><section><div class="widget" id="searchbox" role="search">
+    <h1><a href="#searchbox">Search</a></h1>
+    <form action="../../../search.html" method="get">
+        <input type="text" name="q" />
+        <button type="submit"><span class="fa fa-search"></span></button>
+    </form>
+</div></section><section><div class="widget">
+  <h1>ライセンス</h1>
+  <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
+  <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"
+       src="https://i.creativecommons.org/l/by/4.0/88x31.png"></a><br>
+  <font size="-1">
+  特に表示をしていない限り、このサイトのコンテンツは
+  <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
+  クリエイティブ・コモンズ 表示 4.0 国際ライセンスの下に提供されています。
+  </font></a>
+</div></section></aside></div> <!-- #main --></div> <!-- #main-container -->
+
+        <div class="footer-container" role="contentinfo"><footer class="wrapper">&copy; Copyright 2014, @paoneJP. Powered by <a href="http://www.tinkerer.me/">Tinkerer</a> and <a href="http://sphinx.pocoo.org/">Sphinx</a>.</footer></div> <!-- footer-container -->
+
+      </div> <!--! end of #container --><!--[if lt IE 7 ]>
+          <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+          <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+        <![endif]-->
+    </body>
+</html>
