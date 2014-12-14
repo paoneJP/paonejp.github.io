@@ -1,0 +1,145 @@
+﻿DTIのVPS上でiptablesを設定しておく
+==================================
+
+サーバ系のソフトウェアを試していると、localhostだけで待受けできないものや、
+待ち受けするポートが固定できないものが出てきたりする。iptablesを設定して、
+最低限の対策をしておこう、というメモ。
+
+.. more::
+
+
+必要なパッケージをインストール
+------------------------------
+
+iptablesは最初からインストールされているが、起動時にフィルタルールを
+設定するにはiptables-persistentが必要となる。
+
+::
+
+  $ sudo apt install iptables-persistent
+
+
+設定したフィルタルールは、依存性によりインストールされたnetfilter-persistent
+パッケージの ``netfilter-persistent save`` コマンドを使うと保存することができ、
+それが起動時に設定される、という動作となる。
+
+
+DTIのVPS向けにちょっとパッチする
+--------------------------------
+
+DTIのVPS上では、この ``netfilter-persistent save`` コマンドが
+うまく動かないので、パッチをしておく。
+(modprobeしている行をコメントアウトする)
+
+.. code-block :: sh
+
+  diff -u 15-ip4tables.orig 15-ip4tables
+  --- 15-ip4tables.orig   2014-12-14 11:32:27.000000000 +0900
+  +++ 15-ip4tables        2014-12-14 11:31:37.000000000 +0900
+  @@ -31,7 +31,7 @@
+   {
+          #save IPv4 rules
+          #need at least iptable_filter loaded:
+  -       /sbin/modprobe -q iptable_filter
+  +       #/sbin/modprobe -q iptable_filter
+          if [ ! -f /proc/net/ip_tables_names ]; then
+                  echo "Warning: skipping IPv4 (no modules loaded)"
+          elif [ -x /sbin/iptables-save ]; then
+  diff -u 25-ip6tables.orig 25-ip6tables
+  --- 25-ip6tables.orig   2014-12-14 11:32:46.000000000 +0900
+  +++ 25-ip6tables        2014-12-14 11:31:37.000000000 +0900
+  @@ -31,7 +31,7 @@
+   {
+          #save IPv6 rules
+          #need at least ip6table_filter loaded:
+  -       /sbin/modprobe -q ip6table_filter
+  +       #/sbin/modprobe -q ip6table_filter
+          if [ ! -f /proc/net/ip6_tables_names ]; then
+                  log_action_cont_msg "Warning: skipping IPv6 (no modules loaded)"
+          elif [ -x /sbin/ip6tables-save ]; then
+
+
+フィルタールールを書く
+----------------------
+
+ここでは次のようなルールを書くことにする。
+
+* UDPのポートの待ち受けは自分でコントロールできているので、
+  特別なフィルタ設定はしない。
+* TCPのポートは、外部からのアクセスできるポートだけ明示的に開けておき、
+  それ以外は閉じておく。
+* ホスト内の通信はすべて許可する。
+
+SSH (22/tcp) と HTTPS (443/tcp) へのアクセスを、IPv4, IPv6の両方で許可する
+という設定の場合、以下のとおり。
+
+::
+
+  $ sudo iptables -F
+  $ sudo iptables -P INPUT ACCEPT
+  $ sudo iptables -A INPUT -i lo -j ACCEPT
+  $ sudo iptables -A INPUT -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
+  $ sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+  $ sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+  $ sudo iptables -A INPUT -p tcp -j DROP
+
+  $ sudo ip6tables -F
+  $ sudo ip6tables -P INPUT ACCEPT
+  $ sudo ip6tables -A INPUT -i lo -j ACCEPT
+  $ sudo ip6tables -A INPUT -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
+  $ sudo ip6tables -A INPUT -p tcp --dport 22 -j ACCEPT
+  $ sudo ip6tables -A INPUT -p tcp --dport 443 -j ACCEPT
+  $ sudo ip6tables -A INPUT -p tcp -j DROP
+
+
+この時点で、フィルタールールは効いている。
+
+
+フィルタールールを保存して再起動後も適用させる
+----------------------------------------------
+
+``netfilter-persistent save`` を実行しておけば、次の起動から
+設定したフィルタルールが設定される。
+
+::
+
+  $ sudo netfilter-persistent save
+  run-parts: executing /usr/share/netfilter-persistent/plugins.d/15-ip4tables save
+  run-parts: executing /usr/share/netfilter-persistent/plugins.d/25-ip6tables save
+
+再起動して確認しておく。まず再起動。
+
+::
+
+  $ sudo shutdown -r now
+
+再起動が終われば、ログインして確認。
+
+::
+
+  $ sudo iptables -S
+  -P INPUT ACCEPT
+  -P FORWARD ACCEPT
+  -P OUTPUT ACCEPT
+  -A INPUT -i lo -j ACCEPT
+  -A INPUT -p tcp -m state --state RELATED,ESTABLISHED -j ACCEPT
+  -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+  -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+  -A INPUT -p tcp -j DROP
+  $ sudo ip6tables -S
+  -P INPUT ACCEPT
+  -P FORWARD ACCEPT
+  -P OUTPUT ACCEPT
+  -A INPUT -i lo -j ACCEPT
+  -A INPUT -p tcp -m state --state RELATED,ESTABLISHED -j ACCEPT
+  -A INPUT -p tcp -m tcp --dport 3843 -j ACCEPT
+  -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+  -A INPUT -p tcp -j DROP
+
+うまく設定できているので、これでOK。
+
+
+.. author:: default
+.. categories:: none
+.. tags:: debian, vps
+.. comments::

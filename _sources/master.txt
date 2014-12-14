@@ -4,6 +4,7 @@ Sitemap
 .. toctree::
    :maxdepth: 1
 
+   2014/12/14/iptables_setup_memo
    2014/11/28/dti_vps_as_vdi_memo
    2014/09/24/winsdk_setup_for_python
    2014/06/10/dti_vps_setup_memo

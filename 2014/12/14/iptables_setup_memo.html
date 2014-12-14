@@ -1,0 +1,256 @@
+<!DOCTYPE html><!--[if lt IE 7]>      <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+        <title>DTIのVPS上でiptablesを設定しておく &mdash; 実験メモとかいろいろ</title>
+            <link rel="stylesheet" href="../../../_static/normalize.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/sphinx.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/main.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/modern5.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+            <link rel="stylesheet" href="../../../_static/font-awesome.min.css" type="text/css">
+        <link rel="shortcut icon" href="../../../_static/tinkerer.ico" /><!-- Load modernizr and JQuery -->
+        <script src="../../../_static/vendor/modernizr-2.6.2.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
+        <script src="../../../_static/plugins.js"></script>
+        <script src="../../../_static/main.js"></script>
+        <link rel="next" title="DTIのVPS上にデスクトップ環境を作るという試み" href="../../11/28/dti_vps_as_vdi_memo.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // Adjusts document height if sidebar is taller
+            var documentwrapper = document.getElementsByTagName("article")[0];
+            var sidebar = document.getElementsByClassName("sidebar")[0];
+
+            if (sidebar.offsetHeight > documentwrapper.offsetHeight)
+            {
+                var mainwrapper = document.getElementsByClassName("main")[0];
+                documentwrapper.style.minHeight = mainwrapper.offsetHeight + "px";
+            }
+
+            // Scroll to content if on small screen
+            if (screen.width < 480)
+            {
+                $(document).scrollTop(document.getElementsByTagName("article")[0].offsetTop - 44);
+            }
+        });
+    </script></head>
+    <body role="document">
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+
+      <div id="container"><header role="banner">
+            <hgroup>
+              <h1><a href="../../../index.html">実験メモとかいろいろ</a></h1><h2>python, xperia, debian, oidc 辺りを中心に</h2></hgroup>
+          </header>
+      <nav role="navigation">
+            <ul><li class="quicklink"><div class="rss">
+        <a href="../../../rss.html" title="Subscribe via RSS"><span class="fa fa-lg fa-rss"></span></a>
+    </div></li><li class="main-nav">
+                  <a href="../../../index.html">ホーム</a>
+                </li>
+              </ul>
+          </nav><div class="main-container" role="main"><div class="main wrapper body clearfix"><article role="article"><ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="../../11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a> &raquo; </li>
+        </ul><div class="timestamp postmeta">
+            <span>December 14, 2014</span>
+        </div>
+    <div class="section" id="dtivpsiptables">
+<h1>DTIのVPS上でiptablesを設定しておく</h1>
+<p>サーバ系のソフトウェアを試していると、localhostだけで待受けできないものや、
+待ち受けするポートが固定できないものが出てきたりする。iptablesを設定して、
+最低限の対策をしておこう、というメモ。</p>
+<div id="more"> </div><div class="section" id="id1">
+<h2>必要なパッケージをインストール</h2>
+<p>iptablesは最初からインストールされているが、起動時にフィルタルールを
+設定するにはiptables-persistentが必要となる。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo apt install iptables-persistent
+</pre></div>
+</div>
+<p>設定したフィルタルールは、依存性によりインストールされたnetfilter-persistent
+パッケージの <span class="docutils literal"><span class="pre">netfilter-persistent</span> <span class="pre">save</span></span> コマンドを使うと保存することができ、
+それが起動時に設定される、という動作となる。</p>
+</div>
+<div class="section" id="dtivps">
+<h2>DTIのVPS向けにちょっとパッチする</h2>
+<p>DTIのVPS上では、この <span class="docutils literal"><span class="pre">netfilter-persistent</span> <span class="pre">save</span></span> コマンドが
+うまく動かないので、パッチをしておく。
+(modprobeしている行をコメントアウトする)</p>
+<div class="highlight-sh"><div class="highlight"><pre>diff -u 15-ip4tables.orig 15-ip4tables
+--- 15-ip4tables.orig   2014-12-14 11:32:27.000000000 +0900
++++ 15-ip4tables        2014-12-14 11:31:37.000000000 +0900
+@@ -31,7 +31,7 @@
+ <span class="o">{</span>
+        <span class="c">#save IPv4 rules</span>
+        <span class="c">#need at least iptable_filter loaded:</span>
+-       /sbin/modprobe -q iptable_filter
++       <span class="c">#/sbin/modprobe -q iptable_filter</span>
+        <span class="k">if</span> <span class="o">[</span> ! -f /proc/net/ip_tables_names <span class="o">]</span>; <span class="k">then</span>
+<span class="k">                </span><span class="nb">echo</span> <span class="s2">&quot;Warning: skipping IPv4 (no modules loaded)&quot;</span>
+        <span class="k">elif</span> <span class="o">[</span> -x /sbin/iptables-save <span class="o">]</span>; <span class="k">then</span>
+diff -u 25-ip6tables.orig 25-ip6tables
+--- 25-ip6tables.orig   2014-12-14 11:32:46.000000000 +0900
++++ 25-ip6tables        2014-12-14 11:31:37.000000000 +0900
+@@ -31,7 +31,7 @@
+ <span class="o">{</span>
+        <span class="c">#save IPv6 rules</span>
+        <span class="c">#need at least ip6table_filter loaded:</span>
+-       /sbin/modprobe -q ip6table_filter
++       <span class="c">#/sbin/modprobe -q ip6table_filter</span>
+        <span class="k">if</span> <span class="o">[</span> ! -f /proc/net/ip6_tables_names <span class="o">]</span>; <span class="k">then</span>
+<span class="k">                </span>log_action_cont_msg <span class="s2">&quot;Warning: skipping IPv6 (no modules loaded)&quot;</span>
+        <span class="k">elif</span> <span class="o">[</span> -x /sbin/ip6tables-save <span class="o">]</span>; <span class="k">then</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h2>フィルタールールを書く</h2>
+<p>ここでは次のようなルールを書くことにする。</p>
+<ul class="simple">
+<li>UDPのポートの待ち受けは自分でコントロールできているので、
+特別なフィルタ設定はしない。</li>
+<li>TCPのポートは、外部からのアクセスできるポートだけ明示的に開けておき、
+それ以外は閉じておく。</li>
+<li>ホスト内の通信はすべて許可する。</li>
+</ul>
+<p>SSH (22/tcp) と HTTPS (443/tcp) へのアクセスを、IPv4, IPv6の両方で許可する
+という設定の場合、以下のとおり。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo iptables -F
+$ sudo iptables -P INPUT ACCEPT
+$ sudo iptables -A INPUT -i lo -j ACCEPT
+$ sudo iptables -A INPUT -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
+$ sudo iptables -A INPUT -p tcp --dport 22 -j ACCEPT
+$ sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+$ sudo iptables -A INPUT -p tcp -j DROP
+
+$ sudo ip6tables -F
+$ sudo ip6tables -P INPUT ACCEPT
+$ sudo ip6tables -A INPUT -i lo -j ACCEPT
+$ sudo ip6tables -A INPUT -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
+$ sudo ip6tables -A INPUT -p tcp --dport 22 -j ACCEPT
+$ sudo ip6tables -A INPUT -p tcp --dport 443 -j ACCEPT
+$ sudo ip6tables -A INPUT -p tcp -j DROP
+</pre></div>
+</div>
+<p>この時点で、フィルタールールは効いている。</p>
+</div>
+<div class="section" id="id3">
+<h2>フィルタールールを保存して再起動後も適用させる</h2>
+<p><span class="docutils literal"><span class="pre">netfilter-persistent</span> <span class="pre">save</span></span> を実行しておけば、次の起動から
+設定したフィルタルールが設定される。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo netfilter-persistent save
+run-parts: executing /usr/share/netfilter-persistent/plugins.d/15-ip4tables save
+run-parts: executing /usr/share/netfilter-persistent/plugins.d/25-ip6tables save
+</pre></div>
+</div>
+<p>再起動して確認しておく。まず再起動。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo shutdown -r now
+</pre></div>
+</div>
+<p>再起動が終われば、ログインして確認。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo iptables -S
+-P INPUT ACCEPT
+-P FORWARD ACCEPT
+-P OUTPUT ACCEPT
+-A INPUT -i lo -j ACCEPT
+-A INPUT -p tcp -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+-A INPUT -p tcp -j DROP
+$ sudo ip6tables -S
+-P INPUT ACCEPT
+-P FORWARD ACCEPT
+-P OUTPUT ACCEPT
+-A INPUT -i lo -j ACCEPT
+-A INPUT -p tcp -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 3843 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+-A INPUT -p tcp -j DROP
+</pre></div>
+</div>
+<p>うまく設定できているので、これでOK。</p>
+</div>
+</div>
+
+    <div class="postmeta">
+        <div class="author">
+            <span>投稿者 @paoneJP</span>
+        </div>
+        
+        <div class="tags">
+            <span>
+                タグ:
+                <a href="../../../tags/debian.html">debian</a>, <a href="../../../tags/vps.html">vps</a></span>
+        </div>
+        </div>
+    <ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="../../11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a> &raquo; </li>
+        </ul></article><aside class="sidebar"><section><div class="widget">
+  <h1>書いてる人</h1>
+  <img src="https://pbs.twimg.com/profile_images/440050792179847168/4OhPuelv.jpeg" width="96" height="96"><br>
+  Takashi Yahata
+  (<a href="https://twitter.com/paoneJP">@paoneJP</a>)
+</div></section><section><div class="widget">
+    <h1>最近の投稿</h1>
+    <ul><li>
+            <a href="#">DTIのVPS上でiptablesを設定しておく</a>
+        </li><li>
+            <a href="../../11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
+        </li><li>
+            <a href="../../09/24/winsdk_setup_for_python.html">Pythonのモジュールインストール用にWindows SDKをセットアップする</a>
+        </li><li>
+            <a href="../../06/10/dti_vps_setup_memo.html">DTIのVPSでDebian6の区画を借りたあとにやったこと</a>
+        </li><li>
+            <a href="../../05/18/idcon_mini_vol3_memo.html">#idcon mini vol.3 参加前にモヤモヤしとくメモ</a>
+        </li></ul>
+</div>
+</section><section><div class="widget" id="searchbox" role="search">
+    <h1><a href="#searchbox">Search</a></h1>
+    <form action="../../../search.html" method="get">
+        <input type="text" name="q" />
+        <button type="submit"><span class="fa fa-search"></span></button>
+    </form>
+</div></section><section><div class="widget">
+  <h1>ライセンス</h1>
+  <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
+  <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"
+       src="https://i.creativecommons.org/l/by/4.0/88x31.png"></a><br>
+  特に表示をしていない限り、このサイトのコンテンツは
+  <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
+  クリエイティブ・コモンズ 表示 4.0 国際ライセンスの下に提供されています。
+  </a>
+</div></section></aside></div> <!-- #main --></div> <!-- #main-container -->
+
+        <div class="footer-container" role="contentinfo"><footer class="wrapper">&copy; Copyright 2014, @paoneJP. Powered by <a href="http://www.tinkerer.me/">Tinkerer</a> and <a href="http://sphinx.pocoo.org/">Sphinx</a>.</footer></div> <!-- footer-container -->
+
+      </div> <!--! end of #container --><!--[if lt IE 7 ]>
+          <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+          <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+        <![endif]-->
+    </body>
+</html>
