@@ -93,6 +93,7 @@ Appendix A.2に出てくるRSA1_5 and A128CBC-HS256で暗号化されたJWE
 として使う。</li>
 <li>ブロック暗号のパディングはPKCS#7 Paddingになっているので、
 復号するときにPKCS#7 Paddingの仕様にあわせたパディング除去が必要。</li>
+<li>AAD Lengthは、バイト長ではなくビット長を値として持つので、変換が必要。</li>
 </ul>
 <p>といったところ。</p>
 <p>ただ、&#8221;JOSE Header&#8221; と &#8220;JWE Protected Header&#8221; と &#8220;AAD&#8221; との関係というか
