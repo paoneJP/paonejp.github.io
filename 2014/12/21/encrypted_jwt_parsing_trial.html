@@ -1,0 +1,338 @@
+<!DOCTYPE html><!--[if lt IE 7]>      <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+        <title>暗号化されたJWTをパースしてみる &mdash; 実験メモとかいろいろ</title>
+            <link rel="stylesheet" href="../../../_static/normalize.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/sphinx.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/main.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/modern5plus.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+            <link rel="stylesheet" href="../../../_static/font-awesome.min.css" type="text/css">
+        <link rel="shortcut icon" href="../../../_static/tinkerer.ico" /><!-- Load modernizr and JQuery -->
+        <script src="../../../_static/vendor/modernizr-2.6.2.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
+        <script src="../../../_static/plugins.js"></script>
+        <script src="../../../_static/main.js"></script>
+        <link rel="next" title="Tinkererのテーマをカスタマイズする" href="tinker_theme_customize.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // Adjusts document height if sidebar is taller
+            var documentwrapper = document.getElementsByTagName("article")[0];
+            var sidebar = document.getElementsByClassName("sidebar")[0];
+
+            if (sidebar.offsetHeight > documentwrapper.offsetHeight)
+            {
+                var mainwrapper = document.getElementsByClassName("main")[0];
+                documentwrapper.style.minHeight = mainwrapper.offsetHeight + "px";
+            }
+
+            // Scroll to content if on small screen
+            if (screen.width < 480)
+            {
+                $(document).scrollTop(document.getElementsByTagName("article")[0].offsetTop - 44);
+            }
+        });
+    </script></head>
+    <body role="document">
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+
+      <div id="container"><header role="banner">
+            <hgroup>
+              <h1><a href="../../../index.html">実験メモとかいろいろ</a></h1><h2>python, xperia, debian, oidc 辺りを中心に</h2></hgroup>
+          </header>
+      <nav role="navigation">
+            <ul><li class="quicklink"><div class="rss">
+        <a href="../../../rss.html" title="Subscribe via RSS"><span class="fa fa-lg fa-rss"></span></a>
+    </div></li><li class="main-nav">
+                  <a href="../../../index.html">ホーム</a>
+                </li>
+              </ul>
+          </nav><div class="main-container" role="main"><div class="main wrapper body clearfix"><article role="article"><ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="tinker_theme_customize.html">Tinkererのテーマをカスタマイズする</a> &raquo; </li>
+        </ul><div class="timestamp postmeta">
+            <span>December 21, 2014</span>
+        </div>
+    <div class="section" id="jwt">
+<h1>暗号化されたJWTをパースしてみる</h1>
+<p>セッション管理にJWTをCookieにセットして使う実装も増えてきて、いよいよ
+JWTが流行しそうな予感がする。セッション管理になると暗号化されたJWT (JWE)
+を使うので、その辺の仕組みを知っておく必要があるので、やってみた。</p>
+<div id="more"> </div><p>今回書いてみたコードは、draft-ietf-jose-json-web-encryption <a class="footnote-reference" href="#jwe" id="id1">[1]</a>
+Appendix A.2に出てくるRSA1_5 and A128CBC-HS256で暗号化されたJWE
+をパースするもの。</p>
+<p>書いてみてポイントかなと思ったところは、</p>
+<ul class="simple">
+<li>Content Encryption Key (CEK) の前半128bitをMAC_KEY、後半128bitをENC_KEY
+として使う。</li>
+<li>ブロック暗号のパディングはPKCS#7 Paddingになっているので、
+復号するときにPKCS#7 Paddingの仕様にあわせたパディング除去が必要。</li>
+</ul>
+<p>といったところ。</p>
+<p>ただ、&#8221;JOSE Header&#8221; と &#8220;JWE Protected Header&#8221; と &#8220;AAD&#8221; との関係というか
+用語の使い分けがまだしっくりきていない。</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">urlsafe_b64decode</span>
+
+<span class="kn">from</span> <span class="nn">Crypto.PublicKey</span> <span class="kn">import</span> <span class="n">RSA</span>
+<span class="kn">from</span> <span class="nn">Crypto.Cipher</span> <span class="kn">import</span> <span class="n">PKCS1_v1_5</span>
+<span class="kn">from</span> <span class="nn">Crypto.Cipher</span> <span class="kn">import</span> <span class="n">AES</span>
+<span class="kn">from</span> <span class="nn">Crypto.Hash</span> <span class="kn">import</span> <span class="n">HMAC</span>
+<span class="kn">from</span> <span class="nn">Crypto.Hash</span> <span class="kn">import</span> <span class="n">SHA256</span>
+<span class="kn">from</span> <span class="nn">Crypto.Util.number</span> <span class="kn">import</span> <span class="n">long_to_bytes</span><span class="p">,</span> <span class="n">bytes_to_long</span>
+
+
+<span class="c"># RSA Key described in A.2.3</span>
+<span class="c">#</span>
+<span class="n">jwk_n</span> <span class="o">=</span> <span class="s">&#39;sXchDaQebHnPiGvyDOAT4saGEUetSyo9MKLOoWFsueri23bOdgWp4Dy1Wl&#39;</span> \
+        <span class="s">&#39;UzewbgBHod5pcM9H95GQRV3JDXboIRROSBigeC5yjU1hGzHHyXss8UDpre&#39;</span> \
+        <span class="s">&#39;cbAYxknTcQkhslANGRUZmdTOQ5qTRsLAt6BTYuyvVRdhS8exSZEy_c4gs_&#39;</span> \
+        <span class="s">&#39;7svlJJQ4H9_NxsiIoLwAEk7-Q3UXERGYw_75IDrGA84-lA_-Ct4eTlXHBI&#39;</span> \
+        <span class="s">&#39;Y2EaV7t7LjJaynVJCpkv4LKjTTAumiGUIuQhrNhZLuF_RJLqHpM2kgWFLU&#39;</span> \
+        <span class="s">&#39;7-VTdL1VbC2tejvcI2BlMkEpk1BzBZI0KQB0GaDWFLN-aEAw3vRw&#39;</span>
+<span class="n">jwk_e</span> <span class="o">=</span> <span class="s">&#39;AQAB&#39;</span>
+<span class="n">jwk_d</span> <span class="o">=</span> <span class="s">&#39;VFCWOqXr8nvZNyaaJLXdnNPXZKRaWCjkU5Q2egQQpTBMwhprMzWzpR8Sxq&#39;</span> \
+        <span class="s">&#39;1OPThh_J6MUD8Z35wky9b8eEO0pwNS8xlh1lOFRRBoNqDIKVOku0aZb-ry&#39;</span> \
+        <span class="s">&#39;nq8cxjDTLZQ6Fz7jSjR1Klop-YKaUHc9GsEofQqYruPhzSA-QgajZGPbE_&#39;</span> \
+        <span class="s">&#39;0ZaVDJHfyd7UUBUKunFMScbflYAAOYJqVIVwaYR5zWEEceUjNnTNo_CVSj&#39;</span> \
+        <span class="s">&#39;-VvXLO5VZfCUAVLgW4dpf1SrtZjSt34YLsRarSb127reG_DUwg9Ch-Kyvj&#39;</span> \
+        <span class="s">&#39;T1SkHgUWRVGcyly7uvVGRSDwsXypdrNinPA4jlhoNdizK2zF2CWQ&#39;</span>
+<span class="n">jwk_p</span> <span class="o">=</span> <span class="s">&#39;9gY2w6I6S6L0juEKsbeDAwpd9WMfgqFoeA9vEyEUuk4kLwBKcoe1x4HG68&#39;</span> \
+        <span class="s">&#39;ik918hdDSE9vDQSccA3xXHOAFOPJ8R9EeIAbTi1VwBYnbTp87X-xcPWlEP&#39;</span> \
+        <span class="s">&#39;krdoUKW60tgs1aNd_Nnc9LEVVPMS390zbFxt8TN_biaBgelNgbC95sM&#39;</span>
+<span class="n">jwk_q</span> <span class="o">=</span> <span class="s">&#39;uKlCKvKv_ZJMVcdIs5vVSU_6cPtYI1ljWytExV_skstvRSNi9r66jdd9-y&#39;</span> \
+        <span class="s">&#39;BhVfuG4shsp2j7rGnIio901RBeHo6TPKWVVykPu1iYhQXw1jIABfw-MVsN&#39;</span> \
+        <span class="s">&#39;-3bQ76WLdt2SDxsHs7q7zPyUyHXmps7ycZ5c72wGkUwNOjYelmkiNS0&#39;</span>
+<span class="n">n</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwk_n</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">))</span>
+<span class="n">e</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwk_e</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">))</span>
+<span class="n">d</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwk_d</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">))</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwk_p</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">))</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwk_q</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">))</span>
+<span class="n">key</span> <span class="o">=</span> <span class="n">RSA</span><span class="o">.</span><span class="n">construct</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">))</span>
+
+
+<span class="c"># Target JWT described in A.2.7</span>
+<span class="c">#</span>
+<span class="n">jwt</span> <span class="o">=</span> <span class="s">&#39;eyJhbGciOiJSU0ExXzUiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0.&#39;</span> \
+      <span class="s">&#39;UGhIOguC7IuEvf_NPVaXsGMoLOmwvc1GyqlIKOK1nN94nHPoltGRhWhw7Zx0-kFm&#39;</span> \
+      <span class="s">&#39;1NJn8LE9XShH59_i8J0PH5ZZyNfGy2xGdULU7sHNF6Gp2vPLgNZ__deLKxGHZ7Pc&#39;</span> \
+      <span class="s">&#39;HALUzoOegEI-8E66jX2E4zyJKx-YxzZIItRzC5hlRirb6Y5Cl_p-ko3YvkkysZIF&#39;</span> \
+      <span class="s">&#39;NPccxRU7qve1WYPxqbb2Yw8kZqa2rMWI5ng8OtvzlV7elprCbuPhcCdZ6XDP0_F8&#39;</span> \
+      <span class="s">&#39;rkXds2vE4X-ncOIM8hAYHHi29NX0mcKiRaD0-D-ljQTP-cFPgwCp6X-nZZd9OHBv&#39;</span> \
+      <span class="s">&#39;-B3oWh2TbqmScqXMR4gp_A.&#39;</span> \
+      <span class="s">&#39;AxY8DCtDaGlsbGljb3RoZQ.&#39;</span> \
+      <span class="s">&#39;KDlTtXchhZTGufMYmOYGS4HffxPSUrfmqCHXaI9wOGY.&#39;</span> \
+      <span class="s">&#39;9hH0vgRfYgPnAHOd8stkvw&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span>
+
+
+<span class="c"># Decode JOSE Header (JWE Protected Header) [A.2.1]</span>
+<span class="c">#</span>
+<span class="n">header</span> <span class="o">=</span> <span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;## JOSE Header</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span>
+
+
+<span class="c"># Decrypt CEK usign the RSAES-PKCS1-V1_5 algorithm [A.2.3][A.2.2]</span>
+<span class="c">#</span>
+<span class="n">cek</span> <span class="o">=</span> <span class="n">PKCS1_v1_5</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;## CEK</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">cek</span><span class="p">))</span>
+
+
+<span class="c"># Decode Initializtion Vector [A.2.4][B.4]</span>
+<span class="c">#</span>
+<span class="n">iv</span> <span class="o">=</span> <span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;## IV</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">iv</span><span class="p">))</span>
+
+
+<span class="c"># Decode Additional Authenticated Data (use JWE Protected Header) [A.2.5]</span>
+<span class="c">#</span>
+<span class="n">aad</span> <span class="o">=</span> <span class="n">jwt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;## AAD</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">aad</span><span class="p">))</span>
+
+
+<span class="c"># Extract MAC_KEY and ENC_KEY [B.1]</span>
+<span class="c">#</span>
+<span class="n">mac_key</span> <span class="o">=</span> <span class="n">cek</span><span class="p">[:</span><span class="mi">16</span><span class="p">]</span>
+<span class="n">enc_key</span> <span class="o">=</span> <span class="n">cek</span><span class="p">[</span><span class="mi">16</span><span class="p">:]</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;## MAC_KEY</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">mac_key</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;## ENC_KEY</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">enc_key</span><span class="p">))</span>
+
+
+<span class="c"># Decrypt Ciphertext [B.2]</span>
+
+<span class="c">## Decode Ciphertext</span>
+<span class="n">ct</span> <span class="o">=</span> <span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwt</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;## Ciphertext</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">ct</span><span class="p">))</span>
+
+<span class="c">## Decrypt Ciphertext</span>
+<span class="n">aes</span> <span class="o">=</span> <span class="n">AES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">enc_key</span><span class="p">,</span> <span class="n">AES</span><span class="o">.</span><span class="n">MODE_CBC</span><span class="p">,</span> <span class="n">iv</span><span class="p">)</span>
+<span class="n">text</span> <span class="o">=</span> <span class="n">aes</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">ct</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+
+<span class="c">## Remove PKCS#7 padding</span>
+<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">aes</span><span class="o">.</span><span class="n">block_size</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">padding</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span>
+    <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">padding</span><span class="p">):</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">[:</span><span class="o">-</span><span class="n">n</span><span class="p">]</span>
+
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;## Plaintext</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+
+
+<span class="c"># AAD Length value [B.3]</span>
+<span class="c">#</span>
+<span class="n">al</span> <span class="o">=</span> <span class="n">long_to_bytes</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">aad</span><span class="p">)</span><span class="o">*</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;## AL value</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">al</span><span class="p">))</span>
+
+
+<span class="c"># Input to HMAC Computation [B.5]</span>
+<span class="c">#</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;## Input to HMAC Computation (AAD + IV + Ciphertext + AL value)</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span>
+      <span class="nb">list</span><span class="p">(</span><span class="n">aad</span><span class="o">+</span><span class="n">iv</span><span class="o">+</span><span class="n">ct</span><span class="o">+</span><span class="n">al</span><span class="p">))</span>
+
+
+<span class="c"># Compute HMAC Value [B.6]</span>
+<span class="c">#</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">HMAC</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">mac_key</span><span class="p">,</span> <span class="n">aad</span><span class="o">+</span><span class="n">iv</span><span class="o">+</span><span class="n">ct</span><span class="o">+</span><span class="n">al</span><span class="p">,</span> <span class="n">SHA256</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;## Computed HMAC Value</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+
+
+<span class="c"># Compute Authentication Tag [B.7]</span>
+<span class="c">#</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">m</span><span class="p">[:</span><span class="mi">16</span><span class="p">]</span>
+<span class="n">tag</span> <span class="o">=</span> <span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwt</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;## Computed Authentiction Tag</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s">&#39;## Authentication Tag in JWT</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
+</pre></div>
+</div>
+<p><a class="reference external" href="https://gist.github.com/paoneJP/7fa72ab0458091681b30">https://gist.github.com/paoneJP/7fa72ab0458091681b30</a> にも同じものを貼っておく。</p>
+<div class="section" id="id2">
+<h2>実行結果</h2>
+<div class="highlight-python"><div class="highlight"><pre>$ python3 parse_jwe_sample.py
+## JOSE Header
+ {&quot;alg&quot;:&quot;RSA1_5&quot;,&quot;enc&quot;:&quot;A128CBC-HS256&quot;}
+## CEK
+ [4, 211, 31, 197, 84, 157, 252, 254, 11, 100, 157, 250, 63, 170, 106, 206, 107, 124, 212, 45, 111, 107, 9, 219, 200, 177, 0, 240, 143, 156, 44, 207]
+## IV
+ [3, 22, 60, 12, 43, 67, 104, 105, 108, 108, 105, 99, 111, 116, 104, 101]
+## AAD
+ [101, 121, 74, 104, 98, 71, 99, 105, 79, 105, 74, 83, 85, 48, 69, 120, 88, 122, 85, 105, 76, 67, 74, 108, 98, 109, 77, 105, 79, 105, 74, 66, 77, 84, 73, 52, 81, 48, 74, 68, 76, 85, 104, 84, 77, 106, 85, 50, 73, 110, 48]
+## MAC_KEY
+ [4, 211, 31, 197, 84, 157, 252, 254, 11, 100, 157, 250, 63, 170, 106, 206]
+## ENC_KEY
+ [107, 124, 212, 45, 111, 107, 9, 219, 200, 177, 0, 240, 143, 156, 44, 207]
+## Ciphertext
+ [40, 57, 83, 181, 119, 33, 133, 148, 198, 185, 243, 24, 152, 230, 6, 75, 129, 223, 127, 19, 210, 82, 183, 230, 168, 33, 215, 104, 143, 112, 56, 102]
+## Plaintext
+ Live long and prosper.
+## AL value
+ [0, 0, 0, 0, 0, 0, 1, 152]
+## Input to HMAC Computation (AAD + IV + Ciphertext + AL value)
+ [101, 121, 74, 104, 98, 71, 99, 105, 79, 105, 74, 83, 85, 48, 69, 120, 88, 122, 85, 105, 76, 67, 74, 108, 98, 109, 77, 105, 79, 105, 74, 66, 77, 84, 73, 52, 81, 48, 74, 68, 76, 85, 104, 84, 77, 106, 85, 50, 73, 110, 48, 3, 22, 60, 12, 43, 67, 104, 105, 108, 108, 105, 99, 111, 116, 104, 101, 40, 57, 83, 181, 119, 33, 133, 148, 198, 185, 243, 24, 152, 230, 6, 75, 129, 223, 127, 19, 210, 82, 183, 230, 168, 33, 215, 104, 143, 112, 56, 102, 0, 0, 0, 0, 0, 0, 1, 152]
+## Computed HMAC Value
+ [246, 17, 244, 190, 4, 95, 98, 3, 231, 0, 115, 157, 242, 203, 100, 191, 23, 164, 159, 52, 126, 166, 142, 192, 23, 79, 73, 181, 252, 116, 123, 198]
+## Computed Authentiction Tag
+ [246, 17, 244, 190, 4, 95, 98, 3, 231, 0, 115, 157, 242, 203, 100, 191]
+## Authentication Tag in JWT
+ [246, 17, 244, 190, 4, 95, 98, 3, 231, 0, 115, 157, 242, 203, 100, 191]
+$
+</pre></div>
+</div>
+<p class="rubric">脚注</p>
+<table class="docutils footnote" frame="void" id="jwe" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td><a class="reference external" href="https://tools.ietf.org/html/draft-ietf-jose-json-web-encryption-38">JSON Web Encryption (JWE)</a></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+    <div class="postmeta">
+        <div class="author">
+            <span>投稿者 @paoneJP</span>
+        </div>
+        
+        <div class="tags">
+            <span>
+                タグ:
+                <a href="../../../tags/python.html">python</a>, <a href="../../../tags/jwt.html">jwt</a></span>
+        </div>
+        </div>
+    <ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="tinker_theme_customize.html">Tinkererのテーマをカスタマイズする</a> &raquo; </li>
+        </ul></article><aside class="sidebar"><section><div class="widget">
+  <h1>書いてる人</h1>
+  <img src="https://pbs.twimg.com/profile_images/440050792179847168/4OhPuelv.jpeg" width="96" height="96"><br>
+  Takashi Yahata
+  (<a href="https://twitter.com/paoneJP">@paoneJP</a>)
+</div></section><section><div class="widget">
+    <h1>最近の投稿</h1>
+    <ul><li>
+            <a href="#">暗号化されたJWTをパースしてみる</a>
+        </li><li>
+            <a href="tinker_theme_customize.html">Tinkererのテーマをカスタマイズする</a>
+        </li><li>
+            <a href="../14/easy_setup_instructions_for_openam.html">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</a>
+        </li><li>
+            <a href="../14/iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a>
+        </li><li>
+            <a href="../../11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
+        </li><li>
+            <a href="../../09/24/winsdk_setup_for_python.html">Pythonのモジュールインストール用にWindows SDKをセットアップする</a>
+        </li><li>
+            <a href="../../06/10/dti_vps_setup_memo.html">DTIのVPSでDebian6の区画を借りたあとにやったこと</a>
+        </li><li>
+            <a href="../../05/18/idcon_mini_vol3_memo.html">#idcon mini vol.3 参加前にモヤモヤしとくメモ</a>
+        </li></ul>
+</div>
+</section><section><div class="widget" id="searchbox" role="search">
+    <h1><a href="#searchbox">Search</a></h1>
+    <form action="../../../search.html" method="get">
+        <input type="text" name="q" />
+        <button type="submit"><span class="fa fa-search"></span></button>
+    </form>
+</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/debian.html">debian</a> (4), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (1), <a href="../../../tags/openam.html">openam</a> (1), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4)</div></section><section><div class="widget">
+  <h1>ライセンス</h1>
+  <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
+  <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"
+       src="https://i.creativecommons.org/l/by/4.0/88x31.png"></a><br>
+  <font size="-1">
+  特に表示をしていない限り、このサイトのコンテンツは
+  <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
+  クリエイティブ・コモンズ 表示 4.0 国際ライセンスの下に提供されています。
+  </font></a>
+</div></section></aside></div> <!-- #main --></div> <!-- #main-container -->
+
+        <div class="footer-container" role="contentinfo"><footer class="wrapper">&copy; Copyright 2014, @paoneJP. Powered by <a href="http://www.tinkerer.me/">Tinkerer</a> and <a href="http://sphinx.pocoo.org/">Sphinx</a>.</footer></div> <!-- footer-container -->
+
+      </div> <!--! end of #container --><!--[if lt IE 7 ]>
+          <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+          <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+        <![endif]-->
+    </body>
+</html>

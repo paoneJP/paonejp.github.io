@@ -1,0 +1,205 @@
+﻿暗号化されたJWTをパースしてみる
+===============================
+
+セッション管理にJWTをCookieにセットして使う実装も増えてきて、いよいよ
+JWTが流行しそうな予感がする。セッション管理になると暗号化されたJWT (JWE)
+を使うので、その辺の仕組みを知っておく必要があるので、やってみた。
+
+
+.. more::
+
+今回書いてみたコードは、draft-ietf-jose-json-web-encryption [#jwe]_
+Appendix A.2に出てくるRSA1_5 and A128CBC-HS256で暗号化されたJWE
+をパースするもの。
+
+書いてみてポイントかなと思ったところは、
+
+* Content Encryption Key (CEK) の前半128bitをMAC_KEY、後半128bitをENC_KEY
+  として使う。
+* ブロック暗号のパディングはPKCS#7 Paddingになっているので、
+  復号するときにPKCS#7 Paddingの仕様にあわせたパディング除去が必要。
+
+といったところ。
+
+ただ、"JOSE Header" と "JWE Protected Header" と "AAD" との関係というか
+用語の使い分けがまだしっくりきていない。
+
+
+.. code-block:: python
+
+  from base64 import urlsafe_b64decode
+   
+  from Crypto.PublicKey import RSA
+  from Crypto.Cipher import PKCS1_v1_5
+  from Crypto.Cipher import AES
+  from Crypto.Hash import HMAC
+  from Crypto.Hash import SHA256
+  from Crypto.Util.number import long_to_bytes, bytes_to_long
+   
+   
+  # RSA Key described in A.2.3
+  #
+  jwk_n = 'sXchDaQebHnPiGvyDOAT4saGEUetSyo9MKLOoWFsueri23bOdgWp4Dy1Wl' \
+          'UzewbgBHod5pcM9H95GQRV3JDXboIRROSBigeC5yjU1hGzHHyXss8UDpre' \
+          'cbAYxknTcQkhslANGRUZmdTOQ5qTRsLAt6BTYuyvVRdhS8exSZEy_c4gs_' \
+          '7svlJJQ4H9_NxsiIoLwAEk7-Q3UXERGYw_75IDrGA84-lA_-Ct4eTlXHBI' \
+          'Y2EaV7t7LjJaynVJCpkv4LKjTTAumiGUIuQhrNhZLuF_RJLqHpM2kgWFLU' \
+          '7-VTdL1VbC2tejvcI2BlMkEpk1BzBZI0KQB0GaDWFLN-aEAw3vRw'
+  jwk_e = 'AQAB'
+  jwk_d = 'VFCWOqXr8nvZNyaaJLXdnNPXZKRaWCjkU5Q2egQQpTBMwhprMzWzpR8Sxq' \
+          '1OPThh_J6MUD8Z35wky9b8eEO0pwNS8xlh1lOFRRBoNqDIKVOku0aZb-ry' \
+          'nq8cxjDTLZQ6Fz7jSjR1Klop-YKaUHc9GsEofQqYruPhzSA-QgajZGPbE_' \
+          '0ZaVDJHfyd7UUBUKunFMScbflYAAOYJqVIVwaYR5zWEEceUjNnTNo_CVSj' \
+          '-VvXLO5VZfCUAVLgW4dpf1SrtZjSt34YLsRarSb127reG_DUwg9Ch-Kyvj' \
+          'T1SkHgUWRVGcyly7uvVGRSDwsXypdrNinPA4jlhoNdizK2zF2CWQ'
+  jwk_p = '9gY2w6I6S6L0juEKsbeDAwpd9WMfgqFoeA9vEyEUuk4kLwBKcoe1x4HG68' \
+          'ik918hdDSE9vDQSccA3xXHOAFOPJ8R9EeIAbTi1VwBYnbTp87X-xcPWlEP' \
+          'krdoUKW60tgs1aNd_Nnc9LEVVPMS390zbFxt8TN_biaBgelNgbC95sM'
+  jwk_q = 'uKlCKvKv_ZJMVcdIs5vVSU_6cPtYI1ljWytExV_skstvRSNi9r66jdd9-y' \
+          'BhVfuG4shsp2j7rGnIio901RBeHo6TPKWVVykPu1iYhQXw1jIABfw-MVsN' \
+          '-3bQ76WLdt2SDxsHs7q7zPyUyHXmps7ycZ5c72wGkUwNOjYelmkiNS0'
+  n = bytes_to_long(urlsafe_b64decode(jwk_n+'=='))
+  e = bytes_to_long(urlsafe_b64decode(jwk_e+'=='))
+  d = bytes_to_long(urlsafe_b64decode(jwk_d+'=='))
+  p = bytes_to_long(urlsafe_b64decode(jwk_p+'=='))
+  q = bytes_to_long(urlsafe_b64decode(jwk_q+'=='))
+  key = RSA.construct((n, e, d, p, q))
+   
+   
+  # Target JWT described in A.2.7
+  #
+  jwt = 'eyJhbGciOiJSU0ExXzUiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0.' \
+        'UGhIOguC7IuEvf_NPVaXsGMoLOmwvc1GyqlIKOK1nN94nHPoltGRhWhw7Zx0-kFm' \
+        '1NJn8LE9XShH59_i8J0PH5ZZyNfGy2xGdULU7sHNF6Gp2vPLgNZ__deLKxGHZ7Pc' \
+        'HALUzoOegEI-8E66jX2E4zyJKx-YxzZIItRzC5hlRirb6Y5Cl_p-ko3YvkkysZIF' \
+        'NPccxRU7qve1WYPxqbb2Yw8kZqa2rMWI5ng8OtvzlV7elprCbuPhcCdZ6XDP0_F8' \
+        'rkXds2vE4X-ncOIM8hAYHHi29NX0mcKiRaD0-D-ljQTP-cFPgwCp6X-nZZd9OHBv' \
+        '-B3oWh2TbqmScqXMR4gp_A.' \
+        'AxY8DCtDaGlsbGljb3RoZQ.' \
+        'KDlTtXchhZTGufMYmOYGS4HffxPSUrfmqCHXaI9wOGY.' \
+        '9hH0vgRfYgPnAHOd8stkvw'.split('.')
+   
+   
+  # Decode JOSE Header (JWE Protected Header) [A.2.1]
+  #
+  header = urlsafe_b64decode(jwt[0]+'==').decode()
+  print('## JOSE Header\n', header)
+   
+   
+  # Decrypt CEK usign the RSAES-PKCS1-V1_5 algorithm [A.2.3][A.2.2]
+  #
+  cek = PKCS1_v1_5.new(key).decrypt(urlsafe_b64decode(jwt[1]+'=='), None)
+  print('## CEK\n', list(cek))
+   
+   
+  # Decode Initializtion Vector [A.2.4][B.4]
+  #
+  iv = urlsafe_b64decode(jwt[2]+'==')
+  print('## IV\n', list(iv))
+   
+   
+  # Decode Additional Authenticated Data (use JWE Protected Header) [A.2.5]
+  #
+  aad = jwt[0].encode()
+  print('## AAD\n', list(aad))
+   
+   
+  # Extract MAC_KEY and ENC_KEY [B.1]
+  #
+  mac_key = cek[:16]
+  enc_key = cek[16:]
+  print('## MAC_KEY\n', list(mac_key))
+  print('## ENC_KEY\n', list(enc_key))
+   
+   
+  # Decrypt Ciphertext [B.2]
+   
+  ## Decode Ciphertext
+  ct = urlsafe_b64decode(jwt[3]+'==')
+  print('## Ciphertext\n', list(ct))
+   
+  ## Decrypt Ciphertext
+  aes = AES.new(enc_key, AES.MODE_CBC, iv)
+  text = aes.decrypt(ct).decode()
+   
+  ## Remove PKCS#7 padding
+  for n in range(1, aes.block_size+1):
+      padding = chr(n) * n
+      if text.endswith(padding):
+          text = text[:-n]
+   
+  print('## Plaintext\n', text)
+   
+   
+  # AAD Length value [B.3]
+  #
+  al = long_to_bytes(len(aad)*8, 8)
+  print('## AL value\n', list(al))
+   
+   
+  # Input to HMAC Computation [B.5]
+  #
+  print('## Input to HMAC Computation (AAD + IV + Ciphertext + AL value)\n',
+        list(aad+iv+ct+al))
+   
+   
+  # Compute HMAC Value [B.6]
+  #
+  m = HMAC.new(mac_key, aad+iv+ct+al, SHA256).digest()
+  print('## Computed HMAC Value\n', list(m))
+   
+   
+  # Compute Authentication Tag [B.7]
+  #
+  t = m[:16]
+  tag = urlsafe_b64decode(jwt[4]+'==')
+  print('## Computed Authentiction Tag\n', list(t))
+  print('## Authentication Tag in JWT\n', list(tag))
+
+
+https://gist.github.com/paoneJP/7fa72ab0458091681b30 にも同じものを貼っておく。
+
+
+実行結果
+--------
+
+::
+
+  $ python3 parse_jwe_sample.py
+  ## JOSE Header
+   {"alg":"RSA1_5","enc":"A128CBC-HS256"}
+  ## CEK
+   [4, 211, 31, 197, 84, 157, 252, 254, 11, 100, 157, 250, 63, 170, 106, 206, 107, 124, 212, 45, 111, 107, 9, 219, 200, 177, 0, 240, 143, 156, 44, 207]
+  ## IV
+   [3, 22, 60, 12, 43, 67, 104, 105, 108, 108, 105, 99, 111, 116, 104, 101]
+  ## AAD
+   [101, 121, 74, 104, 98, 71, 99, 105, 79, 105, 74, 83, 85, 48, 69, 120, 88, 122, 85, 105, 76, 67, 74, 108, 98, 109, 77, 105, 79, 105, 74, 66, 77, 84, 73, 52, 81, 48, 74, 68, 76, 85, 104, 84, 77, 106, 85, 50, 73, 110, 48]
+  ## MAC_KEY
+   [4, 211, 31, 197, 84, 157, 252, 254, 11, 100, 157, 250, 63, 170, 106, 206]
+  ## ENC_KEY
+   [107, 124, 212, 45, 111, 107, 9, 219, 200, 177, 0, 240, 143, 156, 44, 207]
+  ## Ciphertext
+   [40, 57, 83, 181, 119, 33, 133, 148, 198, 185, 243, 24, 152, 230, 6, 75, 129, 223, 127, 19, 210, 82, 183, 230, 168, 33, 215, 104, 143, 112, 56, 102]
+  ## Plaintext
+   Live long and prosper.
+  ## AL value
+   [0, 0, 0, 0, 0, 0, 1, 152]
+  ## Input to HMAC Computation (AAD + IV + Ciphertext + AL value)
+   [101, 121, 74, 104, 98, 71, 99, 105, 79, 105, 74, 83, 85, 48, 69, 120, 88, 122, 85, 105, 76, 67, 74, 108, 98, 109, 77, 105, 79, 105, 74, 66, 77, 84, 73, 52, 81, 48, 74, 68, 76, 85, 104, 84, 77, 106, 85, 50, 73, 110, 48, 3, 22, 60, 12, 43, 67, 104, 105, 108, 108, 105, 99, 111, 116, 104, 101, 40, 57, 83, 181, 119, 33, 133, 148, 198, 185, 243, 24, 152, 230, 6, 75, 129, 223, 127, 19, 210, 82, 183, 230, 168, 33, 215, 104, 143, 112, 56, 102, 0, 0, 0, 0, 0, 0, 1, 152]
+  ## Computed HMAC Value
+   [246, 17, 244, 190, 4, 95, 98, 3, 231, 0, 115, 157, 242, 203, 100, 191, 23, 164, 159, 52, 126, 166, 142, 192, 23, 79, 73, 181, 252, 116, 123, 198]
+  ## Computed Authentiction Tag
+   [246, 17, 244, 190, 4, 95, 98, 3, 231, 0, 115, 157, 242, 203, 100, 191]
+  ## Authentication Tag in JWT
+   [246, 17, 244, 190, 4, 95, 98, 3, 231, 0, 115, 157, 242, 203, 100, 191]
+  $ 
+
+.. rubric:: 脚注
+
+.. [#jwe] `JSON Web Encryption (JWE) <https://tools.ietf.org/html/draft-ietf-jose-json-web-encryption-38>`_
+
+
+.. author:: default
+.. categories:: none
+.. tags:: python, jwt
+.. comments::

@@ -16,7 +16,7 @@ OpenAMの環境を作っておこうと思って、DTIのVPS上のDebian jessie�
 * httpsの待ちうけはApacheのmod_sslで処理。
 * ApacheとTomcat8はAJP 1.3 (mod_proxy_ajp) で接続。
 
-また、セットアップを実行するサーバは、次のような環境であるとします。
+また、セットアップを実行するサーバは、次のような環境であるとする。
 
 * Debian jessie を使う。
 * www.example.com という名前でアクセスできる。
@@ -316,5 +316,5 @@ anonymousとdemoにチェックを入れ、[削除] をクリックする。
 
 .. author:: default
 .. categories:: none
-.. tags:: OpenAM, debian, vps
+.. tags:: openam, debian, vps
 .. comments::
