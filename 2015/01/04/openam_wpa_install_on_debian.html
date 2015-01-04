@@ -1,0 +1,618 @@
+<!DOCTYPE html><!--[if lt IE 7]>      <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+        <title>DebianにOpenAM Web Policy Agentをインストールする [非公式手順] &mdash; 実験メモとかいろいろ</title>
+            <link rel="stylesheet" href="../../../_static/normalize.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/sphinx.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/main.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/modern5plus.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+            <link rel="stylesheet" href="../../../_static/font-awesome.min.css" type="text/css">
+        <link rel="shortcut icon" href="../../../_static/tinkerer.ico" /><!-- Load modernizr and JQuery -->
+        <script src="../../../_static/vendor/modernizr-2.6.2.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
+        <script src="../../../_static/plugins.js"></script>
+        <script src="../../../_static/main.js"></script>
+        <link rel="next" title="暗号化されたJWTをパースしてみる" href="../../../2014/12/21/encrypted_jwt_parsing_trial.html" /><link rel="prev" title="OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順]" href="openam_wpa_in_same_apache2_instance.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // Adjusts document height if sidebar is taller
+            var documentwrapper = document.getElementsByTagName("article")[0];
+            var sidebar = document.getElementsByClassName("sidebar")[0];
+
+            if (sidebar.offsetHeight > documentwrapper.offsetHeight)
+            {
+                var mainwrapper = document.getElementsByClassName("main")[0];
+                documentwrapper.style.minHeight = mainwrapper.offsetHeight + "px";
+            }
+
+            // Scroll to content if on small screen
+            if (screen.width < 480)
+            {
+                $(document).scrollTop(document.getElementsByTagName("article")[0].offsetTop - 44);
+            }
+        });
+    </script></head>
+    <body role="document">
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+
+      <div id="container"><header role="banner">
+            <hgroup>
+              <h1><a href="../../../index.html">実験メモとかいろいろ</a></h1><h2>python, xperia, debian, oidc 辺りを中心に</h2></hgroup>
+          </header>
+      <nav role="navigation">
+            <ul><li class="quicklink"><div class="rss">
+        <a href="../../../rss.html" title="Subscribe via RSS"><span class="fa fa-lg fa-rss"></span></a>
+    </div></li><li class="main-nav">
+                  <a href="../../../index.html">ホーム</a>
+                </li>
+              </ul>
+          </nav><div class="main-container" role="main"><div class="main wrapper body clearfix"><article role="article"><ul class="related clearfix">
+            <li class="left"> &laquo; <a href="openam_wpa_in_same_apache2_instance.html">OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順]</a></li>
+            <li class="right"><a href="../../../2014/12/21/encrypted_jwt_parsing_trial.html">暗号化されたJWTをパースしてみる</a> &raquo; </li>
+        </ul><div class="timestamp postmeta">
+            <span>January 04, 2015</span>
+        </div>
+    <div class="section" id="debianopenam-web-policy-agent">
+<h1>DebianにOpenAM Web Policy Agentをインストールする [非公式手順]</h1>
+<p>Debian環境のApacheは、設定ファイルが細かく分割されていて、個々のモジュールや
+サイト (VirtualHost) がコマンドで enable/disable できるようになっている。
+この方法、とてもわかりやすく、管理もしやすくて、僕はとても気にっている。</p>
+<p>Debian環境に合わせてOpenAMのWeb Policy Agentをインストールしてみたので、
+そのときの手順をまとめておく。</p>
+<div id="more"> </div><div class="section" id="id1">
+<h2>インストールする環境の概要</h2>
+<ul class="simple">
+<li>OpenAM Nightly BuildのWeb Policy Agentを使う。
+(この手順では2014/12/16ビルド版を使用)</li>
+<li>OpenAM (https://www.example.com/openam) のエージェントとして動作させる。</li>
+<li>Apache+mod_sslでWebサーバを構成し、そこにWeb Policy Agentをインストールする。</li>
+</ul>
+<p>インストールを行なうサーバは、次のような環境であるとする。</p>
+<ul class="simple">
+<li>Debian jessie を使う。</li>
+<li>ホスト名は wpa.example.com になっている。</li>
+</ul>
+</div>
+<div class="section" id="openam">
+<h2>OpenAMの設定</h2>
+<div class="section" id="openamagent-profile">
+<h3>OpenAMにAgent Profileを作る</h3>
+<p>OpenAMの管理コンソール画面で、
+[アクセス制御] → [/ (最上位のレルム)] → [エージェント] → [Web]
+とたどる。</p>
+<p>エージェント一覧の [新規...] をクリックする。</p>
+<img alt="../../../_images/20150104_openam_wpa_install_on_debian_1.png" src="../../../_images/20150104_openam_wpa_install_on_debian_1.png" />
+<p>エージェントに関する設定を記入し、[作成] をクリックする。</p>
+<img alt="../../../_images/20150104_openam_wpa_install_on_debian_2.png" src="../../../_images/20150104_openam_wpa_install_on_debian_2.png" />
+<table border="1" class="docutils">
+<colgroup>
+<col width="24%" />
+<col width="76%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">項目</th>
+<th class="head">説明</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>名前</td>
+<td>エージェントに名前をつける。エージェントをインストールする
+サーバ名にしておくとよい。(<span class="docutils literal"><span class="pre">wpa.example.com</span></span>)</td>
+</tr>
+<tr class="row-odd"><td>パスワード</td>
+<td>エージェントがOpenAMサーバにアクセスするときのパスワード。
+16文字程度のランダム文字列にするとよい。</td>
+</tr>
+<tr class="row-even"><td>パスワードの再入力</td>
+<td>パスワードを再入力する。</td>
+</tr>
+<tr class="row-odd"><td>サーバーURL</td>
+<td>OpenAMサーバのURLを入力する。例にあるとおりポート番号を
+明示的に入力する必要がある。
+(<span class="docutils literal"><span class="pre">https://www.example.com:443/openam</span></span>)</td>
+</tr>
+<tr class="row-even"><td>エージェントURL</td>
+<td>エージェントをインストールするサーバのURLを入力する。
+OpenAMサーバーからエージェントに設定やポリシーの更新を
+通知し、即時に反映するために使われる。
+(<span class="docutils literal"><span class="pre">https://wpa.example.com:443</span></span>)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id2">
+<h3>OpenAMのアクセス制御ポリシーを作る</h3>
+<p>OpenAMのWeb Policy Agentは、デフォルトで iPlanetAMWebAgentService という
+アプリケーションに設定されたポリシーを使うようになっている。</p>
+<p>初期状態はポリシーが空 (アクセス許可が無い) 状態となっているため、認証された
+ユーザーのアクセスを許可する設定を追加しておく。</p>
+<p>OpenAMの管理コンソール画面で、
+[アクセス制御] → [/ (最上位のレルム)] → [ポリシー]
+とたどる。</p>
+<p>[iPlanetAMWebAgentService] の行をクリックする。</p>
+<img alt="../../../_images/20150104_openam_wpa_install_on_debian_3.png" src="../../../_images/20150104_openam_wpa_install_on_debian_3.png" />
+<p>[Add New Policy] をクリックする。</p>
+<img alt="../../../_images/20150104_openam_wpa_install_on_debian_4.png" src="../../../_images/20150104_openam_wpa_install_on_debian_4.png" />
+<p>Stepに沿って入力を進め、最終的に次の設定となるようにする。
+[Finish] をクリックすればポリシーが作成される。</p>
+<img alt="../../../_images/20150104_openam_wpa_install_on_debian_5.png" src="../../../_images/20150104_openam_wpa_install_on_debian_5.png" />
+<table border="1" class="docutils">
+<colgroup>
+<col width="33%" />
+<col width="67%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">項目</th>
+<th class="head">設定値</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Name</td>
+<td>wpa_allow_all</td>
+</tr>
+<tr class="row-odd"><td>Resources</td>
+<td><div class="first last line-block">
+<div class="line">*://*:*/*</div>
+<div class="line">*://*:*/*?*</div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td>Actions</td>
+<td><div class="first last line-block">
+<div class="line">DELETE: Allowed</div>
+<div class="line">GET: Allowed</div>
+<div class="line">HEAD: Allowed</div>
+<div class="line">OPTIONS: Allowed</div>
+<div class="line">PATCH: Allowed</div>
+<div class="line">POST: Allowed</div>
+<div class="line">PUT: Allowed</div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td>Subjects</td>
+<td><div class="first last line-block">
+<div class="line">{</div>
+<div class="line">&#8220;type&#8221;: &#8220;AuthenticatedUsers&#8221;</div>
+<div class="line">}</div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td>Environments</td>
+<td>There are no Environment Conditions...</td>
+</tr>
+<tr class="row-odd"><td>Response attributes</td>
+<td><div class="first last line-block">
+<div class="line">Static attributes</div>
+<div class="line">There are no Static attributes...</div>
+<div class="line">Subject attributes</div>
+<div class="line">There are no Subject attributes...</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="openjdk">
+<h2>OpenJDKのインストール</h2>
+<p>Web Policy AgentのインストーラがJavaで作られているため、OpenJDKをインストールする。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo apt install openjdk-7-jre-headless
+</pre></div>
+</div>
+</div>
+<div class="section" id="apache">
+<h2>Apacheのセットアップ</h2>
+<p>apache2をインストールする。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo apt install apache2
+</pre></div>
+</div>
+<p>SSL用のサーバ設定を有効にする。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo a2enmod ssl
+$ sudo a2ensite default-ssl
+$ sudo service apache2 restart
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">サーバ証明書の設定手順はここでは省いています。そのまま動かすと、
+apache2のインストール過程で自動生成される自己署名サーバ証明書が使われます。</p>
+</div>
+</div>
+<div class="section" id="web-policy-agent">
+<h2>Web Policy Agentのインストール</h2>
+<div class="section" id="id3">
+<h3>Web Policy Agentをダウンロードする</h3>
+<p>OpenAM Nightly Builds <a class="footnote-reference" href="#download" id="id4">[1]</a> から [Apache 2.4] の [Linux] の [64bits] 用の
+Web Policy Agentをダウンロードする。</p>
+<img alt="../../../_images/20150104_openam_wpa_install_on_debian_6.png" src="../../../_images/20150104_openam_wpa_install_on_debian_6.png" />
+<p>ダウンロードされたファイルが &#8220;apache_v24_Linux_64_agent_4.0.0-SNAPSHOT.zip&#8221;
+であることを確認する。</p>
+</div>
+<div class="section" id="id5">
+<h3>Web Policy Agentを配置する</h3>
+<p>ダウンロードしたzipファイルを展開する。zipファイルを展開した場所が、
+インストール先になるため、先にインストール先のディレクトリを作ってから
+展開する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo apt install unzip
+$ sudo mkdir /opt/openam
+$ cd /opt/openam
+$ sudo unzip /path/to/apache_v24_Linux_64_agent_4.0.0-SNAPSHOT.zip
+$ ls -F
+web_agents/
+$
+</pre></div>
+</div>
+</div>
+<div class="section" id="id6">
+<h3>パスワードファイルを作成する</h3>
+<p>インストーラに渡すパスワードのファイルを作成する。
+パスワードはAgent Profileを作成した際に入力したものを指定する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ umask 0377
+$ echo password_for_agent &gt; /tmp/pwd.txt
+$ umask 0022
+</pre></div>
+</div>
+</div>
+<div class="section" id="httpd-conf">
+<h3>ダミーのhttpd.confファイルを作る</h3>
+<p>インストーラがhttpd.confファイルがあることをチェックしているので、
+ダミーのhttpd.confを作成する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo touch /etc/apache2/httpd.conf
+</pre></div>
+</div>
+</div>
+<div class="section" id="id7">
+<h3>Web Policy Agentのインストーラを実行する</h3>
+<p>インストーラを実行する前に、apacheを止めておく。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo service apache2 stop
+</pre></div>
+</div>
+<p>Web Policy Agentのインストーラを実行する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ cd /opt/openam/web_agents/apache24_agent/bin
+$ sudo ./agentadmin --install
+</pre></div>
+</div>
+<p>ライセンス条件 (CDDL Version1.0) が表示される。内容を確認して <span class="docutils literal"><span class="pre">y</span></span> を
+入力する。</p>
+<div class="highlight-python"><div class="highlight"><pre>Please read the following License Agreement carefully:
+
+COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
+...
+Do you accept the license? y
+</pre></div>
+</div>
+<p>Apacheの設定ディレクトリのパスを訊かれるので、<span class="docutils literal"><span class="pre">/etc/apache2</span></span> と入力する。</p>
+<div class="highlight-python"><div class="highlight"><pre>Enter the complete path to the directory which is used by Apache Server to
+store its configuration Files. This directory uniquely identifies the
+Apache Server instance that is secured by this Agent.
+[ ? : Help, ! : Exit ]
+Enter the Apache Server Config Directory Path [/opt/apache24/conf]: /etc/apache2
+</pre></div>
+</div>
+<p>OpenAMサーバのURLを訊かれるので、<span class="docutils literal"><span class="pre">https://www.example.com/openam</span></span> と
+入力する。ポート番号はデフォルトポートの場合は省略できる。</p>
+<div class="highlight-python"><div class="highlight"><pre>Enter the URL where the OpenAM server is running. Please include the
+deployment URI also as shown below:
+(http://openam.sample.com:58080/openam)
+[ ? : Help, &lt; : Back, ! : Exit ]
+OpenAM server URL: https://www.example.com/openam
+</pre></div>
+</div>
+<p>Policy AgentのURLを訊かれるので、<span class="docutils literal"><span class="pre">https://wpa.example.com</span></span> と
+入力する。ポート番号はデフォルトポートの場合は省略できる。</p>
+<div class="highlight-python"><div class="highlight"><pre>Enter the Agent URL as shown below: (http://agent1.sample.com:1234)
+[ ? : Help, &lt; : Back, ! : Exit ]
+Agent URL: https://wpa.example.com
+</pre></div>
+</div>
+<p>Agent Profileの名前を訊かれるので、OpenAMサーバで設定した
+<span class="docutils literal"><span class="pre">wpa.example.com</span></span> を入力する。</p>
+<div class="highlight-python"><div class="highlight"><pre>Enter the Agent profile name
+[ ? : Help, &lt; : Back, ! : Exit ]
+Enter the Agent Profile name: wpa.example.com
+</pre></div>
+</div>
+<p>パスワードファイルの場所を訊かれるので、先に作成したパスワードファイルの
+名前 <span class="docutils literal"><span class="pre">/tmp/pwd.txt</span></span> を入力する。</p>
+<div class="highlight-python"><div class="highlight"><pre>Enter the path to a file that contains the password to be used for identifying
+the Agent.
+[ ? : Help, &lt; : Back, ! : Exit ]
+Enter the path to the password file: /tmp/pwd.txt
+</pre></div>
+</div>
+<p>ここまで入力した値を再確認して、<span class="docutils literal"><span class="pre">1</span></span> を入力する。</p>
+<div class="highlight-python"><div class="highlight"><pre>-----------------------------------------------
+SUMMARY OF YOUR RESPONSES
+-----------------------------------------------
+Apache Server Config Directory : /etc/apache2
+OpenAM server URL : https://www.example.com/openam
+Agent URL : https://wpa.example.com
+Agent Profile name : wpa.example.com
+Agent Profile Password file name : /tmp/pwd.txt
+
+Verify your settings above and decide from the choices below.
+1. Continue with Installation
+2. Back to the last interaction
+3. Start Over
+4. Exit
+Please make your selection [1]: 1
+</pre></div>
+</div>
+<p>インストーラが完了する。</p>
+<div class="highlight-python"><div class="highlight"><pre>...
+Thank you for using OpenAM Policy Agent
+$
+</pre></div>
+</div>
+</div>
+<div class="section" id="id8">
+<h3>パスワードファイルを消す</h3>
+<p>パスワードファイルは使い終わったので消しておく。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ rm /tmp/pwd.txt
+rm: remove write-protected regular file ‘/tmp/pwd.txt’? y
+$
+</pre></div>
+</div>
+<p>コマンドラインヒストリに生パスワードが残っているので、それも消しておく。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ history -c
+</pre></div>
+</div>
+</div>
+<div class="section" id="id9">
+<h3>Apacheモジュールを組み込む</h3>
+<p>Debianが使うApacheモジュール読み込み設定をつくり、それを有効にする。
+Web Policy AgentのApache上のモジュール名は歴史的にdsameであることから、
+その名前を使う。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ cd /etc/apache2
+$ sudo mv httpd.conf mod-available/dsame.load
+$ sudo a2enmod dsame
+</pre></div>
+</div>
+<p>設定ディレクトリにできた不要ファイルを削除する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo rm httpd.conf-*
+</pre></div>
+</div>
+</div>
+<div class="section" id="id10">
+<h3>ログディレクトリの所有者を修正する</h3>
+<p>Web Policy Agentのインストーラが作成するログディレクトリの所有者を
+変更する。これを行なわないと、エージェントがログローテーションに
+失敗する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ cd /opt/openam/web_agents/apache24_agent/Agent_001/logs
+$ sudo chown www-data:www-data audit debug
+</pre></div>
+</div>
+</div>
+<div class="section" id="openssl">
+<h3>OpenSSL関連ライブラリのシンボリックリンクを作成する</h3>
+<p>Web Policy AgentがOpenAMサーバとSSLを使って通信をする場合、
+OpenSSL由来のlibssl.soとlibcrypto.soをdlopen()で読み込んで使用している。</p>
+<p>しかし、Debianの標準的なインストール状態では、libssl.so, libcrypto.soは
+存在しておらず、OpenAMサーバとのSSL接続ができない。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ cd /usr/lib/x86_64-linux-gnu
+$ ls -l libssl* libcrypto*
+-rw-r--r-- 1 root root 2058560 Oct 16 02:48 libcrypto.so.1.0.0
+-rw-r--r-- 1 root root  392296 Oct 16 02:48 libssl.so.1.0.0
+-rw-r--r-- 1 root root  311928 Dec 22 13:05 libssl3.so
+</pre></div>
+</div>
+<p>(libssl3.soはOpenSSLではなくNSSのライブラリ)</p>
+<p>libssl.so, libcrypto.soは、libssl-devパッケージに収録されているので、
+libssl-devをインストールする。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo apt install libssl-dev
+$ cd /usr/lib/x86_64-linux-gnu
+$ ls -l libssl* libcrypto*
+-rw-r--r-- 1 root root 4276742 Oct 16 02:48 libcrypto.a
+lrwxrwxrwx 1 root root      18 Oct 16 02:48 libcrypto.so -&gt; libcrypto.so.1.0.0
+-rw-r--r-- 1 root root 2058560 Oct 16 02:48 libcrypto.so.1.0.0
+-rw-r--r-- 1 root root  661580 Oct 16 02:48 libssl.a
+lrwxrwxrwx 1 root root      15 Oct 16 02:48 libssl.so -&gt; libssl.so.1.0.0
+-rw-r--r-- 1 root root  392296 Oct 16 02:48 libssl.so.1.0.0
+-rw-r--r-- 1 root root  311928 Dec 22 13:05 libssl3.so
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>上記のとおりlibssl-devをインストールすると、
+libssl.so -&gt; libssl.so.1.0.0,
+libcrypto.so -&gt; libcrypto.so.1.0.0 のシンボリックリンクが
+出来上がる。</p>
+<p class="last">逆に言えば、手でシンボリックリンクを張れば、動作させることができる。
+ただし、OpenSSLのバージョンアップがあった場合に、シンボリックリンクの
+メンテナンスを忘れないように行なう必要がある。</p>
+</div>
+</div>
+<div class="section" id="id11">
+<h3>Apacheを起動する</h3>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo service apache2 start
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id12">
+<h2>動作確認</h2>
+<p>https://wpa.example.com にアクセスする。</p>
+<img alt="../../../_images/20150104_openam_wpa_install_on_debian_7.png" src="../../../_images/20150104_openam_wpa_install_on_debian_7.png" />
+<p>OpenAMの認証画面が表示される。</p>
+<img alt="../../../_images/20150104_openam_wpa_install_on_debian_8.png" src="../../../_images/20150104_openam_wpa_install_on_debian_8.png" />
+<p>コンテンツが表示される。</p>
+<img alt="../../../_images/20150104_openam_wpa_install_on_debian_9.png" src="../../../_images/20150104_openam_wpa_install_on_debian_9.png" />
+</div>
+<div class="section" id="id13">
+<h2>OpenAMサーバに証明書を登録する</h2>
+<p>wpa.example.comのサーバ証明書が、自己署名の証明書もしくはプライベート認証局の
+証明書になっている場合、OpenAMサーバからWeb Policy AgentへのSSL接続時に
+証明書の検証ができず、OpenAMでの設定変更やポリシー変更を通知することができない。</p>
+<p>ここでは、wpa.example.comの証明書にapache2のインストール時に
+ssl-certパッケージによって自動生成される自己署名証明書を使っている
+前提で、OpenAMサーバに信頼する証明書を登録する手順をまとめる。</p>
+<div class="section" id="id14">
+<h3>証明書を確認する</h3>
+<p>wpa.example.comが使っているサーバ証明書の内容を確認する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ openssl x509 -in /etc/ssl/certs/ssl-cert-snakeoil.pem -text | grep Subject:
+        Subject: CN=wpa.example.com
+</pre></div>
+</div>
+<p>ここで、&#8221;CN=wpa.examle.com&#8221; になっていることを確認する。
+もし異なる場合は、サーバ証明書を作り直す。</p>
+<p>ひとつの方法として、サーバ名をwpa.example.comに設定し、snakeoil証明書を
+作り直す方法がある。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo hostname wpa.example.com
+$ hostname -f
+wpa.example.com
+$ sudo make-ssl-cert generate-default-snakeoil --force-overwrite
+$ openssl x509 -in /etc/ssl/certs/ssl-cert-snakeoil.pem -text | grep Subject:
+        Subject: CN=wpa.example.com
+</pre></div>
+</div>
+</div>
+<div class="section" id="id15">
+<h3>サーバ証明書をOpenAMサーバに登録する</h3>
+<p>wpa.example.comの/etc/ssl/certs/ssl-cert-snakeoid.pemを
+OpenAMサーバ (www.example.com) にwpa.example.com.pemとして転送しておく。</p>
+<p>以下の手順をOpenAMサーバ上で実行する。</p>
+<p>まず証明書の内容を確認する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ openssl x509 -in wpa.example.com.pem -text | grep Subject:
+        Subject: CN=wpa.example.com
+</pre></div>
+</div>
+<p>&#8220;CN=wpa.example.com&#8221;となっていることを確認する。</p>
+<p>つぎに、Javaが参照している証明書ストアに、この証明書を信頼できる証明書として
+登録する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo keytool -keystore /etc/ssl/certs/java/cacerts -importcert -trustcacerts -file wpa.example.com.pem -alias wpa.example.com
+Enter keystore password:
+</pre></div>
+</div>
+<p>証明書ストアのパスワードを入力する。デフォルトは <span class="docutils literal"><span class="pre">changeit</span></span> になっている。</p>
+<div class="highlight-python"><div class="highlight"><pre>Owner: CN=wpa.example.com
+Issuer: CN=wpa.example.com
+..
+Trust this certificate? [no]: yes
+Certificate was added to keystore
+</pre></div>
+</div>
+<p>証明書の情報が表示される。もう一度 &#8220;CN=wpa.example.com&#8221; となっていることを
+確認して、<span class="docutils literal"><span class="pre">yes</span></span> を入力する。</p>
+<p>tomcat8 を再起動し、証明書ストアの内容を反映する。</p>
+<div class="highlight-python"><div class="highlight"><pre>sudo service tomcat8 restart
+</pre></div>
+</div>
+<p>以上でWeb Policy Agentのインストールは完了！</p>
+</div>
+<div class="section" id="id16">
+<h3>補足</h3>
+<p>RedHat/CentOSでも、Apacheの設定ファイルは分割管理されていたり
+libssl.so, libcrypto.soが存在していなかったりします。</p>
+<p>今回の手順はDebian用としてまとめましたが、RedHat/CentOSでの
+Web Policy Agentのインストールの時にも参考にしてみてください。</p>
+<p class="rubric">脚注</p>
+<table class="docutils footnote" frame="void" id="download" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id4">[1]</a></td><td><a class="reference external" href="https://forgerock.org/downloads/openam-builds/">OpenAM Nightly Builds</a></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+    <div class="postmeta">
+        <div class="author">
+            <span>投稿者 @paoneJP</span>
+        </div>
+        
+        <div class="tags">
+            <span>
+                タグ:
+                <a href="../../../tags/openam.html">openam</a>, <a href="../../../tags/debian.html">debian</a></span>
+        </div>
+        </div>
+    <ul class="related clearfix">
+            <li class="left"> &laquo; <a href="openam_wpa_in_same_apache2_instance.html">OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順]</a></li>
+            <li class="right"><a href="../../../2014/12/21/encrypted_jwt_parsing_trial.html">暗号化されたJWTをパースしてみる</a> &raquo; </li>
+        </ul></article><aside class="sidebar"><section><div class="widget">
+  <h1>書いてる人</h1>
+  <!--
+  <img src="https://pbs.twimg.com/profile_images/440050792179847168/4OhPuelv.jpeg" width="96" height="96"><br>
+  -->
+  <img src="https://avatars1.githubusercontent.com/u/6633398?v=3&s=460" width="96" height="96"><br>
+  Takashi Yahata
+  (<a href="https://twitter.com/paoneJP">@paoneJP</a>)
+</div></section><section><div class="widget">
+    <h1>最近の投稿</h1>
+    <ul><li>
+            <a href="openam_wpa_in_same_apache2_instance.html">OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順]</a>
+        </li><li>
+            <a href="#">DebianにOpenAM Web Policy Agentをインストールする [非公式手順]</a>
+        </li><li>
+            <a href="../../../2014/12/21/encrypted_jwt_parsing_trial.html">暗号化されたJWTをパースしてみる</a>
+        </li><li>
+            <a href="../../../2014/12/21/tinker_theme_customize.html">Tinkererのテーマをカスタマイズする</a>
+        </li><li>
+            <a href="../../../2014/12/14/easy_setup_instructions_for_openam.html">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</a>
+        </li><li>
+            <a href="../../../2014/12/14/iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a>
+        </li><li>
+            <a href="../../../2014/11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
+        </li><li>
+            <a href="../../../2014/09/24/winsdk_setup_for_python.html">Pythonのモジュールインストール用にWindows SDKをセットアップする</a>
+        </li><li>
+            <a href="../../../2014/06/10/dti_vps_setup_memo.html">DTIのVPSでDebian6の区画を借りたあとにやったこと</a>
+        </li><li>
+            <a href="../../../2014/05/18/idcon_mini_vol3_memo.html">#idcon mini vol.3 参加前にモヤモヤしとくメモ</a>
+        </li></ul>
+</div>
+</section><section><div class="widget" id="searchbox" role="search">
+    <h1><a href="#searchbox">Search</a></h1>
+    <form action="../../../search.html" method="get">
+        <input type="text" name="q" />
+        <button type="submit"><span class="fa fa-search"></span></button>
+    </form>
+</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/debian.html">debian</a> (6), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (1), <a href="../../../tags/openam.html">OpenAM</a> (1), <a href="../../../tags/openam.html">openam</a> (2), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4)</div></section><section><div class="widget">
+  <h1>ライセンス</h1>
+  <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
+  <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"
+       src="https://i.creativecommons.org/l/by/4.0/88x31.png"></a><br>
+  <font size="-1">
+  特に表示をしていない限り、このサイトのコンテンツは
+  <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
+  クリエイティブ・コモンズ 表示 4.0 国際ライセンスの下に提供されています。
+  </font></a>
+</div></section></aside></div> <!-- #main --></div> <!-- #main-container -->
+
+        <div class="footer-container" role="contentinfo"><footer class="wrapper">&copy; Copyright 2014-2015, @paoneJP. Powered by <a href="http://www.tinkerer.me/">Tinkerer</a> and <a href="http://sphinx.pocoo.org/">Sphinx</a>.</footer></div> <!-- footer-container -->
+
+      </div> <!--! end of #container --><!--[if lt IE 7 ]>
+          <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+          <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+        <![endif]-->
+    </body>
+</html>

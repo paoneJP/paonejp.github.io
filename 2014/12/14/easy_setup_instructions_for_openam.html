@@ -83,7 +83,30 @@
 <h1>DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</h1>
 <p>OpenAMの環境を作っておこうと思って、DTIのVPS上のDebian jessieな環境で
 あれこれやってみたことをまとめておく。</p>
+<p>(2015/1/4更新)</p>
 <div id="more"> </div><div class="section" id="id1">
+<h2>更新履歴</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="86%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">日付</th>
+<th class="head">更新内容</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>2015/1/4</td>
+<td>手順の一部見直し。誤記、体裁の修正。</td>
+</tr>
+<tr class="row-odd"><td>2014/12/14</td>
+<td>最初の投稿</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id2">
 <h2>セットアップする環境の概要</h2>
 <ul class="simple">
 <li>OpenAM Nightly Buildを使う。(OpenAM-13.0.0-SNAPSHOT_nightly_20141129.zip)</li>
@@ -120,7 +143,7 @@
 <span class="nv">JAVA_OPTS</span><span class="o">=</span><span class="s2">&quot;-Djava.awt.headless=true -Xmx256m -XX:+UseConcMarkSweepGC&quot;</span>
 </pre></div>
 </div>
-<p>Tomcat8へは、Apache経由でAJPを使ってアクセスするため、<span class="docutils literal"><span class="pre">server.xml</span></span> を
+<p>Tomcat8へは、Apache経由でAJPを使ってアクセスするため、server.xmlを
 編集して、HTTP Connectorの設定をコメントアウトし、
 AJP 1.3 Connectrの設定はコメントアウトを解除する。</p>
 <div class="highlight-python"><div class="highlight"><pre>$ sudo vi /etc/tomcat8/server.xml
@@ -156,7 +179,6 @@ AJP 1.3 Connectrの設定はコメントアウトを解除する。</p>
 <p>SSL用のサーバ設定を有効にする。mod_proxy_ajpも有効にしておく。</p>
 <div class="highlight-python"><div class="highlight"><pre>$ sudo a2enmod ssl proxy_ajp
 $ sudo a2ensite default-ssl
-$ sudo service apache2 restart
 </pre></div>
 </div>
 <div class="admonition note">
@@ -165,31 +187,35 @@ $ sudo service apache2 restart
 そのまま動かすと、apache2のインストール過程で自動生成される
 自己署名サーバ証明書が使われます。</p>
 </div>
-<p><a class="reference external" href="https://www.example.com/openam/">https://www.example.com/openam/</a> へアクセスしたときに、AJPを使ってTomcat8上の
+<p>https://www.example.com/openam/ へアクセスしたときに、AJPを使ってTomcat8上の
 OpenAMへ中継されるように構成する。</p>
 <div class="highlight-python"><div class="highlight"><pre>$ sudo vi /etc/apache2/sites-available/default-ssl.conf
 </pre></div>
 </div>
-<p>140行付近、<span class="docutils literal"><span class="pre">&lt;/VirtualHost&gt;</span></span> の直前に次の3行を書き足す。</p>
-<div class="highlight-python"><div class="highlight"><pre>&lt;Location /openam&gt;
-        ProxyPass ajp://localhost:8009/openam
-&lt;/Location&gt;
+<p>133行付近、&lt;/VirtualHost&gt; の直前に次の3行を書き足す。</p>
+<div class="highlight-apache"><div class="highlight"><pre><span class="nt">&lt;Location</span> <span class="s">/openam</span><span class="nt">&gt;</span>
+        <span class="nb">ProxyPass</span> ajp://localhost:8009/openam
+<span class="nt">&lt;/Location&gt;</span>
 </pre></div>
 </div>
 <p>書き足した後は、こんな感じになる。</p>
-<div class="highlight-python"><div class="highlight"><pre>                BrowserMatch &quot;MSIE [17-9]&quot; ssl-unclean-shutdown
+<div class="highlight-apache"><div class="highlight"><pre>                <span class="nb">BrowserMatch</span> <span class="s2">&quot;MSIE [17-9]&quot;</span> ssl-unclean-shutdown
 
-                &lt;Location /openam&gt;
-                        ProxyPass ajp://localhost:8009/openam
-                &lt;/Location&gt;
-        &lt;/VirtualHost&gt;
-&lt;/IfModule&gt;
+                <span class="nt">&lt;Location</span> <span class="s">/openam</span><span class="nt">&gt;</span>
+                        <span class="nb">ProxyPass</span> ajp://localhost:8009/openam
+                <span class="nt">&lt;/Location&gt;</span>
+        <span class="nt">&lt;/VirtualHost&gt;</span>
+<span class="nt">&lt;/IfModule&gt;</span>
+</pre></div>
+</div>
+<p>Apacheを再起動する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo service apache2 restart
 </pre></div>
 </div>
 </div>
 <div class="section" id="openam">
 <h2>OpenAMのデプロイ</h2>
-<p>OpenAM Nightly Builds <a class="footnote-reference" href="#download" id="id2">[2]</a> から [Nightly Build] をダウンロードする。</p>
+<p>OpenAM Nightly Builds <a class="footnote-reference" href="#download" id="id3">[2]</a> から [Nightly Build] をダウンロードする。</p>
 <img alt="../../../_images/20141214_easy_setup_instructions_for_openam_1.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_1.png" />
 <p>ダウンロードしたzipファイルを展開する。</p>
 <div class="highlight-python"><div class="highlight"><pre>$ sudo apt install unzip
@@ -210,14 +236,14 @@ legal-notices
 $
 </pre></div>
 </div>
-<p>OpenAMのwarファイルをデプロイする。デプロイ先のファイル名は <span class="docutils literal"><span class="pre">openam.war</span></span>
+<p>OpenAMのwarファイルをデプロイする。デプロイ先のファイル名は openam.war
 にする。</p>
 <div class="highlight-python"><div class="highlight"><pre>$ sudo cp openam/OpenAM-13.0.0-SNAPSHOT.war /var/lib/tomcat8/webapps/openam.war
-$ chown tomcat8:tomcat8 /var/lib/tomcat8/webapps/openam.war
+$ sudo chown tomcat8:tomcat8 /var/lib/tomcat8/webapps/openam.war
 </pre></div>
 </div>
 <p>Tomcat8がデプロイを完了するのを待つ。Tomcat8のログファイルを見て、
-<span class="docutils literal"><span class="pre">Deployment</span> <span class="pre">of</span> <span class="pre">...</span> <span class="pre">openam.war</span> <span class="pre">has</span> <span class="pre">finished</span> <span class="pre">...</span></span> が表示されたらデプロイ完了。</p>
+&#8220;Deployment of ... openam.war has finished ...&#8221; が表示されたらデプロイ完了。</p>
 <div class="highlight-python"><div class="highlight"><pre>$ sudo tail -f /var/log/tomcat8/catalina.out
 ...
 Dec 14, 2014 8:53:00 PM org.apache.catalina.startup.HostConfig deployWAR
@@ -229,7 +255,7 @@ INFO: Deployment of web application archive /var/lib/tomcat8/webapps/openam.war 
 </pre></div>
 </div>
 </div>
-<div class="section" id="id3">
+<div class="section" id="id4">
 <h2>OpenAMのセットアップ</h2>
 <p>セットアップを行なう前に、OpenAMをセットアップするサーバ自身で、
 www.example.comの名前解決ができていることを確認する。
@@ -251,9 +277,9 @@ $ sudo mkdir /usr/share/tomcat8/.openamcfg
 $ sudo chown tomcat8:tomcat8 /usr/share/tomcat8/.openamcfg
 </pre></div>
 </div>
-<p><a class="reference external" href="https://www.example.com/openam">https://www.example.com/openam</a> にアクセスする。</p>
+<p>https://www.example.com/openam にアクセスする。</p>
 <img alt="../../../_images/20141214_easy_setup_instructions_for_openam_2.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_2.png" />
-<p>「/usr/share/tomcat8への書き込みアクセスができない」という警告が出るが、
+<p>「/usr/share/tomcat8への書き込みアクセスができません」という警告が出るが、
 処置済みなので、そのまま [設定ページに進みます。] をクリックする。</p>
 <img alt="../../../_images/20141214_easy_setup_instructions_for_openam_3.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_3.png" />
 <p>[デフォルト設定の作成] をクリックする。</p>
@@ -272,7 +298,7 @@ $ sudo chown tomcat8:tomcat8 /usr/share/tomcat8/.openamcfg
 <img alt="../../../_images/20141214_easy_setup_instructions_for_openam_8.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_8.png" />
 <p>「設定が完了しました」が表示されたら [ログインに進む] をクリックする。</p>
 <img alt="../../../_images/20141214_easy_setup_instructions_for_openam_9.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_9.png" />
-<p>「ユーザー名」に amadmin と入力、パスワードに先に設定した管理用ユーザの
+<p>「ユーザー名」に <span class="docutils literal"><span class="pre">amadmin</span></span> と入力、パスワードに先に設定した管理用ユーザの
 パスワードを入力して、[Log in] をクリックする。</p>
 <img alt="../../../_images/20141214_easy_setup_instructions_for_openam_10.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_10.png" />
 <p>管理画面が表示される。
@@ -281,16 +307,16 @@ $ sudo chown tomcat8:tomcat8 /usr/share/tomcat8/.openamcfg
 <img alt="../../../_images/20141214_easy_setup_instructions_for_openam_11.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_11.png" />
 <p>[最上位のレルム] をクリックする。</p>
 <img alt="../../../_images/20141214_easy_setup_instructions_for_openam_12.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_12.png" />
-<p>anonymousとdemoにチェックを入れ、[削除] をクリックする。</p>
+<p>[対象] のユーザー一覧のanonymousとdemoにチェックを入れ、[削除] をクリックする。</p>
 <img alt="../../../_images/20141214_easy_setup_instructions_for_openam_13.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_13.png" />
 <p>[ログアウト] してセットアップ完了。</p>
 </div>
-<div class="section" id="id4">
+<div class="section" id="id5">
 <h2>最後に注意点などを。</h2>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">ここでまとめた手順は、できるだけ少ない手数でOpenAMを動かすことを
-目指しているので、OpenAM Installation Guide <a class="footnote-reference" href="#guide" id="id5">[1]</a> にある推奨手順の
+目指しているので、OpenAM Installation Guide <a class="footnote-reference" href="#guide" id="id6">[1]</a> にある推奨手順の
 いくつかを省いています。
 きちんとセットアップしたい方は Installation Guide に従って
 セットアップしてください。</p>
@@ -306,13 +332,13 @@ VPS上でセットアップする場合は、これらのポートへのアク�
 <table class="docutils footnote" frame="void" id="guide" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id5">[1]</a></td><td><a class="reference external" href="http://openam.forgerock.org/openam-documentation/openam-doc-source/doc/install-guide/index.html">OpenAM Installation Guide</a></td></tr>
+<tr><td class="label"><a class="fn-backref" href="#id6">[1]</a></td><td><a class="reference external" href="http://openam.forgerock.org/openam-documentation/openam-doc-source/doc/install-guide/index.html">OpenAM Installation Guide</a></td></tr>
 </tbody>
 </table>
 <table class="docutils footnote" frame="void" id="download" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td><a class="reference external" href="https://forgerock.org/downloads/openam-builds/">OpenAM Nightly Builds</a></td></tr>
+<tr><td class="label"><a class="fn-backref" href="#id3">[2]</a></td><td><a class="reference external" href="https://forgerock.org/downloads/openam-builds/">OpenAM Nightly Builds</a></td></tr>
 </tbody>
 </table>
 </div>
@@ -334,12 +360,19 @@ VPS上でセットアップする場合は、これらのポートへのアク�
             <li class="right"><a href="iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a> &raquo; </li>
         </ul></article><aside class="sidebar"><section><div class="widget">
   <h1>書いてる人</h1>
+  <!--
   <img src="https://pbs.twimg.com/profile_images/440050792179847168/4OhPuelv.jpeg" width="96" height="96"><br>
+  -->
+  <img src="https://avatars1.githubusercontent.com/u/6633398?v=3&s=460" width="96" height="96"><br>
   Takashi Yahata
   (<a href="https://twitter.com/paoneJP">@paoneJP</a>)
 </div></section><section><div class="widget">
     <h1>最近の投稿</h1>
     <ul><li>
+            <a href="../../../2015/01/04/openam_wpa_in_same_apache2_instance.html">OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順]</a>
+        </li><li>
+            <a href="../../../2015/01/04/openam_wpa_install_on_debian.html">DebianにOpenAM Web Policy Agentをインストールする [非公式手順]</a>
+        </li><li>
             <a href="../21/encrypted_jwt_parsing_trial.html">暗号化されたJWTをパースしてみる</a>
         </li><li>
             <a href="../21/tinker_theme_customize.html">Tinkererのテーマをカスタマイズする</a>
@@ -364,7 +397,7 @@ VPS上でセットアップする場合は、これらのポートへのアク�
         <button type="submit"><span class="fa fa-search"></span></button>
     </form>
 </div></section><section><div class="widget">
-    <h1>タグ</h1><a href="../../../tags/debian.html">debian</a> (4), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (1), <a href="../../../tags/openam.html">openam</a> (1), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4)</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/debian.html">debian</a> (6), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (1), <a href="../../../tags/openam.html">OpenAM</a> (1), <a href="../../../tags/openam.html">openam</a> (2), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4)</div></section><section><div class="widget">
   <h1>ライセンス</h1>
   <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
   <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"
@@ -376,7 +409,7 @@ VPS上でセットアップする場合は、これらのポートへのアク�
   </font></a>
 </div></section></aside></div> <!-- #main --></div> <!-- #main-container -->
 
-        <div class="footer-container" role="contentinfo"><footer class="wrapper">&copy; Copyright 2014, @paoneJP. Powered by <a href="http://www.tinkerer.me/">Tinkerer</a> and <a href="http://sphinx.pocoo.org/">Sphinx</a>.</footer></div> <!-- footer-container -->
+        <div class="footer-container" role="contentinfo"><footer class="wrapper">&copy; Copyright 2014-2015, @paoneJP. Powered by <a href="http://www.tinkerer.me/">Tinkerer</a> and <a href="http://sphinx.pocoo.org/">Sphinx</a>.</footer></div> <!-- footer-container -->
 
       </div> <!--! end of #container --><!--[if lt IE 7 ]>
           <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>

@@ -4,7 +4,20 @@
 OpenAMの環境を作っておこうと思って、DTIのVPS上のDebian jessieな環境で
 あれこれやってみたことをまとめておく。
 
+(2015/1/4更新)
+
 .. more::
+
+
+更新履歴
+--------
+
+========== =============================================================
+日付       更新内容
+========== =============================================================
+2015/1/4   手順の一部見直し。誤記、体裁の修正。
+2014/12/14 最初の投稿
+========== =============================================================
 
 
 セットアップする環境の概要
@@ -50,7 +63,7 @@ JavaVMへのメモリ割り当ては、デフォルトの128MBのままだと、
   #JAVA_OPTS="-Djava.awt.headless=true -Xmx128m -XX:+UseConcMarkSweepGC"
   JAVA_OPTS="-Djava.awt.headless=true -Xmx256m -XX:+UseConcMarkSweepGC"
 
-Tomcat8へは、Apache経由でAJPを使ってアクセスするため、``server.xml`` を
+Tomcat8へは、Apache経由でAJPを使ってアクセスするため、server.xmlを
 編集して、HTTP Connectorの設定をコメントアウトし、
 AJP 1.3 Connectrの設定はコメントアウトを解除する。
 
@@ -102,14 +115,13 @@ SSL用のサーバ設定を有効にする。mod_proxy_ajpも有効にしてお�
 
   $ sudo a2enmod ssl proxy_ajp
   $ sudo a2ensite default-ssl
-  $ sudo service apache2 restart
 
 .. note::
   サーバ証明書の設定手順はここでは省いています。
   そのまま動かすと、apache2のインストール過程で自動生成される
   自己署名サーバ証明書が使われます。
 
-https://www.example.com/openam/ へアクセスしたときに、AJPを使ってTomcat8上の
+\https://www.example.com/openam/ へアクセスしたときに、AJPを使ってTomcat8上の
 OpenAMへ中継されるように構成する。
 
 ::
@@ -117,9 +129,9 @@ OpenAMへ中継されるように構成する。
   $ sudo vi /etc/apache2/sites-available/default-ssl.conf
 
 
-140行付近、``</VirtualHost>`` の直前に次の3行を書き足す。
+133行付近、</VirtualHost> の直前に次の3行を書き足す。
 
-::
+.. code-block:: apache
 
   <Location /openam>
           ProxyPass ajp://localhost:8009/openam
@@ -127,7 +139,7 @@ OpenAMへ中継されるように構成する。
 
 書き足した後は、こんな感じになる。
 
-::
+.. code-block:: apache
 
                   BrowserMatch "MSIE [17-9]" ssl-unclean-shutdown
 
@@ -136,7 +148,13 @@ OpenAMへ中継されるように構成する。
                   </Location>
           </VirtualHost>
   </IfModule>
- 
+
+Apacheを再起動する。
+
+:: 
+
+  $ sudo service apache2 restart
+
 
 OpenAMのデプロイ
 ----------------
@@ -167,16 +185,16 @@ OpenAM Nightly Builds [#download]_ から [Nightly Build] をダウンロード�
   $ 
 
 
-OpenAMのwarファイルをデプロイする。デプロイ先のファイル名は ``openam.war`` 
+OpenAMのwarファイルをデプロイする。デプロイ先のファイル名は openam.war
 にする。
 
 ::
 
   $ sudo cp openam/OpenAM-13.0.0-SNAPSHOT.war /var/lib/tomcat8/webapps/openam.war
-  $ chown tomcat8:tomcat8 /var/lib/tomcat8/webapps/openam.war
+  $ sudo chown tomcat8:tomcat8 /var/lib/tomcat8/webapps/openam.war
 
 Tomcat8がデプロイを完了するのを待つ。Tomcat8のログファイルを見て、
-``Deployment of ... openam.war has finished ...`` が表示されたらデプロイ完了。
+"Deployment of ... openam.war has finished ..." が表示されたらデプロイ完了。
 
 ::
 
@@ -219,12 +237,12 @@ www.example.comの名前解決ができていることを確認する。
   $ sudo chown tomcat8:tomcat8 /usr/share/tomcat8/.openamcfg
 
 
-https://www.example.com/openam にアクセスする。
+\https://www.example.com/openam にアクセスする。
 
 
 .. image:: 20141214_easy_setup_instructions_for_openam_2.png
 
-「/usr/share/tomcat8への書き込みアクセスができない」という警告が出るが、
+「/usr/share/tomcat8への書き込みアクセスができません」という警告が出るが、
 処置済みなので、そのまま [設定ページに進みます。] をクリックする。
 
 
@@ -265,7 +283,7 @@ https://www.example.com/openam にアクセスする。
 
 .. image:: 20141214_easy_setup_instructions_for_openam_9.png
 
-「ユーザー名」に amadmin と入力、パスワードに先に設定した管理用ユーザの
+「ユーザー名」に ``amadmin`` と入力、パスワードに先に設定した管理用ユーザの
 パスワードを入力して、[Log in] をクリックする。
 
 
@@ -283,7 +301,7 @@ https://www.example.com/openam にアクセスする。
 
 .. image:: 20141214_easy_setup_instructions_for_openam_12.png
 
-anonymousとdemoにチェックを入れ、[削除] をクリックする。
+[対象] のユーザー一覧のanonymousとdemoにチェックを入れ、[削除] をクリックする。
 
 
 .. image:: 20141214_easy_setup_instructions_for_openam_13.png

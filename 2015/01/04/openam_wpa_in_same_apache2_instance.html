@@ -1,0 +1,519 @@
+<!DOCTYPE html><!--[if lt IE 7]>      <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+        <title>OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順] &mdash; 実験メモとかいろいろ</title>
+            <link rel="stylesheet" href="../../../_static/normalize.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/sphinx.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/main.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/modern5plus.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+            <link rel="stylesheet" href="../../../_static/font-awesome.min.css" type="text/css">
+        <link rel="shortcut icon" href="../../../_static/tinkerer.ico" /><!-- Load modernizr and JQuery -->
+        <script src="../../../_static/vendor/modernizr-2.6.2.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
+        <script src="../../../_static/plugins.js"></script>
+        <script src="../../../_static/main.js"></script>
+        <link rel="next" title="DebianにOpenAM Web Policy Agentをインストールする [非公式手順]" href="openam_wpa_install_on_debian.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // Adjusts document height if sidebar is taller
+            var documentwrapper = document.getElementsByTagName("article")[0];
+            var sidebar = document.getElementsByClassName("sidebar")[0];
+
+            if (sidebar.offsetHeight > documentwrapper.offsetHeight)
+            {
+                var mainwrapper = document.getElementsByClassName("main")[0];
+                documentwrapper.style.minHeight = mainwrapper.offsetHeight + "px";
+            }
+
+            // Scroll to content if on small screen
+            if (screen.width < 480)
+            {
+                $(document).scrollTop(document.getElementsByTagName("article")[0].offsetTop - 44);
+            }
+        });
+    </script></head>
+    <body role="document">
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+
+      <div id="container"><header role="banner">
+            <hgroup>
+              <h1><a href="../../../index.html">実験メモとかいろいろ</a></h1><h2>python, xperia, debian, oidc 辺りを中心に</h2></hgroup>
+          </header>
+      <nav role="navigation">
+            <ul><li class="quicklink"><div class="rss">
+        <a href="../../../rss.html" title="Subscribe via RSS"><span class="fa fa-lg fa-rss"></span></a>
+    </div></li><li class="main-nav">
+                  <a href="../../../index.html">ホーム</a>
+                </li>
+              </ul>
+          </nav><div class="main-container" role="main"><div class="main wrapper body clearfix"><article role="article"><ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="openam_wpa_install_on_debian.html">DebianにOpenAM Web Policy Agentをインストールする [非公式手順]</a> &raquo; </li>
+        </ul><div class="timestamp postmeta">
+            <span>January 04, 2015</span>
+        </div>
+    <div class="section" id="openamweb-policy-agentapache">
+<h1>OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順]</h1>
+<p>実験用の環境を作るときにOpenAMサーバとWeb Policy Agentを同じ
+Apacheインスタンスに同居させて構成してみることにした。</p>
+<p>OpenAMサーバが使うURLにだけWeb Policy Agentが反応しないようにするだけのこと、
+と高をくくってはじめたのだが、想像を超えたハードなクエストに。</p>
+<p>そのときにわかったことをまとめておく。</p>
+<div id="more"> </div><div class="section" id="id1">
+<h2>目指した構成</h2>
+<p>OpenAMとWeb Policy Agentを同居させる場合の目指した構成は次のとおり。</p>
+<ul class="simple">
+<li>https://www.example.com/openam にアクセスするとOpenAMサーバが使える。</li>
+<li>https://www.example.com (の/openam以外) にアクセスするとWeb Policy Agent
+に保護されたアクセスとなる。</li>
+</ul>
+<p>さらに構成する上で考慮しておく制約事項を次のとおりとする。</p>
+<ul class="simple">
+<li>VPS上に構成することも想定して1つのグローバルIPで構成する。</li>
+<li>サーバへはhttpsを使ってアクセスをする。プロキシ越しのアクセスを想定して
+ポート番号は443だけを使う。</li>
+<li>DebianがもつApache設定ファイルのわかりやすい構成を保つため、Apache
+のインスタンスは1つに保つ。</li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h2>構成方法</h2>
+<div class="section" id="tomcathttp-connector">
+<h3>TomcatのHTTP Connectorを有効にする</h3>
+<p>/etc/tomcat8/server.xmlのHTTP Connectorのコメントアウトを外す。</p>
+<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;Connector</span> <span class="na">port=</span><span class="s">&quot;8080&quot;</span> <span class="na">protocol=</span><span class="s">&quot;HTTP/1.1&quot;</span>
+           <span class="na">connectionTimeout=</span><span class="s">&quot;20000&quot;</span>
+           <span class="na">URIEncoding=</span><span class="s">&quot;UTF-8&quot;</span>
+           <span class="na">redirectPort=</span><span class="s">&quot;8443&quot;</span> <span class="nt">/&gt;</span>
+</pre></div>
+</div>
+<p>Tomcatを再起動して、HTTP Connectorを有効にする。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo service tomcat8 restart
+</pre></div>
+</div>
+</div>
+<div class="section" id="web-policy-agent">
+<h3>Web Policy Agentをインストールする</h3>
+<p>先に書いたエントリ <a class="reference internal" href="openam_wpa_install_on_debian.html"><em>DebianにOpenAM Web Policy Agentをインストールする [非公式手順]</em></a>
+の手順で、Web Policy Agentをインストールする。(動作確認以外の手順を実行する)</p>
+<p><strong>Agent Profileでの設定値</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="35%" />
+<col width="65%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">項目</th>
+<th class="head">設定値</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>名前</td>
+<td>www.example.com</td>
+</tr>
+<tr class="row-odd"><td>サーバーURL</td>
+<td>https://www.example.com:443/openam</td>
+</tr>
+<tr class="row-even"><td>エージェントURL</td>
+<td>https://www.example.com:443</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Web Policy Agentでの設定値</strong></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="36%" />
+<col width="64%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">項目</th>
+<th class="head">設定値</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>OpenAM server URL</td>
+<td>https://www.example.com/openam</td>
+</tr>
+<tr class="row-odd"><td>Agent URL</td>
+<td>https://www.example.com</td>
+</tr>
+<tr class="row-even"><td>Agent Profile name</td>
+<td>www.example.com</td>
+</tr>
+</tbody>
+</table>
+<p>この段階では、まだWeb Policy Agentは正しく動作しない。
+このままでは以降の手順を実行するのに支障があるため、
+Web Policy Agentを外してApacheを再起動する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo a2dismod dsame
+$ sudo service apache2 restart
+</pre></div>
+</div>
+</div>
+<div class="section" id="openamurlweb-policy-agent">
+<h3>OpenAMが使うURLをWeb Policy Agentの保護対象外にする</h3>
+<p>OpenAMの管理コンソール画面で、
+[アクセス制御] → [/ (最上位のレルム)] → [エージェント] → [Web]
+→ [www.example.com] → [アプリケーション] とたどる。</p>
+<p>「適用されないURL処理」(Ignore Path Info for Not Enforced URLs)
+にOpenAMが使うURLを2つを指定して保存する。</p>
+<ul class="simple">
+<li><span class="docutils literal"><span class="pre">https://www.example.com/openam</span></span></li>
+<li><span class="docutils literal"><span class="pre">https://www.example.com/openam/*</span></span></li>
+</ul>
+<img alt="../../../_images/20150104_openam_wpa_in_same_apache2_instance_1.png" src="../../../_images/20150104_openam_wpa_in_same_apache2_instance_1.png" />
+</div>
+<div class="section" id="web-policy-agentnaming-servicetomcat">
+<h3>Web Policy AgentのNaming ServiceへのアクセスをTomcatに向ける</h3>
+<p>Web Policy Agentの起動用設定ファイルを編集する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ cd /opt/openam/web_agents/apache24_agent/Agent_001/config/
+$ sudo vi OpenSSOAgentBootstrap.properties
+</pre></div>
+</div>
+<p>Naming ServiceのURLを指定している箇所のURLを
+<span class="docutils literal"><span class="pre">http://localhost.com:8080/...</span></span> に変更する。</p>
+<div class="highlight-python"><div class="highlight"><pre>com.sun.identity.agents.config.naming.url = http://localhost:8080/openam/namingservice
+</pre></div>
+</div>
+</div>
+<div class="section" id="openamnaming-serviceurltomcat">
+<h3>OpenAMのNaming Serviceが応答するURLをTomcatに向ける</h3>
+<p>Web Policy Agentの初期化段階でアクセスエンドポイントについて、
+Naming Serviceが応答するURLをTomcatに向ける。</p>
+<p>OpenAMの管理コンソール画面で、[設定] → [システム] → [ネーミング] とたどる。</p>
+<p>セッションサービスURLとポリシーサービスURLのの2つについて、次のように
+設定を書き換え [保存] する。</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="32%" />
+<col width="68%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">属性名</th>
+<th class="head">設定値</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>セッションサービスURL</td>
+<td>http://localhost:8080/openam/sessionservice</td>
+</tr>
+<tr class="row-odd"><td>ポリシーサービスURL</td>
+<td>http://localhost:8080/openam/policyservice</td>
+</tr>
+</tbody>
+</table>
+<p></p>
+<img alt="../../../_images/20150104_openam_wpa_in_same_apache2_instance_2.png" src="../../../_images/20150104_openam_wpa_in_same_apache2_instance_2.png" />
+<p>この変更で、このホスト以外で動作するWeb Policy Agentの動作に支障が
+出るようになる。Naming Serviceがこのホスト外のWeb Policy Agent
+へ適切な応答をするように、Apacheのmod_substituteとmod_filter
+を使ってNaming Serviceの応答を書き換える。</p>
+<p>書き換え設定のポイントは次のとおり。</p>
+<ul class="simple">
+<li>/openam/namingservice の応答を書き換える。</li>
+<li>http://localhost:8080/ を https://www.example.com/ に書き換える。</li>
+<li>応答に Content-Type が指定されていないので、mod_filterを使って常に書き換えを行なうようにフィルタの登録をする。</li>
+</ul>
+<p>mod_substituteとmod_filterを有効にする。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo a2enmod substitute filter
+</pre></div>
+</div>
+<p>Apacheの設定ファイルを開く。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo vi /etc/apache2/sites-available/default-ssl.conf
+</pre></div>
+</div>
+<p>&lt;Location /openam&gt; ... &lt;/Location&gt; のブロックの後ろに、
+次の6行を書き足す。</p>
+<div class="highlight-apache"><div class="highlight"><pre><span class="nt">&lt;Location</span> <span class="s">/openam/namingservice</span><span class="nt">&gt;</span>
+        <span class="nb">Substitute</span> s!http://localhost:8080/!https://www.example.com/!
+        <span class="nb">FilterDeclare</span> namingrewrite
+        <span class="nb">FilterProvider</span> namingrewrite SUBSTITUTE true
+        <span class="nb">FilterChain</span> namingrewrite
+<span class="nt">&lt;/Location&gt;</span>
+</pre></div>
+</div>
+<p>書き足した後は、こんな感じになる。</p>
+<div class="highlight-apache"><div class="highlight"><pre>        <span class="nt">&lt;Location</span> <span class="s">/openam</span><span class="nt">&gt;</span>
+                <span class="nb">ProxyPass</span> ajp://localhost:8009/openam
+        <span class="nt">&lt;/Location&gt;</span>
+
+        <span class="nt">&lt;Location</span> <span class="s">/openam/namingservice</span><span class="nt">&gt;</span>
+                <span class="nb">Substitute</span> s!http://localhost:8080/!https://www.example.com/!
+                <span class="nb">FilterDeclare</span> namingrewrite
+                <span class="nb">FilterProvider</span> namingrewrite SUBSTITUTE true
+                <span class="nb">FilterChain</span> namingrewrite
+        <span class="nt">&lt;/Location&gt;</span>
+
+<span class="nt">&lt;/VirtualHost&gt;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="hosts">
+<h3>hostsファイルを調整しておく</h3>
+<p>Debianのインストール直後の状態では、/etc/hostsで自ホストのIPアドレスが
+127.0.1.1に設定されている。(理由は今のところ不明だが) 自ホストの
+IPアドレスが127.0.0.1でなければ正しく動作しない。</p>
+<p>/etc/hostsを次のように変更する。</p>
+<p>変更前</p>
+<div class="highlight-python"><div class="highlight"><pre>127.0.0.1       localhost
+127.0.1.1       www.example.com www
+</pre></div>
+</div>
+<p>変更後</p>
+<div class="highlight-python"><div class="highlight"><pre>127.0.0.1       localhost www.example.com www
+#127.0.1.1      www.example.com www
+</pre></div>
+</div>
+</div>
+<div class="section" id="os">
+<h3>OS再起動時の問題をワークアラウンドする</h3>
+<p>OSを再起動したときに、OpenAMが動作するTomcat、Web Policy Agentが組み込まれた
+Apacheともに自動起動される。実際はApacheの方が起動完了が早いため、
+Web Policy Agentが初期化に失敗し、コンテンツへのアクセスができなくなる。</p>
+<p>Web Policy Agentの初期化のリトライを設定することで、この問題に対処する。</p>
+<p>Web Policy Agentの起動用設定ファイルを編集する。</p>
+<div class="highlight-python"><div class="highlight"><pre>$ cd /opt/openam/web_agents/apache24_agent/Agent_001/config/
+$ sudo vi OpenSSOAgentBootstrap.properties
+</pre></div>
+</div>
+<p>ファイルの最後の部分にリトライに関する設定項目があるので、次のとおり
+設定を変更する。</p>
+<div class="highlight-text"><div class="highlight"><pre>com.forgerock.agents.init.retry.max = 5
+com.forgerock.agents.init.retry.wait = 60
+</pre></div>
+</div>
+</div>
+<div class="section" id="web-policy-agentapache">
+<h3>Web Policy Agentを有効にしてApacheを再起動する</h3>
+<div class="highlight-python"><div class="highlight"><pre>$ sudo a2enmod dsame
+$ sudo service apache2 restart
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h3>動作確認</h3>
+<p>https://www.example.com にアクセスする。</p>
+<img alt="../../../_images/20150104_openam_wpa_in_same_apache2_instance_3.png" src="../../../_images/20150104_openam_wpa_in_same_apache2_instance_3.png" />
+<p>OpenAMの認証画面が表示される。</p>
+<img alt="../../../_images/20150104_openam_wpa_in_same_apache2_instance_4.png" src="../../../_images/20150104_openam_wpa_in_same_apache2_instance_4.png" />
+<p>コンテンツが表示される。</p>
+<img alt="../../../_images/20150104_openam_wpa_in_same_apache2_instance_5.png" src="../../../_images/20150104_openam_wpa_in_same_apache2_instance_5.png" />
+</div>
+</div>
+<div class="section" id="id4">
+<h2>構成上のポイントの解説</h2>
+<p>冒頭にも書いたとおり「OpenAMサーバが使うURLにだけWeb Policy Agent
+が反応しないようにするだけのこと」と高をくくっていたが、実際は
+それができなかった。その点についてわかったことを書き出しておく。</p>
+<div class="section" id="id5">
+<h3>Web Policy Agentを普通に構成するとApacheが無応答となる</h3>
+<p>Apache用のWeb Policy Agentは、Apacheモジュールとして実装されており、
+child_initとaccess_checkerをhookして動作するようになっている。</p>
+<p>child_initのhookでは、Apacheのプロセスが生成されたときにPolicy Agentの
+機能の初期化を行なっている。access_checkerのhookでは、
+コンテンツアクセス時の認証状態とアクセスポリシーのチェックを行なっている。</p>
+<p>Policy Agentは、初期化を行なう際に、OpenAMサーバのサービス用エンドポイントへ
+次の順番でアクセスする。</p>
+<ol class="arabic simple">
+<li>Naming Service</li>
+<li>Authentication Service</li>
+<li>Identity REST Services</li>
+<li>Naming Service</li>
+<li>Session Service</li>
+<li>Policy Service</li>
+</ol>
+<p>Web Policy Agentの実装をみると、一連の処理が終了しない限り、HTTP/HTTPS
+のリクエストは受け付けられない (TCP接続はLISTENキューに入ったままACCEPT
+されない) ようになっており、また一連の処理中にエラーがあった場合は、
+child_initが 500 (Internal Server Error) を返すようになってる。</p>
+<p>そのため、今回トライしたOpenAMとWeb Policy Agentを同じApacheインスタンスに
+同居させる構成の場合、</p>
+<ol class="arabic simple">
+<li>Apacheが起動される</li>
+<li>Apacheのサービス用のプロセスが開始する</li>
+<li>child_initが呼ばれる</li>
+<li>Policy Agentの初期化を行なう</li>
+<li>OpenAMのエンドポイントにアクセスする</li>
+<li>その接続は、child_init中のApacheが受ける</li>
+<li>Apacheのchild_initが終了するまで待たされる (ここでデッドロックする)</li>
+</ol>
+<p>という動きとなり、Apacheは無応答となってしまう。</p>
+<p>今回のトライでは、child_initの段階で必要なOpenAMサーバへの接続を
+Tomcatへ直接行なうように構成することで問題を回避している。</p>
+</div>
+<div class="section" id="web-policy-agenturl">
+<h3>Web Policy Agentがサービス用エンドポイントのURLを求める仕組み</h3>
+<p>(この節の説明は、一部推測している事項が含まれています)</p>
+<p>Web Policy Agentの初期化の段階でアクセスするエンドポイントは、
+次の方法で求めされている。</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="3%" />
+<col width="29%" />
+<col width="69%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">No</th>
+<th class="head">エンドポイント</th>
+<th class="head">URLの求め方</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>1</td>
+<td>Naming Service</td>
+<td><p class="first">OpenSSOBootstrap.propertiesの中で
+com.sun.identity.agents.config.naming.url
+に設定されたURLを使う。</p>
+<p class="last">この段階ではNaming ServiceはOpenAMに設定
+されている値をそのまま応答する。デフォルトでは
+%protocol://%host:%port%uriで始まる値となっている。</p>
+</td>
+</tr>
+<tr class="row-odd"><td>2</td>
+<td>Authentication Service</td>
+<td>Naming Serviceが返したURLを使う。
+%protocol, %host, %port, %uri の部分は、
+Naming ServiceのURLを基に置き換えられる。</td>
+</tr>
+<tr class="row-even"><td>3</td>
+<td>Identity REST Services</td>
+<td>(同上)</td>
+</tr>
+<tr class="row-odd"><td>4</td>
+<td>Naming Service</td>
+<td><p class="first">1.と同じURLを使う。</p>
+<p>この段階ではWeb Policy Agentが認証済みとなっている
+ことから、Naming Serviceは
+%protocol, %host, %port, %uri の部分をAgent
+がアクセスすべきサーバの情報に置き換えて応答する。</p>
+<p class="last">今回の例で言えば、https://www.example.com:443/openam
+に置き換えて応答する。</p>
+</td>
+</tr>
+<tr class="row-even"><td>5</td>
+<td>Session Service</td>
+<td>4.のNaming Serviceが返したURLを使う。</td>
+</tr>
+<tr class="row-odd"><td>6</td>
+<td>Policy Service</td>
+<td>(同上)</td>
+</tr>
+</tbody>
+</table>
+<p>今回のトライでは、com.sun.identity.agents.config.naming.urlと、
+OpenAMのNaming Serviceが応答するセッションサービスとポリシーサービスのURL
+をhttp://localhost:8080/で始まるものに変更することで、
+child_initの段階で必要なOpenAMサーバへの接続をTomcatへ直接行なうことを
+実現している。</p>
+</div>
+</div>
+<div class="section" id="id6">
+<h2>所感</h2>
+<p>はまりどころが多く、実現に苦労はしたが、何とか思った動作にすることができたと
+いったところ。はまったときに動作をだいぶ追いかけたので、OpenAMと
+Web Policy Agentの動作の理解をいくらか深められたことが収穫だったかなと。</p>
+<p>でもまぁ、docker で、OpenAMのコンテナとWeb Policy Agentのコンテナ作って実現
+するほうがイマドキのやり方なのかもしれない、と実験を終えてふと思った。</p>
+</div>
+</div>
+
+    <div class="postmeta">
+        <div class="author">
+            <span>投稿者 @paoneJP</span>
+        </div>
+        
+        <div class="tags">
+            <span>
+                タグ:
+                <a href="../../../tags/openam.html">OpenAM</a>, <a href="../../../tags/debian.html">debian</a></span>
+        </div>
+        </div>
+    <ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="openam_wpa_install_on_debian.html">DebianにOpenAM Web Policy Agentをインストールする [非公式手順]</a> &raquo; </li>
+        </ul></article><aside class="sidebar"><section><div class="widget">
+  <h1>書いてる人</h1>
+  <!--
+  <img src="https://pbs.twimg.com/profile_images/440050792179847168/4OhPuelv.jpeg" width="96" height="96"><br>
+  -->
+  <img src="https://avatars1.githubusercontent.com/u/6633398?v=3&s=460" width="96" height="96"><br>
+  Takashi Yahata
+  (<a href="https://twitter.com/paoneJP">@paoneJP</a>)
+</div></section><section><div class="widget">
+    <h1>最近の投稿</h1>
+    <ul><li>
+            <a href="#">OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順]</a>
+        </li><li>
+            <a href="openam_wpa_install_on_debian.html">DebianにOpenAM Web Policy Agentをインストールする [非公式手順]</a>
+        </li><li>
+            <a href="../../../2014/12/21/encrypted_jwt_parsing_trial.html">暗号化されたJWTをパースしてみる</a>
+        </li><li>
+            <a href="../../../2014/12/21/tinker_theme_customize.html">Tinkererのテーマをカスタマイズする</a>
+        </li><li>
+            <a href="../../../2014/12/14/easy_setup_instructions_for_openam.html">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</a>
+        </li><li>
+            <a href="../../../2014/12/14/iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a>
+        </li><li>
+            <a href="../../../2014/11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
+        </li><li>
+            <a href="../../../2014/09/24/winsdk_setup_for_python.html">Pythonのモジュールインストール用にWindows SDKをセットアップする</a>
+        </li><li>
+            <a href="../../../2014/06/10/dti_vps_setup_memo.html">DTIのVPSでDebian6の区画を借りたあとにやったこと</a>
+        </li><li>
+            <a href="../../../2014/05/18/idcon_mini_vol3_memo.html">#idcon mini vol.3 参加前にモヤモヤしとくメモ</a>
+        </li></ul>
+</div>
+</section><section><div class="widget" id="searchbox" role="search">
+    <h1><a href="#searchbox">Search</a></h1>
+    <form action="../../../search.html" method="get">
+        <input type="text" name="q" />
+        <button type="submit"><span class="fa fa-search"></span></button>
+    </form>
+</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/debian.html">debian</a> (6), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (1), <a href="../../../tags/openam.html">OpenAM</a> (1), <a href="../../../tags/openam.html">openam</a> (2), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4)</div></section><section><div class="widget">
+  <h1>ライセンス</h1>
+  <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
+  <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"
+       src="https://i.creativecommons.org/l/by/4.0/88x31.png"></a><br>
+  <font size="-1">
+  特に表示をしていない限り、このサイトのコンテンツは
+  <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
+  クリエイティブ・コモンズ 表示 4.0 国際ライセンスの下に提供されています。
+  </font></a>
+</div></section></aside></div> <!-- #main --></div> <!-- #main-container -->
+
+        <div class="footer-container" role="contentinfo"><footer class="wrapper">&copy; Copyright 2014-2015, @paoneJP. Powered by <a href="http://www.tinkerer.me/">Tinkerer</a> and <a href="http://sphinx.pocoo.org/">Sphinx</a>.</footer></div> <!-- footer-container -->
+
+      </div> <!--! end of #container --><!--[if lt IE 7 ]>
+          <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+          <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+        <![endif]-->
+    </body>
+</html>
