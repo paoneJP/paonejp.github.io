@@ -86,7 +86,32 @@ Apacheインスタンスに同居させて構成してみることにした。</
 <p>OpenAMサーバが使うURLにだけWeb Policy Agentが反応しないようにするだけのこと、
 と高をくくってはじめたのだが、想像を超えたハードなクエストに。</p>
 <p>そのときにわかったことをまとめておく。</p>
+<p>(2015/1/12更新)</p>
 <div id="more"> </div><div class="section" id="id1">
+<h2>更新履歴</h2>
+<table border="1" class="docutils">
+<colgroup>
+<col width="13%" />
+<col width="87%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">日付</th>
+<th class="head">更新内容</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>2015/1/12</td>
+<td>構成後にログインページへのリダイレクトが正しく行なえない
+問題への対応手順を追加 (同時にhostsファイル調整が不要であることが
+わかったのでその部分を削除)</td>
+</tr>
+<tr class="row-odd"><td>2015/1/4</td>
+<td>最初の投稿</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id2">
 <h2>目指した構成</h2>
 <p>OpenAMとWeb Policy Agentを同居させる場合の目指した構成は次のとおり。</p>
 <ul class="simple">
@@ -103,8 +128,13 @@ Apacheインスタンスに同居させて構成してみることにした。</
 のインスタンスは1つに保つ。</li>
 </ul>
 </div>
-<div class="section" id="id2">
+<div class="section" id="id3">
 <h2>構成方法</h2>
+<div class="section" id="openam">
+<h3>OpenAMサーバをセットアップする</h3>
+<p>先に書いたエントリ <a class="reference internal" href="../../../2014/12/14/easy_setup_instructions_for_openam.html"><em>DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</em></a>
+の手順でOpenAMサーバをセットアップする。</p>
+</div>
 <div class="section" id="tomcathttp-connector">
 <h3>TomcatのHTTP Connectorを有効にする</h3>
 <p>/etc/tomcat8/server.xmlのHTTP Connectorのコメントアウトを外す。</p>
@@ -189,6 +219,15 @@ $ sudo service apache2 restart
 <li><span class="docutils literal"><span class="pre">https://www.example.com/openam/*</span></span></li>
 </ul>
 <img alt="../../../_images/20150104_openam_wpa_in_same_apache2_instance_1.png" src="../../../_images/20150104_openam_wpa_in_same_apache2_instance_1.png" />
+</div>
+<div class="section" id="id4">
+<h3>同居しているWeb Policy Agentからのアクセスを保護対象外にする</h3>
+<p>OpenAMの管理コンソール画面で、
+[アクセス制御] → [/ (最上位のレルム)] → [エージェント] → [Web]
+→ [www.example.com] → [アプリケーション] とたどる。</p>
+<p>「適用されないIP処理」(Not Enforced IP Processing Properties)
+に <span class="docutils literal"><span class="pre">127.0.0.1</span></span> を指定して保存する。</p>
+<img alt="../../../_images/20150104_openam_wpa_in_same_apache2_instance_6.png" src="../../../_images/20150104_openam_wpa_in_same_apache2_instance_6.png" />
 </div>
 <div class="section" id="web-policy-agentnaming-servicetomcat">
 <h3>Web Policy AgentのNaming ServiceへのアクセスをTomcatに向ける</h3>
@@ -275,9 +314,11 @@ Naming Serviceが応答するURLをTomcatに向ける。</p>
 </pre></div>
 </div>
 </div>
-<div class="section" id="hosts">
-<h3>hostsファイルを調整しておく</h3>
-<p>Debianのインストール直後の状態では、/etc/hostsで自ホストのIPアドレスが
+<div class="section" id="s-hosts-s">
+<h3><span class="raw-html"><s></span> hostsファイルを調整しておく <span class="raw-html"></s></span></h3>
+<p>(2015/1/12節全体を削除)</p>
+<p><span class="raw-html"><s></span>
+Debianのインストール直後の状態では、/etc/hostsで自ホストのIPアドレスが
 127.0.1.1に設定されている。(理由は今のところ不明だが) 自ホストの
 IPアドレスが127.0.0.1でなければ正しく動作しない。</p>
 <p>/etc/hostsを次のように変更する。</p>
@@ -291,6 +332,7 @@ IPアドレスが127.0.0.1でなければ正しく動作しない。</p>
 #127.0.1.1      www.example.com www
 </pre></div>
 </div>
+<p><span class="raw-html"></s></span></p>
 </div>
 <div class="section" id="os">
 <h3>OS再起動時の問題をワークアラウンドする</h3>
@@ -317,7 +359,7 @@ $ sudo service apache2 restart
 </pre></div>
 </div>
 </div>
-<div class="section" id="id3">
+<div class="section" id="id5">
 <h3>動作確認</h3>
 <p>https://www.example.com にアクセスする。</p>
 <img alt="../../../_images/20150104_openam_wpa_in_same_apache2_instance_3.png" src="../../../_images/20150104_openam_wpa_in_same_apache2_instance_3.png" />
@@ -327,12 +369,12 @@ $ sudo service apache2 restart
 <img alt="../../../_images/20150104_openam_wpa_in_same_apache2_instance_5.png" src="../../../_images/20150104_openam_wpa_in_same_apache2_instance_5.png" />
 </div>
 </div>
-<div class="section" id="id4">
+<div class="section" id="id6">
 <h2>構成上のポイントの解説</h2>
 <p>冒頭にも書いたとおり「OpenAMサーバが使うURLにだけWeb Policy Agent
 が反応しないようにするだけのこと」と高をくくっていたが、実際は
 それができなかった。その点についてわかったことを書き出しておく。</p>
-<div class="section" id="id5">
+<div class="section" id="id7">
 <h3>Web Policy Agentを普通に構成するとApacheが無応答となる</h3>
 <p>Apache用のWeb Policy Agentは、Apacheモジュールとして実装されており、
 child_initとaccess_checkerをhookして動作するようになっている。</p>
@@ -433,8 +475,21 @@ OpenAMのNaming Serviceが応答するセッションサービスとポリシー
 child_initの段階で必要なOpenAMサーバへの接続をTomcatへ直接行なうことを
 実現している。</p>
 </div>
+<div class="section" id="web-policy-agentloginhead">
+<h3>Web Policy AgentはLoginリダイレクト前にHEADリクエストする</h3>
+<p>認証されていないアクセスの場合、Web Policy AgentはOpenAMサーバの
+ログインページへリダイレクトをする。</p>
+<p>Web Policy Agentはログインページへのリダイレクト前にOpenAMサーバの
+稼動状態を調べるためにサーバルート (今回の例では https://www.example.com/)
+へHEADリクエストを投げる。</p>
+<p>Web Policy Agentで保護されたWebサーバとOpenAMサーバのサーバ名が同一
+である場合、このHEADアクセスが失敗し、ログインページへのリダイレクトが
+正しく行なわれない。</p>
+<p>今回のトライでは、Web Policy Agentへのローカルホストからのアクセスを
+保護対象外とすることで、この問題を回避している。</p>
 </div>
-<div class="section" id="id6">
+</div>
+<div class="section" id="id8">
 <h2>所感</h2>
 <p>はまりどころが多く、実現に苦労はしたが、何とか思った動作にすることができたと
 いったところ。はまったときに動作をだいぶ追いかけたので、OpenAMと
@@ -452,7 +507,7 @@ Web Policy Agentの動作の理解をいくらか深められたことが収穫�
         <div class="tags">
             <span>
                 タグ:
-                <a href="../../../tags/openam.html">OpenAM</a>, <a href="../../../tags/debian.html">debian</a></span>
+                <a href="../../../tags/openam.html">openam</a>, <a href="../../../tags/debian.html">debian</a></span>
         </div>
         </div>
     <ul class="related clearfix">
@@ -497,7 +552,7 @@ Web Policy Agentの動作の理解をいくらか深められたことが収穫�
         <button type="submit"><span class="fa fa-search"></span></button>
     </form>
 </div></section><section><div class="widget">
-    <h1>タグ</h1><a href="../../../tags/debian.html">debian</a> (6), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (1), <a href="../../../tags/openam.html">OpenAM</a> (1), <a href="../../../tags/openam.html">openam</a> (2), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4)</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/debian.html">debian</a> (6), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (1), <a href="../../../tags/openam.html">openam</a> (3), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4)</div></section><section><div class="widget">
   <h1>ライセンス</h1>
   <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
   <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"

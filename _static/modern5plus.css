@@ -1,2 +1,4 @@
 @import url("modern5.css");
+div.section { margin-bottom: 2em; }
 div.admonition { background: #FFFF90; }
+span.pre { font-family: monospace, serif; font-size: 0.9em; }
