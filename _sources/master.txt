@@ -4,6 +4,7 @@ Sitemap
 .. toctree::
    :maxdepth: 1
 
+   2015/04/16/building_apache_module_on_various_linux_distro
    2015/02/19/openam_persistent_cookie_auth
    2015/01/04/openam_wpa_in_same_apache2_instance
    2015/01/04/openam_wpa_install_on_debian

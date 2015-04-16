@@ -1,0 +1,269 @@
+<!DOCTYPE html><!--[if lt IE 7]>      <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+        <title>ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする &mdash; 実験メモとかいろいろ</title>
+            <link rel="stylesheet" href="../../../_static/normalize.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/sphinx.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/main.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/modern5plus.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+            <link rel="stylesheet" href="../../../_static/font-awesome.min.css" type="text/css">
+        <link rel="shortcut icon" href="../../../_static/tinkerer.ico" /><!-- Load modernizr and JQuery -->
+        <script src="../../../_static/vendor/modernizr-2.6.2.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
+        <script src="../../../_static/plugins.js"></script>
+        <script src="../../../_static/main.js"></script>
+        <link rel="next" title="OpenAMのPersistent Cookie認証モジュールで遊んでみる" href="../../02/19/openam_persistent_cookie_auth.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // Adjusts document height if sidebar is taller
+            var documentwrapper = document.getElementsByTagName("article")[0];
+            var sidebar = document.getElementsByClassName("sidebar")[0];
+
+            if (sidebar.offsetHeight > documentwrapper.offsetHeight)
+            {
+                var mainwrapper = document.getElementsByClassName("main")[0];
+                documentwrapper.style.minHeight = mainwrapper.offsetHeight + "px";
+            }
+
+            // Scroll to content if on small screen
+            if (screen.width < 480)
+            {
+                $(document).scrollTop(document.getElementsByTagName("article")[0].offsetTop - 44);
+            }
+        });
+    </script></head>
+    <body role="document">
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+
+      <div id="container"><header role="banner">
+            <hgroup>
+              <h1><a href="../../../index.html">実験メモとかいろいろ</a></h1><h2>python, xperia, debian, oidc 辺りを中心に</h2></hgroup>
+          </header>
+      <nav role="navigation">
+            <ul><li class="quicklink"><div class="rss">
+        <a href="../../../rss.html" title="Subscribe via RSS"><span class="fa fa-lg fa-rss"></span></a>
+    </div></li><li class="main-nav">
+                  <a href="../../../index.html">ホーム</a>
+                </li>
+              </ul>
+          </nav><div class="main-container" role="main"><div class="main wrapper body clearfix"><article role="article"><ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="../../02/19/openam_persistent_cookie_auth.html">OpenAMのPersistent Cookie認証モジュールで遊んでみる</a> &raquo; </li>
+        </ul><div class="timestamp postmeta">
+            <span>April 16, 2015</span>
+        </div>
+    <div class="section" id="apachedebianrhel-centos">
+<h1>ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</h1>
+<p>Apacheのモジュールを作るときは、Debian上でapxsコマンドでテンプレートを
+生成して使っている。だけど、使ってくれる人はRHEL/CentOSを使っていることが
+多かったり。</p>
+<p>DebianからRHEL/CentOSに持っていく時はMakefileの書き換えが必要なのだが、
+それも面倒なので、apxsコマンドが生成したMakefileを使って、Debian上でも
+RHEL/CentOS上でもビルドできるようにする補助Makefileを作ってみた。</p>
+<div id="more"> </div><div class="section" id="id1">
+<h2>何ができるようになるか？</h2>
+<ul class="simple">
+<li>DebianとRHEL/CentOSでのApache httpdのディレクトリ構成の差異を
+吸収してApacheのモジュールがビルドできる。</li>
+<li>DebianとRHEL/CentOS 6.x以下とRHEL/CentOS 7の設定ファイルの
+管理方法に合わせて、LoadModuleをする設定ファイルを、
+モジュール名を自動判別しながらインストールする。
+(disable状態でインストールされる)<ul>
+<li>Debianの場合: <span class="docutils literal"><span class="pre">/etc/apache2/mods-available/your_module.load</span></span></li>
+<li>RHEL/CentOS 7の場合: <span class="docutils literal"><span class="pre">/etc/httpd/conf.module.d/99-your_module.conf-</span></span></li>
+<li>RHEL/CentOS 6.x以下の場合: <span class="docutils literal"><span class="pre">/etc/httpd/conf.d/your_module.conf-</span></span></li>
+</ul>
+</li>
+<li>apxsコマンドが生成したMakefileを数行書き換えるだけで使えるようになる。</li>
+</ul>
+</div>
+<div class="section" id="makefile-distro-support-mk">
+<h2>補助Makefile (distro_support.mk)</h2>
+<p>この distro_support.mk を、apxsが生成したディレクトリに配置する。</p>
+<div class="highlight-makefile"><div class="highlight"><pre><span class="nv">module_name</span><span class="o">=</span><span class="k">$(</span>patsubst mod_%,%,<span class="k">$(</span>shared:%.la<span class="o">=</span>%<span class="k">))</span>
+
+<span class="cp">ifneq ($(wildcard /etc/debian_version),)</span>
+<span class="c">  # Debian/Ubuntu</span>
+  <span class="nv">top_srcdir</span><span class="o">=</span>/usr/share/apache2
+  <span class="nv">top_builddir</span><span class="o">=</span>/usr/share/apache2
+<span class="cp">  include /usr/share/apache2/build/special.mk</span>
+  <span class="nv">loader_file</span><span class="o">=</span>/etc/apache2/mods-available/<span class="k">$(</span>module_name<span class="k">)</span>.load
+  <span class="nv">loader_lines</span><span class="o">=</span>LoadModule <span class="k">$(</span>module_name<span class="k">)</span>_module <span class="k">$(</span>libexecdir<span class="k">)</span>/mod_<span class="k">$(</span>module_name<span class="k">)</span>.so
+<span class="cp">else ifneq ($(wildcard /etc/redhat-release),)</span>
+<span class="c">  # RHEL/CentOS</span>
+  <span class="nv">top_srcdir</span><span class="o">=</span>/etc/httpd
+<span class="cp">  ifneq ($(wildcard /usr/lib64),)  # 64bit</span>
+    <span class="nv">top_builddir</span><span class="o">=</span>/usr/lib64/httpd
+<span class="cp">    include /usr/lib64/httpd/build/special.mk</span>
+<span class="cp">  else</span>
+    <span class="nv">top_builddir</span><span class="o">=</span>/usr/lib/httpd
+<span class="cp">    include /usr/lib/httpd/build/special.mk</span>
+<span class="cp">  endif</span>
+<span class="cp">  ifneq ($(wildcard /etc/httpd/conf.modules.d),)  # CentOS7</span>
+    <span class="nv">loader_file</span><span class="o">=</span>/etc/httpd/conf.modules.d/99-<span class="k">$(</span>module_name<span class="k">)</span>.conf-
+<span class="cp">  else</span>
+    <span class="nv">loader_file</span><span class="o">=</span>/etc/httpd/conf.d/<span class="k">$(</span>module_name<span class="k">)</span>.conf-
+<span class="cp">  endif</span>
+  <span class="nv">loader_lines</span><span class="o">=</span>LoadModule <span class="k">$(</span>module_name<span class="k">)</span>_module modules/mod_<span class="k">$(</span>module_name<span class="k">)</span>.so
+<span class="cp">else</span>
+  <span class="k">$(</span>error unsupported platform<span class="k">)</span>
+<span class="cp">endif</span>
+
+
+<span class="nf">install-loader-config</span><span class="o">:</span>
+       <span class="nb">echo</span> -e <span class="s2">&quot;$(loader_lines)&quot;</span> &gt; <span class="k">$(</span>loader_file<span class="k">)</span>
+       chmod 644 <span class="k">$(</span>loader_file<span class="k">)</span>
+
+<span class="nf">install</span><span class="o">:</span> <span class="m">install-modules-yes install-loader-config</span>
+</pre></div>
+</div>
+<p><a class="reference external" href="https://gist.github.com/paoneJP/cfa8650e20b33e4506d4">https://gist.github.com/paoneJP/cfa8650e20b33e4506d4</a> にも同じものを貼っておく。</p>
+</div>
+<div class="section" id="makefile">
+<h2>補助Makefileを使う</h2>
+<p>distro_support.mkを使うように、apxsが生成したMakefileの先頭部分を
+次のとおり書き換える。</p>
+<p><strong>変更前</strong></p>
+<div class="highlight-make"><div class="highlight"><pre>##
+##  Makefile -- Build procedure for sample your_module Apache module
+##  Autogenerated via ``apxs -n your_module -g&#39;&#39;.
+##
+
+builddir=.
+top_srcdir=/usr/share/apache2
+top_builddir=/usr/share/apache2
+include /usr/share/apache2/build/special.mk
+
+#   the used tools
+...
+</pre></div>
+</div>
+<p><strong>変更後</strong></p>
+<div class="highlight-make"><div class="highlight"><pre>##
+##  Makefile -- Build procedure for sample your_module Apache module
+##  Autogenerated via ``apxs -n your_module -g&#39;&#39;.
+##
+
+builddir=.
+#top_srcdir=/usr/share/apache2
+#top_builddir=/usr/share/apache2
+#include /usr/share/apache2/build/special.mk
+include distro_support.mk
+
+#   the used tools
+...
+</pre></div>
+</div>
+<p><span class="docutils literal"><span class="pre">top_srcdir=...</span></span> から <span class="docutils literal"><span class="pre">include</span> <span class="pre">...</span></span> までの3行をコメントアウトし、
+<span class="docutils literal"><span class="pre">include</span> <span class="pre">distro_support.mk</span></span> 行を書き足す。</p>
+</div>
+<div class="section" id="id2">
+<h2>使い方</h2>
+<p>いつもどおりの使い方でOK.</p>
+<div class="highlight-python"><div class="highlight"><pre>$ make
+$ sudo make install
+</pre></div>
+</div>
+</div>
+</div>
+
+    <div class="postmeta">
+        <div class="author">
+            <span>投稿者 @paoneJP</span>
+        </div>
+        
+        <div class="tags">
+            <span>
+                タグ:
+                <a href="../../../tags/debian.html">debian</a>, <a href="../../../tags/centos.html">centos</a>, <a href="../../../tags/apache_module.html">apache module</a></span>
+        </div>
+        </div>
+    <ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="../../02/19/openam_persistent_cookie_auth.html">OpenAMのPersistent Cookie認証モジュールで遊んでみる</a> &raquo; </li>
+        </ul></article><aside class="sidebar"><section><div class="widget">
+  <h1>書いてる人</h1>
+  <!--
+  <img src="https://pbs.twimg.com/profile_images/440050792179847168/4OhPuelv.jpeg" width="96" height="96"><br>
+  -->
+  <img src="https://avatars1.githubusercontent.com/u/6633398?v=3&s=460" width="96" height="96"><br>
+  Takashi Yahata
+  (<a href="https://twitter.com/paoneJP">@paoneJP</a>)
+</div></section><section><div class="widget">
+    <h1>最近の投稿</h1>
+    <ul><li>
+            <a href="#">ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</a>
+        </li><li>
+            <a href="../../02/19/openam_persistent_cookie_auth.html">OpenAMのPersistent Cookie認証モジュールで遊んでみる</a>
+        </li><li>
+            <a href="../../01/04/openam_wpa_in_same_apache2_instance.html">OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順]</a>
+        </li><li>
+            <a href="../../01/04/openam_wpa_install_on_debian.html">DebianにOpenAM Web Policy Agentをインストールする [非公式手順]</a>
+        </li><li>
+            <a href="../../../2014/12/21/encrypted_jwt_parsing_trial.html">暗号化されたJWTをパースしてみる</a>
+        </li><li>
+            <a href="../../../2014/12/21/tinker_theme_customize.html">Tinkererのテーマをカスタマイズする</a>
+        </li><li>
+            <a href="../../../2014/12/14/easy_setup_instructions_for_openam.html">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</a>
+        </li><li>
+            <a href="../../../2014/12/14/iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a>
+        </li><li>
+            <a href="../../../2014/11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
+        </li><li>
+            <a href="../../../2014/09/24/winsdk_setup_for_python.html">Pythonのモジュールインストール用にWindows SDKをセットアップする</a>
+        </li></ul>
+</div>
+</section><section><div class="widget" id="searchbox" role="search">
+    <h1><a href="#searchbox">Search</a></h1>
+    <form action="../../../search.html" method="get">
+        <input type="text" name="q" />
+        <button type="submit"><span class="fa fa-search"></span></button>
+    </form>
+</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (4), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4)</div></section><section><div class="widget">
+  <h1>ライセンス</h1>
+  <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
+  <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"
+       src="https://i.creativecommons.org/l/by/4.0/88x31.png"></a><br>
+  <font size="-1">
+  特に表示をしていない限り、このサイトのコンテンツは
+  <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
+  クリエイティブ・コモンズ 表示 4.0 国際ライセンスの下に提供されています。
+  </font></a>
+</div></section></aside></div> <!-- #main --></div> <!-- #main-container -->
+
+        <div class="footer-container" role="contentinfo"><footer class="wrapper">&copy; Copyright 2014-2015, @paoneJP. Powered by <a href="http://www.tinkerer.me/">Tinkerer</a> and <a href="http://sphinx.pocoo.org/">Sphinx</a>.</footer></div> <!-- footer-container -->
+
+      </div> <!--! end of #container --><!--[if lt IE 7 ]>
+          <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+          <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+        <![endif]-->
+    </body>
+</html>
