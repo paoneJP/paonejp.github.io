@@ -15,7 +15,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width">
-        <title>ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする &mdash; 実験メモとかいろいろ</title>
+        <title>Xperia Z4 Tabletのプロジェクター出力を試す &mdash; 実験メモとかいろいろ</title>
             <link rel="stylesheet" href="../../../_static/normalize.css" type="text/css">
             <link rel="stylesheet" href="../../../_static/sphinx.css" type="text/css">
             <link rel="stylesheet" href="../../../_static/main.css" type="text/css">
@@ -28,7 +28,7 @@
         <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
         <script src="../../../_static/plugins.js"></script>
         <script src="../../../_static/main.js"></script>
-        <link rel="next" title="OpenAMのPersistent Cookie認証モジュールで遊んでみる" href="../../02/19/openam_persistent_cookie_auth.html" /><link rel="prev" title="Xperia Z4 Tabletのプロジェクター出力を試す" href="../../07/10/xperia_z4_tablet_projector_output.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+        <link rel="next" title="ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする" href="../../04/16/building_apache_module_on_various_linux_distro.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
         VERSION:     '1.5',
@@ -74,123 +74,113 @@
                 </li>
               </ul>
           </nav><div class="main-container" role="main"><div class="main wrapper body clearfix"><article role="article"><ul class="related clearfix">
-            <li class="left"> &laquo; <a href="../../07/10/xperia_z4_tablet_projector_output.html">Xperia Z4 Tabletのプロジェクター出力を試す</a></li>
-            <li class="right"><a href="../../02/19/openam_persistent_cookie_auth.html">OpenAMのPersistent Cookie認証モジュールで遊んでみる</a> &raquo; </li>
+            <li class="left"></li>
+            <li class="right"><a href="../../04/16/building_apache_module_on_various_linux_distro.html">ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</a> &raquo; </li>
         </ul><div class="timestamp postmeta">
-            <span>April 16, 2015</span>
+            <span>July 10, 2015</span>
         </div>
-    <div class="section" id="apachedebianrhel-centos">
-<h1>ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</h1>
-<p>Apacheのモジュールを作るときは、Debian上でapxsコマンドでテンプレートを
-生成して使っている。だけど、使ってくれる人はRHEL/CentOSを使っていることが
-多かったり。</p>
-<p>DebianからRHEL/CentOSに持っていく時はMakefileの書き換えが必要なのだが、
-それも面倒なので、apxsコマンドが生成したMakefileを使って、Debian上でも
-RHEL/CentOS上でもビルドできるようにする補助Makefileを作ってみた。</p>
+    <div class="section" id="xperia-z4-tablet">
+<h1>Xperia Z4 Tabletのプロジェクター出力を試す</h1>
+<p>仕事で使っているPCをXperia Z4 Tablet (SGP712JP) + BKB50に買い換えた。
+もう使い始めた瞬間から最強デバイス。
+Sony Mobileさん、僕はこういうの待ってたの！創ってくれてありがとう！</p>
+<p>さて、Xperia Z4 Tabletそのもののレビューはたぶんあちこちで
+出てくるだろうから、Xperia Z4 Tabletのプロジェクター出力に
+ついて試してみたことをシェアしておこうと思う。</p>
 <div id="more"> </div><div class="section" id="id1">
-<h2>何ができるようになるか？</h2>
+<h2>僕の主な使い方</h2>
 <ul class="simple">
-<li>DebianとRHEL/CentOSでのApache httpdのディレクトリ構成の差異を
-吸収してApacheのモジュールがビルドできる。</li>
-<li>DebianとRHEL/CentOS 6.x以下とRHEL/CentOS 7の設定ファイルの
-管理方法に合わせて、LoadModuleをする設定ファイルを、
-モジュール名を自動判別しながらインストールする。
-(disable状態でインストールされる)<ul>
-<li>Debianの場合: <span class="docutils literal"><span class="pre">/etc/apache2/mods-available/your_module.load</span></span></li>
-<li>RHEL/CentOS 7の場合: <span class="docutils literal"><span class="pre">/etc/httpd/conf.module.d/99-your_module.conf-</span></span></li>
-<li>RHEL/CentOS 6.x以下の場合: <span class="docutils literal"><span class="pre">/etc/httpd/conf.d/your_module.conf-</span></span></li>
+<li>会社のVDIのサービスにつないで、Windowsデスクトップで使う。</li>
+<li>文書作成系の仕事メイン。ときどきパワポでプレゼン。</li>
+<li>これまで ASUS TF201 を3年くらい使ってきた。</li>
+</ul>
+<p>そんな人の使い方での実験結果です。</p>
+</div>
+<div class="section" id="mhl-hdmi">
+<h2>MHLアダプター + HDMIで出力</h2>
+<p>いろいろ試した結果、この方法がベストの出力方法。</p>
+<p>一般的にMHLアダプターは、受け側がMHLのポートでない限り、
+MHLアダプターへの給電が必要と言われている。しかし、Xperia Z4 Tablet
+に関して言えば、MHLアダプターへの給電機能があるため、MHLアダプター
+だけでHDMI出力ができる。</p>
+<p>接続手順は以下のとおり。</p>
+<ol class="arabic simple">
+<li>本体にMHLアダプターを接続する。</li>
+<li>プロジェクターとHDMIケーブルで接続する。</li>
+<li>Xperia Z4 Tablet上で、[設定] → [Xperia接続設定] → [USB接続設定]
+とたどり、[USB機器を検出] を選ぶ。</li>
+<li>MHL接続が有効になり、プロジェクターに画面が出力される。</li>
+</ol>
+<p>実験には、以下のものを使用。</p>
+<ul class="simple">
+<li>3年くらい前に買ったMHLアダプター2種。<ul>
+<li>iBUFFALOのもの (BSMPC09BK)</li>
+<li>グリーンハウスのもの (GH-MHL-HDMIK)</li>
 </ul>
 </li>
-<li>apxsコマンドが生成したMakefileを数行書き換えるだけで使えるようになる。</li>
+<li>EPSONビジネスプロジェクター (WXGA解像度のモデル)</li>
+<li>SONY BRAVIA W700B</li>
 </ul>
+<p>実験に使った機材では、Xperia Z4 Tabletの画面が全画面きれいに出力できる。</p>
+<p>解像度が、Xperia Z4 Tabletが2560x1600、EPSONのプロジェクターが1280x800、
+BRAVIAが1920x1080のため、画面が適当に縮小されて表示されていることになる。
+そのため、多少ぼんやりした感じにはなる。</p>
+<p>さらにBRAVIAの場合、画面が16:9であり、Xperia Z4 Tabletが16:10のため、
+左右に黒い非表示エリアが出ることになる。</p>
 </div>
-<div class="section" id="makefile-distro-support-mk">
-<h2>補助Makefile (distro_support.mk)</h2>
-<p>この distro_support.mk を、apxsが生成したディレクトリに配置する。</p>
-<div class="highlight-makefile"><div class="highlight"><pre><span class="nv">module_name</span><span class="o">=</span><span class="k">$(</span>patsubst mod_%,%,<span class="k">$(</span>shared:%.la<span class="o">=</span>%<span class="k">))</span>
-
-<span class="cp">ifneq ($(wildcard /etc/debian_version),)</span>
-<span class="c">  # Debian/Ubuntu</span>
-  <span class="nv">top_srcdir</span><span class="o">=</span>/usr/share/apache2
-  <span class="nv">top_builddir</span><span class="o">=</span>/usr/share/apache2
-<span class="cp">  include /usr/share/apache2/build/special.mk</span>
-  <span class="nv">loader_file</span><span class="o">=</span>/etc/apache2/mods-available/<span class="k">$(</span>module_name<span class="k">)</span>.load
-  <span class="nv">loader_lines</span><span class="o">=</span>LoadModule <span class="k">$(</span>module_name<span class="k">)</span>_module <span class="k">$(</span>libexecdir<span class="k">)</span>/mod_<span class="k">$(</span>module_name<span class="k">)</span>.so
-<span class="cp">else ifneq ($(wildcard /etc/redhat-release),)</span>
-<span class="c">  # RHEL/CentOS</span>
-  <span class="nv">top_srcdir</span><span class="o">=</span>/etc/httpd
-<span class="cp">  ifneq ($(wildcard /usr/lib64),)  # 64bit</span>
-    <span class="nv">top_builddir</span><span class="o">=</span>/usr/lib64/httpd
-<span class="cp">    include /usr/lib64/httpd/build/special.mk</span>
-<span class="cp">  else</span>
-    <span class="nv">top_builddir</span><span class="o">=</span>/usr/lib/httpd
-<span class="cp">    include /usr/lib/httpd/build/special.mk</span>
-<span class="cp">  endif</span>
-<span class="cp">  ifneq ($(wildcard /etc/httpd/conf.modules.d),)  # CentOS7</span>
-    <span class="nv">loader_file</span><span class="o">=</span>/etc/httpd/conf.modules.d/99-<span class="k">$(</span>module_name<span class="k">)</span>.conf-
-<span class="cp">  else</span>
-    <span class="nv">loader_file</span><span class="o">=</span>/etc/httpd/conf.d/<span class="k">$(</span>module_name<span class="k">)</span>.conf-
-<span class="cp">  endif</span>
-  <span class="nv">loader_lines</span><span class="o">=</span>LoadModule <span class="k">$(</span>module_name<span class="k">)</span>_module modules/mod_<span class="k">$(</span>module_name<span class="k">)</span>.so
-<span class="cp">else</span>
-  <span class="k">$(</span>error unsupported platform<span class="k">)</span>
-<span class="cp">endif</span>
-
-
-<span class="nf">install-loader-config</span><span class="o">:</span>
-       <span class="nb">echo</span> -e <span class="s2">&quot;$(loader_lines)&quot;</span> &gt; <span class="k">$(</span>loader_file<span class="k">)</span>
-       chmod 644 <span class="k">$(</span>loader_file<span class="k">)</span>
-
-<span class="nf">install</span><span class="o">:</span> <span class="m">install-modules-yes install-loader-config</span>
-</pre></div>
+<div class="section" id="mhl-hdmi-to-vga-vga">
+<h2>MHLアダプター + HDMI to VGAアダプター + VGAで出力</h2>
+<p>MHLアダプターにHDMI to VGAアダプターをつなぐと、VGAケーブル経由で出力が
+できるようになる。</p>
+<p>実験には、以下のものを使用。</p>
+<ul class="simple">
+<li>3年くらい前に買ったMHLアダプター2種。<ul>
+<li>iBUFFALOのもの (BSMPC09BK)</li>
+<li>グリーンハウスのもの (GH-MHL-HDMIK)</li>
+</ul>
+</li>
+<li>EPSONビジネスプロジェクター (WXGA解像度のモデル)</li>
+<li>3年くらい前に買った HDMI to VGAアダプター (メーカー不明)</li>
+</ul>
+<p>実験に使った機材では、Xperia Z4 Tabletの画面が全画面きれいに出力できる。
+HDMIで出力したときに比べ、やや発色が薄い印象になった。理由はよくわからない。</p>
+<p>4:3サイズの液晶もモニターに接続してみたところ、やっぱり画面が縦長に出力
+されてしまう。XGAサイズのプロジェクターしかないときは要注意。
+まぁ、このあたりはASUS TF201でも経験済みなので想定内。</p>
 </div>
-<p><a class="reference external" href="https://gist.github.com/paoneJP/cfa8650e20b33e4506d4">https://gist.github.com/paoneJP/cfa8650e20b33e4506d4</a> にも同じものを貼っておく。</p>
+<div class="section" id="miracast-hdmi">
+<h2>Miracastレシーバー + スクリーンミラーリングでHDMIへ出力</h2>
+<p>実験には、以下のものを使用。</p>
+<ul class="simple">
+<li>Actiontec ScreenBeam Mini2</li>
+<li>EPSONビジネスプロジェクター (WXGA解像度のモデル)</li>
+</ul>
+<p>実験に使った機材では、Xperia Z4 Tabletの画面が全画面きれいに出力できる。
+画面出力の遅延も気にならないレベルで、十分使える。</p>
+<p>ScreenBeam Mini2の場合、設定ツールを使うと、画面サイズの縮小ができるので、
+出力した際に、端っこが切れてしまう場合の対応力が高い点が ○ (マル)。</p>
+<p>実は、MicroUSB to MicroUSBケーブルでXperia Z4 Tabletから電源供給しようと
+もくろんでいたのだが、Xperia Z4 TabletがScreenBeam Mini2を
+USBデバイスとして認識しないため、電源供給はできなかった。
+モバイルバッテリーなどを使った給電が必要。</p>
 </div>
-<div class="section" id="makefile">
-<h2>補助Makefileを使う</h2>
-<p>distro_support.mkを使うように、apxsが生成したMakefileの先頭部分を
-次のとおり書き換える。</p>
-<p><strong>変更前</strong></p>
-<div class="highlight-make"><div class="highlight"><pre>##
-##  Makefile -- Build procedure for sample your_module Apache module
-##  Autogenerated via ``apxs -n your_module -g&#39;&#39;.
-##
-
-builddir=.
-top_srcdir=/usr/share/apache2
-top_builddir=/usr/share/apache2
-include /usr/share/apache2/build/special.mk
-
-#   the used tools
-...
-</pre></div>
-</div>
-<p><strong>変更後</strong></p>
-<div class="highlight-make"><div class="highlight"><pre>##
-##  Makefile -- Build procedure for sample your_module Apache module
-##  Autogenerated via ``apxs -n your_module -g&#39;&#39;.
-##
-
-builddir=.
-#top_srcdir=/usr/share/apache2
-#top_builddir=/usr/share/apache2
-#include /usr/share/apache2/build/special.mk
-include distro_support.mk
-
-#   the used tools
-...
-</pre></div>
-</div>
-<p><span class="docutils literal"><span class="pre">top_srcdir=...</span></span> から <span class="docutils literal"><span class="pre">include</span> <span class="pre">...</span></span> までの3行をコメントアウトし、
-<span class="docutils literal"><span class="pre">include</span> <span class="pre">distro_support.mk</span></span> 行を書き足す。</p>
+<div class="section" id="miracast-hdmi-to-vga-vga">
+<h2>Miracastレシーバー + HDMI to VGAアダプター + スクリーンミラーリングでVGAへ出力</h2>
+<p>実験には、以下のものを使用。</p>
+<ul class="simple">
+<li>Actiontec ScreenBeam Mini2</li>
+<li>EPSONビジネスプロジェクター (WXGA解像度のモデル)</li>
+<li>3年くらい前に買った HDMI to VGAアダプター (メーカー不明)</li>
+</ul>
+<p>この組み合わせは少々微妙。HDCP未対応となるため、ホーム画面は出力できる
+ものの、アプリによって出力できないものがある。僕の場合、VDIで使っている
+VMware Horizon Clientの出力ができず、この組み合わせでの出力は使えない
+という結論になった。</p>
 </div>
 <div class="section" id="id2">
-<h2>使い方</h2>
-<p>いつもどおりの使い方でOK.</p>
-<div class="highlight-python"><div class="highlight"><pre>$ make
-$ sudo make install
-</pre></div>
-</div>
+<h2>まとめ</h2>
+<p>基本はMHLアダプターを使って出力。HDMIで出力したいけど、ケーブルが短くて
+届かないって時にScreenBeam Mini2を併用するのがいい感じの使い方のようだ。</p>
 </div>
 </div>
 
@@ -202,12 +192,12 @@ $ sudo make install
         <div class="tags">
             <span>
                 タグ:
-                <a href="../../../tags/debian.html">debian</a>, <a href="../../../tags/centos.html">centos</a>, <a href="../../../tags/apache_module.html">apache module</a></span>
+                <a href="../../../tags/xperia.html">xperia</a></span>
         </div>
         </div>
     <ul class="related clearfix">
-            <li class="left"> &laquo; <a href="../../07/10/xperia_z4_tablet_projector_output.html">Xperia Z4 Tabletのプロジェクター出力を試す</a></li>
-            <li class="right"><a href="../../02/19/openam_persistent_cookie_auth.html">OpenAMのPersistent Cookie認証モジュールで遊んでみる</a> &raquo; </li>
+            <li class="left"></li>
+            <li class="right"><a href="../../04/16/building_apache_module_on_various_linux_distro.html">ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</a> &raquo; </li>
         </ul></article><aside class="sidebar"><section><div class="widget">
   <h1>書いてる人</h1>
   <!--
@@ -219,9 +209,9 @@ $ sudo make install
 </div></section><section><div class="widget">
     <h1>最近の投稿</h1>
     <ul><li>
-            <a href="../../07/10/xperia_z4_tablet_projector_output.html">Xperia Z4 Tabletのプロジェクター出力を試す</a>
+            <a href="#">Xperia Z4 Tabletのプロジェクター出力を試す</a>
         </li><li>
-            <a href="#">ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</a>
+            <a href="../../04/16/building_apache_module_on_various_linux_distro.html">ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</a>
         </li><li>
             <a href="../../02/19/openam_persistent_cookie_auth.html">OpenAMのPersistent Cookie認証モジュールで遊んでみる</a>
         </li><li>
