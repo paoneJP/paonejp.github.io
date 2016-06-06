@@ -106,7 +106,7 @@ Cookieにセッションに関する情報を保持するようになってい�
 を設定することで利用できる。
 ここでは「/ (最上位のレルム)」にPersistent Cookie認証を設定してみることにする。</p>
 <p>以降の手順は、先に書いたエントリ
-<a class="reference internal" href="../../01/04/openam_wpa_in_same_apache2_instance.html"><em>OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順]</em></a> の手順で
+<a class="reference internal" href="../../01/04/openam_wpa_in_same_apache2_instance.html"><span class="doc">OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順]</span></a> の手順で
 セットアップした環境で実行している。</p>
 <div class="section" id="openam">
 <h3>OpenAMのキーストアの設定を行なう</h3>
@@ -116,7 +116,7 @@ Cookieにセッションに関する情報を保持するようになってい�
 <h4>新しいキーペアを生成する</h4>
 <p>新しいキーペアを、仮のキーストアに生成する。以下の例では <span class="docutils literal"><span class="pre">openam-YYYYMMDD</span></span>
 という名前 (alias) の1年間有効なキーペアを生成している。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ keytool -genkeypair -keyalg rsa -keysize 2048 -validity 380 -keystore newkey.jks -dname &quot;CN=openam, DC=www, DC=example, DC=com&quot; -alias openam-20150218
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ keytool -genkeypair -keyalg rsa -keysize 2048 -validity 380 -keystore newkey.jks -dname &quot;CN=openam, DC=www, DC=example, DC=com&quot; -alias openam-20150218
 Enter keystore password:
 Re-enter new password:
 Enter key password for &lt;openam-20150218&gt;
@@ -136,7 +136,7 @@ Enter key password for &lt;openam-20150218&gt;
 15日の猶予をもたせている。</p>
 </div>
 <p>生成したキーペアの内容を確認しておく。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ keytool -list -keystore newkey.jks -alias openam-20150218 -rfc | keytool -printcert
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ keytool -list -keystore newkey.jks -alias openam-20150218 -rfc | keytool -printcert
 Enter keystore password:
 Owner: CN=openam, DC=www, DC=example, DC=com
 Issuer: CN=openam, DC=www, DC=example, DC=com
@@ -165,7 +165,7 @@ KeyIdentifier [
 <div class="section" id="id3">
 <h4>キーペアをOpenAMのキーストアにインポートする</h4>
 <p>生成したキーペアを、OpenAMが参照しているキーストアにインポートする。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo keytool -importkeystore -srckeystore newkey.jks -srcalias openam-20150218 -destkeystore /usr/share/tomcat8/openam/openam/keystore.jks
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo keytool -importkeystore -srckeystore newkey.jks -srcalias openam-20150218 -destkeystore /usr/share/tomcat8/openam/openam/keystore.jks
 Enter destination keystore password:
 Enter source keystore password:
 </pre></div>
@@ -175,7 +175,7 @@ Enter source keystore password:
 <p>次に &#8220;Enter source keystore password&#8221; と聞かれるので、先の手順でキーペアを
 生成したときに入力したパスワードを入力する。</p>
 <p>キーペアが正しくインポートされたことを確認しておく。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ keytool -list -keystore /usr/share/tomcat8/openam/openam/keystore.jks -alias openam-20150218
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ keytool -list -keystore /usr/share/tomcat8/openam/openam/keystore.jks -alias openam-20150218
 Enter keystore password:
 openam-20150218, Feb 18, 2015, PrivateKeyEntry,
 Certificate fingerprint (SHA1): BC:AD:AF:4B:33:50:10:7A:E9:05:28:E3:F5:D2:9A:
@@ -192,7 +192,7 @@ XUIを使ったOpenAMへのログインができなくなる。</p>
 <div class="section" id="tomcat">
 <h4>Tomcatを再起動する</h4>
 <p>キーストアの更新を反映するためにTomcatを再起動する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo service tomcat8 restart
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo service tomcat8 restart
 $ sudo tail -f /var/log/tomcat8/catalina.out
 ...
 INFO: Server startup in 121156 ms
@@ -347,7 +347,7 @@ on になっていないのは、実験用に用意した環境の OpenAM で該
 いったんOpenAMにリダイレクトされる。このとき OpenAM の XUI の中で、
 authenticateエンドポイントにアクセスをして認証処理を行なっている。</p>
 <p>直接 authenticate エンドポイントを叩いて反応を見ておこう。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ curl -D - --data &quot;&quot; --cookie &quot;session-jwt=eyAidH...ZgImw&quot; http://localhost:80
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ curl -D - --data &quot;&quot; --cookie &quot;session-jwt=eyAidH...ZgImw&quot; http://localhost:80
 80/openam/json/authenticate
 HTTP/1.1 200 OK
 Set-Cookie: amlbcookie=01; Domain=.example.com; Path=/
@@ -411,6 +411,8 @@ Set-Cookieされるようにもなっている。</p>
 </div></section><section><div class="widget">
     <h1>最近の投稿</h1>
     <ul><li>
+            <a href="../../../2016/06/06/config_opendj_as_a_scim_server.html">OpenAM内蔵のOpenDJをSCIM 2.0サーバーとして構成する</a>
+        </li><li>
             <a href="../../07/10/xperia_z4_tablet_projector_output.html">Xperia Z4 Tabletのプロジェクター出力を試す</a>
         </li><li>
             <a href="../../04/16/building_apache_module_on_various_linux_distro.html">ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</a>
@@ -428,8 +430,6 @@ Set-Cookieされるようにもなっている。</p>
             <a href="../../../2014/12/14/easy_setup_instructions_for_openam.html">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</a>
         </li><li>
             <a href="../../../2014/12/14/iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a>
-        </li><li>
-            <a href="../../../2014/11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
         </li></ul>
 </div>
 </section><section><div class="widget" id="searchbox" role="search">
@@ -439,7 +439,7 @@ Set-Cookieされるようにもなっている。</p>
         <button type="submit"><span class="fa fa-search"></span></button>
     </form>
 </div></section><section><div class="widget">
-    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (4), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (5), <a href="../../../tags/opendj.html">opendj</a> (1), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/scim.html">scim</a> (1), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
   <h1>ライセンス</h1>
   <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
   <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"

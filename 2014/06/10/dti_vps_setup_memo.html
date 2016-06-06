@@ -113,18 +113,18 @@
 </div>
 <div class="section" id="id2">
 <h2>ホスト名の変更</h2>
-<div class="highlight-none"><div class="highlight"><pre># echo hostname.domainame &gt; /etc/hostname
+<div class="highlight-none"><div class="highlight"><pre><span></span># echo hostname.domainame &gt; /etc/hostname
 </pre></div>
 </div>
 <p><span class="docutils literal"><span class="pre">/etc/hosts</span></span> にレコードを追加する。</p>
-<div class="highlight-none"><div class="highlight"><pre>nnn.nnn.nnn.nnn hostname.domainname
+<div class="highlight-none"><div class="highlight"><pre><span></span>nnn.nnn.nnn.nnn hostname.domainname
 hh:hh:hh:hh:hh:hh:hh:hh hostname.domainname
 </pre></div>
 </div>
 </div>
 <div class="section" id="id3">
 <h2>使わないパッケージの削除</h2>
-<div class="highlight-none"><div class="highlight"><pre># apt-get -y purge ajaxterm
+<div class="highlight-none"><div class="highlight"><pre><span></span># apt-get -y purge ajaxterm
 # apt-get -y purge samba-common
 # apt-get -y purge xinetd
 # apt-get -y purge sasl2-bin
@@ -142,7 +142,7 @@ hh:hh:hh:hh:hh:hh:hh:hh hostname.domainname
 <h2>jessieへのアップグレード</h2>
 <div class="section" id="debian6-squeeze">
 <h3>Debian6 (squeeze) を最新の状態にする</h3>
-<div class="highlight-none"><div class="highlight"><pre># apt-get update
+<div class="highlight-none"><div class="highlight"><pre><span></span># apt-get update
 # yes N | apt-get -y upgrade
 </pre></div>
 </div>
@@ -150,12 +150,12 @@ hh:hh:hh:hh:hh:hh:hh:hh hostname.domainname
 <div class="section" id="debian7-wheezy">
 <h3>Debian7 (Wheezy) へアップグレードする</h3>
 <p><span class="docutils literal"><span class="pre">/etc/apt/sources.list</span></span> を次のとおりに変更する。</p>
-<div class="highlight-none"><div class="highlight"><pre>deb http://ftp.jp.debian.org/debian wheezy main contrib non-free
+<div class="highlight-none"><div class="highlight"><pre><span></span>deb http://ftp.jp.debian.org/debian wheezy main contrib non-free
 deb http://security.debian.org wheezy/updates main contrib non-free
 </pre></div>
 </div>
 <p>アップグレードを実行。</p>
-<div class="highlight-none"><div class="highlight"><pre># apt-get update
+<div class="highlight-none"><div class="highlight"><pre><span></span># apt-get update
 # yes N | apt-get -y upgrade
 # yes N | apt-get -y dist-upgrade
 </pre></div>
@@ -166,24 +166,24 @@ deb http://security.debian.org wheezy/updates main contrib non-free
 <p>systemdへの移行を抑制するための設定を入れる。このサイト <a class="footnote-reference" href="#pere" id="id4">[1]</a>
 に書かれている方法を使う。</p>
 <p><span class="docutils literal"><span class="pre">/etc/apt/preferences.d/use-sysvinit</span></span> として次のファイルを作る。</p>
-<div class="highlight-none"><div class="highlight"><pre>Package: systemd-sysv
+<div class="highlight-none"><div class="highlight"><pre><span></span>Package: systemd-sysv
 Pin: release o=Debian
 Pin-Priority: -1
 </pre></div>
 </div>
 <p><span class="docutils literal"><span class="pre">/etc/apt/sources.list</span></span> を次のとおりに変更する。</p>
-<div class="highlight-none"><div class="highlight"><pre>deb http://ftp.jp.debian.org/debian jessie main contrib non-free
+<div class="highlight-none"><div class="highlight"><pre><span></span>deb http://ftp.jp.debian.org/debian jessie main contrib non-free
 deb http://security.debian.org jessie/updates main contrib non-free
 </pre></div>
 </div>
 <p>アップグレードを実行する。</p>
-<div class="highlight-none"><div class="highlight"><pre># apt-get update
+<div class="highlight-none"><div class="highlight"><pre><span></span># apt-get update
 # yes N | apt-get -y upgrade
 # yes N | apt-get -y dist-upgrade
 </pre></div>
 </div>
 <p>不要となったパッケージを削除する。</p>
-<div class="highlight-none"><div class="highlight"><pre># apt-get -y autoremove
+<div class="highlight-none"><div class="highlight"><pre><span></span># apt-get -y autoremove
 # apt-get -y autoclean
 # for f in `dpkg -l | grep ^rc | awk &#39;{ print $2 ; }&#39;` ; do
 &gt; apt-get -y purge $f
@@ -204,7 +204,7 @@ deb http://security.debian.org jessie/updates main contrib non-free
 </pre></div>
 </div>
 <p>設定ファイルをアップデートする。</p>
-<div class="highlight-none"><div class="highlight"><pre># for f in `find / -name *.dpkg-dist | sed s/\.dpkg-dist$//` ; do
+<div class="highlight-none"><div class="highlight"><pre><span></span># for f in `find / -name *.dpkg-dist | sed s/\.dpkg-dist$//` ; do
 &gt; mv $f.dpkg-dist $f
 &gt; done
 </pre></div>
@@ -213,7 +213,7 @@ deb http://security.debian.org jessie/updates main contrib non-free
 </div>
 <div class="section" id="id5">
 <h2>ユーザーアカウントの作成</h2>
-<div class="highlight-none"><div class="highlight"><pre># useradd -s /bin/bash -d /home/user -m -G sudo user
+<div class="highlight-none"><div class="highlight"><pre><span></span># useradd -s /bin/bash -d /home/user -m -G sudo user
 # passwd user
 # su - user
 $ mkdir ~/.ssh
@@ -226,16 +226,16 @@ $ exit
 </div>
 <div class="section" id="ssh">
 <h2>sshの設定を変更</h2>
-<div class="highlight-none"><div class="highlight"><pre># vi /etc/ssh/sshd_config
+<div class="highlight-none"><div class="highlight"><pre><span></span># vi /etc/ssh/sshd_config
 </pre></div>
 </div>
 <p>次の2箇所を修正。</p>
-<div class="highlight-none"><div class="highlight"><pre>PermitRootLogin no
+<div class="highlight-none"><div class="highlight"><pre><span></span>PermitRootLogin no
 PasswordAuthentication no
 </pre></div>
 </div>
 <p>sshdを再起動する。</p>
-<div class="highlight-none"><div class="highlight"><pre># /etc/init.d/ssh restart
+<div class="highlight-none"><div class="highlight"><pre><span></span># /etc/init.d/ssh restart
 </pre></div>
 </div>
 <p>ここでsshの接続テストをする。</p>
@@ -243,13 +243,13 @@ PasswordAuthentication no
 <div class="section" id="root">
 <h2>rootのパスワードをロック</h2>
 <p>sudoを使うので、rootのパスワードをロックしておく。</p>
-<div class="highlight-none"><div class="highlight"><pre># usermod -L root
+<div class="highlight-none"><div class="highlight"><pre><span></span># usermod -L root
 </pre></div>
 </div>
 </div>
 <div class="section" id="id6">
 <h2>再起動</h2>
-<div class="highlight-none"><div class="highlight"><pre># sync; sync; sync; shutdown -r now
+<div class="highlight-none"><div class="highlight"><pre><span></span># sync; sync; sync; shutdown -r now
 </pre></div>
 </div>
 </div>
@@ -291,6 +291,8 @@ PasswordAuthentication no
 </div></section><section><div class="widget">
     <h1>最近の投稿</h1>
     <ul><li>
+            <a href="../../../2016/06/06/config_opendj_as_a_scim_server.html">OpenAM内蔵のOpenDJをSCIM 2.0サーバーとして構成する</a>
+        </li><li>
             <a href="../../../2015/07/10/xperia_z4_tablet_projector_output.html">Xperia Z4 Tabletのプロジェクター出力を試す</a>
         </li><li>
             <a href="../../../2015/04/16/building_apache_module_on_various_linux_distro.html">ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</a>
@@ -308,8 +310,6 @@ PasswordAuthentication no
             <a href="../../12/14/easy_setup_instructions_for_openam.html">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</a>
         </li><li>
             <a href="../../12/14/iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a>
-        </li><li>
-            <a href="../../11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
         </li></ul>
 </div>
 </section><section><div class="widget" id="searchbox" role="search">
@@ -319,7 +319,7 @@ PasswordAuthentication no
         <button type="submit"><span class="fa fa-search"></span></button>
     </form>
 </div></section><section><div class="widget">
-    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (4), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (5), <a href="../../../tags/opendj.html">opendj</a> (1), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/scim.html">scim</a> (1), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
   <h1>ライセンス</h1>
   <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
   <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"

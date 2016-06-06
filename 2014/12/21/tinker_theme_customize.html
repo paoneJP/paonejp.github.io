@@ -111,7 +111,7 @@
 <p>新しいテーマを、modern5plusという名前にして作業を進める。</p>
 <div class="section" id="id4">
 <h3>テーマディレクトリを作る</h3>
-<div class="highlight-python"><div class="highlight"><pre>$ cd /path/to/blogroot
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ cd /path/to/blogroot
 $ mkdir -p _themes/modern5plus/static
 </pre></div>
 </div>
@@ -119,7 +119,7 @@ $ mkdir -p _themes/modern5plus/static
 <div class="section" id="id5">
 <h3>テーマ設定ファイルを書く</h3>
 <p><span class="docutils literal"><span class="pre">_themes/modern5plus/theme.conf</span></span> に次の4行を書く。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span><span class="n">theme</span><span class="p">]</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">theme</span><span class="p">]</span>
 <span class="n">inherit</span> <span class="o">=</span> <span class="n">modern5</span>
 <span class="n">stylesheet</span> <span class="o">=</span> <span class="n">modern5plus</span><span class="o">.</span><span class="n">css</span>
 <span class="n">pygments_style</span> <span class="o">=</span> <span class="n">native</span>
@@ -132,16 +132,16 @@ $ mkdir -p _themes/modern5plus/static
 class属性に <span class="docutils literal"><span class="pre">admonition</span></span> が指定されている。</p>
 <p>modern5のスタイルシートを継承して、div.admonitionに背景色を指定する。</p>
 <p><span class="docutils literal"><span class="pre">_themes/modern5plus/static/modern5plus.css_t</span></span> に次の2行を書く。</p>
-<div class="highlight-python"><div class="highlight"><pre>@import url(&quot;modern5.css&quot;);
-div.admonition { background: #FFFF90; }
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nd">@import</span> <span class="n">url</span><span class="p">(</span><span class="s2">&quot;modern5.css&quot;</span><span class="p">);</span>
+<span class="n">div</span><span class="o">.</span><span class="n">admonition</span> <span class="p">{</span> <span class="n">background</span><span class="p">:</span> <span class="c1">#FFFF90; }</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="id7">
 <h3>作ったテーマを使う</h3>
 <p>最後に <span class="docutils literal"><span class="pre">conf.py</span></span> の中の <span class="docutils literal"><span class="pre">html_theme</span></span> に <span class="docutils literal"><span class="pre">modern5plus</span></span> を指定する。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># Pick another Tinkerer theme or use your own</span>
-<span class="n">html_theme</span> <span class="o">=</span> <span class="s">&quot;modern5plus&quot;</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Pick another Tinkerer theme or use your own</span>
+<span class="n">html_theme</span> <span class="o">=</span> <span class="s2">&quot;modern5plus&quot;</span>
 </pre></div>
 </div>
 <p>以上で完成。</p>
@@ -181,6 +181,8 @@ div.admonition { background: #FFFF90; }
 </div></section><section><div class="widget">
     <h1>最近の投稿</h1>
     <ul><li>
+            <a href="../../../2016/06/06/config_opendj_as_a_scim_server.html">OpenAM内蔵のOpenDJをSCIM 2.0サーバーとして構成する</a>
+        </li><li>
             <a href="../../../2015/07/10/xperia_z4_tablet_projector_output.html">Xperia Z4 Tabletのプロジェクター出力を試す</a>
         </li><li>
             <a href="../../../2015/04/16/building_apache_module_on_various_linux_distro.html">ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</a>
@@ -198,8 +200,6 @@ div.admonition { background: #FFFF90; }
             <a href="../14/easy_setup_instructions_for_openam.html">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</a>
         </li><li>
             <a href="../14/iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a>
-        </li><li>
-            <a href="../../11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
         </li></ul>
 </div>
 </section><section><div class="widget" id="searchbox" role="search">
@@ -209,7 +209,7 @@ div.admonition { background: #FFFF90; }
         <button type="submit"><span class="fa fa-search"></span></button>
     </form>
 </div></section><section><div class="widget">
-    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (4), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (5), <a href="../../../tags/opendj.html">opendj</a> (1), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/scim.html">scim</a> (1), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
   <h1>ライセンス</h1>
   <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
   <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"

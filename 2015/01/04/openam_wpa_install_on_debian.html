@@ -223,18 +223,18 @@ OpenAMサーバーからエージェントに設定やポリシーの更新を
 <div class="section" id="openjdk">
 <h2>OpenJDKのインストール</h2>
 <p>Web Policy AgentのインストーラがJavaで作られているため、OpenJDKをインストールする。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo apt install openjdk-7-jre-headless
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo apt install openjdk-7-jre-headless
 </pre></div>
 </div>
 </div>
 <div class="section" id="apache">
 <h2>Apacheのセットアップ</h2>
 <p>apache2をインストールする。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo apt install apache2
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo apt install apache2
 </pre></div>
 </div>
 <p>SSL用のサーバ設定を有効にする。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo a2enmod ssl
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo a2enmod ssl
 $ sudo a2ensite default-ssl
 $ sudo service apache2 restart
 </pre></div>
@@ -260,7 +260,7 @@ Web Policy Agentをダウンロードする。</p>
 <p>ダウンロードしたzipファイルを展開する。zipファイルを展開した場所が、
 インストール先になるため、先にインストール先のディレクトリを作ってから
 展開する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo apt install unzip
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo apt install unzip
 $ sudo mkdir /opt/openam
 $ cd /opt/openam
 $ sudo unzip /path/to/apache_v24_Linux_64_agent_4.0.0-SNAPSHOT.zip
@@ -274,7 +274,7 @@ $
 <h3>パスワードファイルを作成する</h3>
 <p>インストーラに渡すパスワードのファイルを作成する。
 パスワードはAgent Profileを作成した際に入力したものを指定する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ umask 0377
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ umask 0377
 $ echo password_for_agent &gt; /tmp/pwd.txt
 $ umask 0022
 </pre></div>
@@ -284,24 +284,24 @@ $ umask 0022
 <h3>ダミーのhttpd.confファイルを作る</h3>
 <p>インストーラがhttpd.confファイルがあることをチェックしているので、
 ダミーのhttpd.confを作成する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo touch /etc/apache2/httpd.conf
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo touch /etc/apache2/httpd.conf
 </pre></div>
 </div>
 </div>
 <div class="section" id="id7">
 <h3>Web Policy Agentのインストーラを実行する</h3>
 <p>インストーラを実行する前に、apacheを止めておく。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo service apache2 stop
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo service apache2 stop
 </pre></div>
 </div>
 <p>Web Policy Agentのインストーラを実行する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ cd /opt/openam/web_agents/apache24_agent/bin
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ cd /opt/openam/web_agents/apache24_agent/bin
 $ sudo ./agentadmin --install
 </pre></div>
 </div>
 <p>ライセンス条件 (CDDL Version1.0) が表示される。内容を確認して <span class="docutils literal"><span class="pre">y</span></span> を
 入力する。</p>
-<div class="highlight-python"><div class="highlight"><pre>Please read the following License Agreement carefully:
+<div class="highlight-default"><div class="highlight"><pre><span></span>Please read the following License Agreement carefully:
 
 COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0
 ...
@@ -309,7 +309,7 @@ Do you accept the license? y
 </pre></div>
 </div>
 <p>Apacheの設定ディレクトリのパスを訊かれるので、<span class="docutils literal"><span class="pre">/etc/apache2</span></span> と入力する。</p>
-<div class="highlight-python"><div class="highlight"><pre>Enter the complete path to the directory which is used by Apache Server to
+<div class="highlight-default"><div class="highlight"><pre><span></span>Enter the complete path to the directory which is used by Apache Server to
 store its configuration Files. This directory uniquely identifies the
 Apache Server instance that is secured by this Agent.
 [ ? : Help, ! : Exit ]
@@ -318,7 +318,7 @@ Enter the Apache Server Config Directory Path [/opt/apache24/conf]: /etc/apache2
 </div>
 <p>OpenAMサーバのURLを訊かれるので、<span class="docutils literal"><span class="pre">https://www.example.com/openam</span></span> と
 入力する。ポート番号はデフォルトポートの場合は省略できる。</p>
-<div class="highlight-python"><div class="highlight"><pre>Enter the URL where the OpenAM server is running. Please include the
+<div class="highlight-default"><div class="highlight"><pre><span></span>Enter the URL where the OpenAM server is running. Please include the
 deployment URI also as shown below:
 (http://openam.sample.com:58080/openam)
 [ ? : Help, &lt; : Back, ! : Exit ]
@@ -327,46 +327,46 @@ OpenAM server URL: https://www.example.com/openam
 </div>
 <p>Policy AgentのURLを訊かれるので、<span class="docutils literal"><span class="pre">https://wpa.example.com</span></span> と
 入力する。ポート番号はデフォルトポートの場合は省略できる。</p>
-<div class="highlight-python"><div class="highlight"><pre>Enter the Agent URL as shown below: (http://agent1.sample.com:1234)
+<div class="highlight-default"><div class="highlight"><pre><span></span>Enter the Agent URL as shown below: (http://agent1.sample.com:1234)
 [ ? : Help, &lt; : Back, ! : Exit ]
 Agent URL: https://wpa.example.com
 </pre></div>
 </div>
 <p>Agent Profileの名前を訊かれるので、OpenAMサーバで設定した
 <span class="docutils literal"><span class="pre">wpa.example.com</span></span> を入力する。</p>
-<div class="highlight-python"><div class="highlight"><pre>Enter the Agent profile name
+<div class="highlight-default"><div class="highlight"><pre><span></span>Enter the Agent profile name
 [ ? : Help, &lt; : Back, ! : Exit ]
 Enter the Agent Profile name: wpa.example.com
 </pre></div>
 </div>
 <p>パスワードファイルの場所を訊かれるので、先に作成したパスワードファイルの
 名前 <span class="docutils literal"><span class="pre">/tmp/pwd.txt</span></span> を入力する。</p>
-<div class="highlight-python"><div class="highlight"><pre>Enter the path to a file that contains the password to be used for identifying
+<div class="highlight-default"><div class="highlight"><pre><span></span>Enter the path to a file that contains the password to be used for identifying
 the Agent.
 [ ? : Help, &lt; : Back, ! : Exit ]
 Enter the path to the password file: /tmp/pwd.txt
 </pre></div>
 </div>
 <p>ここまで入力した値を再確認して、<span class="docutils literal"><span class="pre">1</span></span> を入力する。</p>
-<div class="highlight-python"><div class="highlight"><pre>-----------------------------------------------
-SUMMARY OF YOUR RESPONSES
------------------------------------------------
-Apache Server Config Directory : /etc/apache2
-OpenAM server URL : https://www.example.com/openam
-Agent URL : https://wpa.example.com
-Agent Profile name : wpa.example.com
-Agent Profile Password file name : /tmp/pwd.txt
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">-----------------------------------------------</span>
+<span class="n">SUMMARY</span> <span class="n">OF</span> <span class="n">YOUR</span> <span class="n">RESPONSES</span>
+<span class="o">-----------------------------------------------</span>
+<span class="n">Apache</span> <span class="n">Server</span> <span class="n">Config</span> <span class="n">Directory</span> <span class="p">:</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">apache2</span>
+<span class="n">OpenAM</span> <span class="n">server</span> <span class="n">URL</span> <span class="p">:</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">www</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">openam</span>
+<span class="n">Agent</span> <span class="n">URL</span> <span class="p">:</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">wpa</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+<span class="n">Agent</span> <span class="n">Profile</span> <span class="n">name</span> <span class="p">:</span> <span class="n">wpa</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span>
+<span class="n">Agent</span> <span class="n">Profile</span> <span class="n">Password</span> <span class="n">file</span> <span class="n">name</span> <span class="p">:</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">pwd</span><span class="o">.</span><span class="n">txt</span>
 
-Verify your settings above and decide from the choices below.
-1. Continue with Installation
-2. Back to the last interaction
-3. Start Over
-4. Exit
-Please make your selection [1]: 1
+<span class="n">Verify</span> <span class="n">your</span> <span class="n">settings</span> <span class="n">above</span> <span class="ow">and</span> <span class="n">decide</span> <span class="kn">from</span> <span class="nn">the</span> <span class="n">choices</span> <span class="n">below</span><span class="o">.</span>
+<span class="mf">1.</span> <span class="n">Continue</span> <span class="k">with</span> <span class="n">Installation</span>
+<span class="mf">2.</span> <span class="n">Back</span> <span class="n">to</span> <span class="n">the</span> <span class="n">last</span> <span class="n">interaction</span>
+<span class="mf">3.</span> <span class="n">Start</span> <span class="n">Over</span>
+<span class="mf">4.</span> <span class="n">Exit</span>
+<span class="n">Please</span> <span class="n">make</span> <span class="n">your</span> <span class="n">selection</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="mi">1</span>
 </pre></div>
 </div>
 <p>インストーラが完了する。</p>
-<div class="highlight-python"><div class="highlight"><pre>...
+<div class="highlight-default"><div class="highlight"><pre><span></span>...
 Thank you for using OpenAM Policy Agent
 $
 </pre></div>
@@ -375,13 +375,13 @@ $
 <div class="section" id="id8">
 <h3>パスワードファイルを消す</h3>
 <p>パスワードファイルは使い終わったので消しておく。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ rm /tmp/pwd.txt
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ rm /tmp/pwd.txt
 rm: remove write-protected regular file ‘/tmp/pwd.txt’? y
 $
 </pre></div>
 </div>
 <p>コマンドラインヒストリに生パスワードが残っているので、それも消しておく。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ history -c
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ history -c
 </pre></div>
 </div>
 </div>
@@ -390,13 +390,13 @@ $
 <p>Debianが使うApacheモジュール読み込み設定をつくり、それを有効にする。
 Web Policy AgentのApache上のモジュール名は歴史的にdsameであることから、
 その名前を使う。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ cd /etc/apache2
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ cd /etc/apache2
 $ sudo mv httpd.conf mod-available/dsame.load
 $ sudo a2enmod dsame
 </pre></div>
 </div>
 <p>設定ディレクトリにできた不要ファイルを削除する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo rm httpd.conf-*
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo rm httpd.conf-*
 </pre></div>
 </div>
 </div>
@@ -405,7 +405,7 @@ $ sudo a2enmod dsame
 <p>Web Policy Agentのインストーラが作成するログディレクトリの所有者を
 変更する。これを行なわないと、エージェントがログローテーションに
 失敗する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ cd /opt/openam/web_agents/apache24_agent/Agent_001/logs
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ cd /opt/openam/web_agents/apache24_agent/Agent_001/logs
 $ sudo chown www-data:www-data audit debug
 </pre></div>
 </div>
@@ -416,7 +416,7 @@ $ sudo chown www-data:www-data audit debug
 OpenSSL由来のlibssl.soとlibcrypto.soをdlopen()で読み込んで使用している。</p>
 <p>しかし、Debianの標準的なインストール状態では、libssl.so, libcrypto.soは
 存在しておらず、OpenAMサーバとのSSL接続ができない。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ cd /usr/lib/x86_64-linux-gnu
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ cd /usr/lib/x86_64-linux-gnu
 $ ls -l libssl* libcrypto*
 -rw-r--r-- 1 root root 2058560 Oct 16 02:48 libcrypto.so.1.0.0
 -rw-r--r-- 1 root root  392296 Oct 16 02:48 libssl.so.1.0.0
@@ -426,7 +426,7 @@ $ ls -l libssl* libcrypto*
 <p>(libssl3.soはOpenSSLではなくNSSのライブラリ)</p>
 <p>libssl.so, libcrypto.soは、libssl-devパッケージに収録されているので、
 libssl-devをインストールする。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo apt install libssl-dev
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo apt install libssl-dev
 $ cd /usr/lib/x86_64-linux-gnu
 $ ls -l libssl* libcrypto*
 -rw-r--r-- 1 root root 4276742 Oct 16 02:48 libcrypto.a
@@ -451,7 +451,7 @@ libcrypto.so -&gt; libcrypto.so.1.0.0 のシンボリックリンクが
 </div>
 <div class="section" id="id11">
 <h3>Apacheを起動する</h3>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo service apache2 start
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo service apache2 start
 </pre></div>
 </div>
 </div>
@@ -476,7 +476,7 @@ ssl-certパッケージによって自動生成される自己署名証明書を
 <div class="section" id="id14">
 <h3>証明書を確認する</h3>
 <p>wpa.example.comが使っているサーバ証明書の内容を確認する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ openssl x509 -in /etc/ssl/certs/ssl-cert-snakeoil.pem -text | grep Subject:
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ openssl x509 -in /etc/ssl/certs/ssl-cert-snakeoil.pem -text | grep Subject:
         Subject: CN=wpa.example.com
 </pre></div>
 </div>
@@ -484,7 +484,7 @@ ssl-certパッケージによって自動生成される自己署名証明書を
 もし異なる場合は、サーバ証明書を作り直す。</p>
 <p>ひとつの方法として、サーバ名をwpa.example.comに設定し、snakeoil証明書を
 作り直す方法がある。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo hostname wpa.example.com
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo hostname wpa.example.com
 $ hostname -f
 wpa.example.com
 $ sudo make-ssl-cert generate-default-snakeoil --force-overwrite
@@ -499,19 +499,19 @@ $ openssl x509 -in /etc/ssl/certs/ssl-cert-snakeoil.pem -text | grep Subject:
 OpenAMサーバ (www.example.com) にwpa.example.com.pemとして転送しておく。</p>
 <p>以下の手順をOpenAMサーバ上で実行する。</p>
 <p>まず証明書の内容を確認する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ openssl x509 -in wpa.example.com.pem -text | grep Subject:
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ openssl x509 -in wpa.example.com.pem -text | grep Subject:
         Subject: CN=wpa.example.com
 </pre></div>
 </div>
 <p>&#8220;CN=wpa.example.com&#8221;となっていることを確認する。</p>
 <p>つぎに、Javaが参照している証明書ストアに、この証明書を信頼できる証明書として
 登録する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo keytool -keystore /etc/ssl/certs/java/cacerts -importcert -trustcacerts -file wpa.example.com.pem -alias wpa.example.com
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo keytool -keystore /etc/ssl/certs/java/cacerts -importcert -trustcacerts -file wpa.example.com.pem -alias wpa.example.com
 Enter keystore password:
 </pre></div>
 </div>
 <p>証明書ストアのパスワードを入力する。デフォルトは <span class="docutils literal"><span class="pre">changeit</span></span> になっている。</p>
-<div class="highlight-python"><div class="highlight"><pre>Owner: CN=wpa.example.com
+<div class="highlight-default"><div class="highlight"><pre><span></span>Owner: CN=wpa.example.com
 Issuer: CN=wpa.example.com
 ..
 Trust this certificate? [no]: yes
@@ -521,7 +521,7 @@ Certificate was added to keystore
 <p>証明書の情報が表示される。もう一度 &#8220;CN=wpa.example.com&#8221; となっていることを
 確認して、<span class="docutils literal"><span class="pre">yes</span></span> を入力する。</p>
 <p>tomcat8 を再起動し、証明書ストアの内容を反映する。</p>
-<div class="highlight-python"><div class="highlight"><pre>sudo service tomcat8 restart
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">service</span> <span class="n">tomcat8</span> <span class="n">restart</span>
 </pre></div>
 </div>
 <p>以上でWeb Policy Agentのインストールは完了！</p>
@@ -568,6 +568,8 @@ Web Policy Agentのインストールの時にも参考にしてみてくださ�
 </div></section><section><div class="widget">
     <h1>最近の投稿</h1>
     <ul><li>
+            <a href="../../../2016/06/06/config_opendj_as_a_scim_server.html">OpenAM内蔵のOpenDJをSCIM 2.0サーバーとして構成する</a>
+        </li><li>
             <a href="../../07/10/xperia_z4_tablet_projector_output.html">Xperia Z4 Tabletのプロジェクター出力を試す</a>
         </li><li>
             <a href="../../04/16/building_apache_module_on_various_linux_distro.html">ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</a>
@@ -585,8 +587,6 @@ Web Policy Agentのインストールの時にも参考にしてみてくださ�
             <a href="../../../2014/12/14/easy_setup_instructions_for_openam.html">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</a>
         </li><li>
             <a href="../../../2014/12/14/iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a>
-        </li><li>
-            <a href="../../../2014/11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
         </li></ul>
 </div>
 </section><section><div class="widget" id="searchbox" role="search">
@@ -596,7 +596,7 @@ Web Policy Agentのインストールの時にも参考にしてみてくださ�
         <button type="submit"><span class="fa fa-search"></span></button>
     </form>
 </div></section><section><div class="widget">
-    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (4), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (5), <a href="../../../tags/opendj.html">opendj</a> (1), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/scim.html">scim</a> (1), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
   <h1>ライセンス</h1>
   <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
   <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"

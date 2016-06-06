@@ -1,0 +1,1176 @@
+<!DOCTYPE html><!--[if lt IE 7]>      <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:og="http://ogp.me/ns#"
+    xmlns:fb="https://www.facebook.com/2008/fbml" class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width">
+        <title>OpenAM内蔵のOpenDJをSCIM 2.0サーバーとして構成する &mdash; 実験メモとかいろいろ</title>
+            <link rel="stylesheet" href="../../../_static/normalize.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/sphinx.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/main.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/modern5plus.css" type="text/css">
+            <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+            <link rel="stylesheet" href="../../../_static/font-awesome.min.css" type="text/css">
+        <link rel="shortcut icon" href="../../../_static/tinkerer.ico" /><!-- Load modernizr and JQuery -->
+        <script src="../../../_static/vendor/modernizr-2.6.2.min.js"></script>
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+        <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
+        <script src="../../../_static/plugins.js"></script>
+        <script src="../../../_static/main.js"></script>
+        <link rel="next" title="Xperia Z4 Tabletのプロジェクター出力を試す" href="../../../2015/07/10/xperia_z4_tablet_projector_output.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // Adjusts document height if sidebar is taller
+            var documentwrapper = document.getElementsByTagName("article")[0];
+            var sidebar = document.getElementsByClassName("sidebar")[0];
+
+            if (sidebar.offsetHeight > documentwrapper.offsetHeight)
+            {
+                var mainwrapper = document.getElementsByClassName("main")[0];
+                documentwrapper.style.minHeight = mainwrapper.offsetHeight + "px";
+            }
+
+            // Scroll to content if on small screen
+            if (screen.width < 480)
+            {
+                $(document).scrollTop(document.getElementsByTagName("article")[0].offsetTop - 44);
+            }
+        });
+    </script></head>
+    <body role="document">
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</p>
+        <![endif]-->
+
+      <div id="container"><header role="banner">
+            <hgroup>
+              <h1><a href="../../../index.html">実験メモとかいろいろ</a></h1><h2>python, xperia, debian, oidc 辺りを中心に</h2></hgroup>
+          </header>
+      <nav role="navigation">
+            <ul><li class="quicklink"><div class="rss">
+        <a href="../../../rss.html" title="Subscribe via RSS"><span class="fa fa-lg fa-rss"></span></a>
+    </div></li><li class="main-nav">
+                  <a href="../../../index.html">ホーム</a>
+                </li>
+              </ul>
+          </nav><div class="main-container" role="main"><div class="main wrapper body clearfix"><article role="article"><ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="../../../2015/07/10/xperia_z4_tablet_projector_output.html">Xperia Z4 Tabletのプロジェクター出力を試す</a> &raquo; </li>
+        </ul><div class="timestamp postmeta">
+            <span>June 06, 2016</span>
+        </div>
+    <div class="section" id="openamopendjscim-2-0">
+<h1>OpenAM内蔵のOpenDJをSCIM 2.0サーバーとして構成する</h1>
+<p>OpenAMに内蔵されているOpenDJ (Embedded OpenDJ) がSCIMサーバーとして
+動きそうだったので、ついでにSCIM 2.0サーバーとして構成してみた、という話。</p>
+<div id="more"> </div><div class="section" id="opendj">
+<h2>OpenDJとは</h2>
+<p>OpenDJ <a class="footnote-reference" href="#id30" id="id1">[1]</a> は、ForgeRockのプロジェクトで開発されている
+LDAPサーバーである。バージョン2.6からRESTアクセスの機能が実装されている。</p>
+<p>RESTアクセスではJSONで表現されたデーターが使用されるのだが、簡単な
+設定ファイルを書くことで、JSONデーターをLDAPのオブジェクトにマッピング
+できる。デフォルトの設定ファイルはSCIM 1.0スキーマが扱えるような定義
+になっている。</p>
+<p>OpenDJは、Embedded OpenDJとしてOpenAM <a class="footnote-reference" href="#openam" id="id2">[2]</a> にも内蔵されており、
+OpenAMの設定情報を格納したり、小規模向けに構成する際にユーザー情報や
+グループ情報を保管するデーターストアとして使われる。</p>
+<p>このEmbedded OpenDJでもRESTアクセスの機能を使えるっぽい感じなので、
+OpenAMのユーザーとグループをSCIMで操作するイメージで構成をしてみる。</p>
+<p>SCIMは、SCIM 2.0にあたる仕様が昨年9月 (2015年9月) にRFC <a class="footnote-reference" href="#id31" id="id3">[3]</a>
+化されたので、せっかくなので、できるだけSCIM 2.0スキーマを扱えるように
+構成してみることにした。</p>
+</div>
+<div class="section" id="http-connection-handler">
+<h2>HTTP Connection Handlerの設定を書く</h2>
+<p>HTTP Connection Hanlderの設定は <span class="docutils literal"><span class="pre">http-config.json</span></span> ファイルに書く。
+今回使う設定をこのページの最後に掲載する。また同じものは
+<a class="reference external" href="https://gist.githubusercontent.com/paoneJP/4917b107eb49e75fd3b5a58e6a3295e3/raw/71e6fc3ba9af77d2934e83c057898806b2c9487f/http-config.json">こちらからダウンロード</a>
+できる。</p>
+<p>この設定では以下のような属性マッピングを行なっている。</p>
+<div class="section" id="user-users">
+<h3>Userリソース (/Usersエンドポイント)</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="27%" />
+<col width="27%" />
+<col width="45%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head" colspan="2" rowspan="2">JSON (SCIMリソース) 属性</th>
+<th class="head" rowspan="2">LDAPオブジェクト属性</th>
+</tr>
+<tr class="row-even"></tr>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="2">_id <a class="reference internal" href="#a" id="id5">[a]</a></td>
+<td>entryUUID <a class="reference internal" href="#b" id="id6">[b]</a></td>
+</tr>
+<tr class="row-even"><td colspan="2">_rev <a class="reference internal" href="#a" id="id7">[a]</a></td>
+<td>etag</td>
+</tr>
+<tr class="row-odd"><td colspan="2">id</td>
+<td>entryUUID <a class="reference internal" href="#b" id="id8">[b]</a></td>
+</tr>
+<tr class="row-even"><td colspan="2">externalId</td>
+<td>uid</td>
+</tr>
+<tr class="row-odd"><td colspan="2">userName</td>
+<td>mail <a class="reference internal" href="#c" id="id9">[c]</a></td>
+</tr>
+<tr class="row-even"><td rowspan="3">name</td>
+<td>formatted</td>
+<td>cn</td>
+</tr>
+<tr class="row-odd"><td>givenName</td>
+<td>givenName</td>
+</tr>
+<tr class="row-even"><td>familyName</td>
+<td>sn</td>
+</tr>
+<tr class="row-odd"><td colspan="2">displayName</td>
+<td>description</td>
+</tr>
+<tr class="row-even"><td colspan="2">title</td>
+<td>title</td>
+</tr>
+<tr class="row-odd"><td rowspan="2">emails</td>
+<td>value</td>
+<td>mail</td>
+</tr>
+<tr class="row-even"><td>primary</td>
+<td>&#8220;true&#8221; <a class="reference internal" href="#d" id="id10">[d]</a></td>
+</tr>
+<tr class="row-odd"><td rowspan="2">phoneNumbers</td>
+<td>value</td>
+<td>mail</td>
+</tr>
+<tr class="row-even"><td>primary</td>
+<td>&#8220;true&#8221; <a class="reference internal" href="#d" id="id11">[d]</a></td>
+</tr>
+<tr class="row-odd"><td colspan="2">active</td>
+<td>inetUserStatus <a class="reference internal" href="#e" id="id12">[e]</a></td>
+</tr>
+<tr class="row-even"><td rowspan="3">groups</td>
+<td>value</td>
+<td>group の entryUUID</td>
+</tr>
+<tr class="row-odd"><td>_value <a class="reference internal" href="#f" id="id13">[f]</a></td>
+<td>group の cn</td>
+</tr>
+<tr class="row-even"><td>display</td>
+<td>group の description</td>
+</tr>
+<tr class="row-odd"><td colspan="2">employeeNumber</td>
+<td>employeeNumber</td>
+</tr>
+<tr class="row-even"><td rowspan="4">meta</td>
+<td>resourceType</td>
+<td>&#8220;User&#8221; <a class="reference internal" href="#g" id="id14">[g]</a></td>
+</tr>
+<tr class="row-odd"><td>create</td>
+<td>createTimestamp</td>
+</tr>
+<tr class="row-even"><td>lastModified</td>
+<td>modifyTimestamp</td>
+</tr>
+<tr class="row-odd"><td>version</td>
+<td>etag</td>
+</tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="a" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[a]</td><td><em>(<a class="fn-backref" href="#id5">1</a>, <a class="fn-backref" href="#id7">2</a>)</em> &#8220;_id&#8221;, &#8220;_rev&#8221; はOpenDJが固有に使用する属性値である。</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="b" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[b]</td><td><em>(<a class="fn-backref" href="#id6">1</a>, <a class="fn-backref" href="#id8">2</a>)</em> 今回はリソースIDにサーバーが生成する値を使用するように構成した。</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="c" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id9">[c]</a></td><td>ログインIDにメールアドレスを使用する想定をして設定した。</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="d" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[d]</td><td><em>(<a class="fn-backref" href="#id10">1</a>, <a class="fn-backref" href="#id11">2</a>)</em> 固定値として &#8220;true&#8221; を設定した。</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="e" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id12">[e]</a></td><td>SCIMスキーマではBooleanだが、LDAP側の制約で &#8220;Active&#8221; or &#8220;InActive&#8221;
+のいずれかの値をとる。</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="f" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id13">[f]</a></td><td>LDAP側のグループオブジェクトのキー属性が必要なため、補助属性を定義した。</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="g" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id14">[g]</a></td><td>固定値として &#8220;User&#8221; を設定した。</td></tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="group-groups">
+<h3>Groupリソース (/Groupsエンドポイント)</h3>
+<table border="1" class="docutils">
+<colgroup>
+<col width="27%" />
+<col width="27%" />
+<col width="45%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head" colspan="2" rowspan="2">SCIM 2.0 Core Schema 属性</th>
+<th class="head" rowspan="2">LDAP 属性</th>
+</tr>
+<tr class="row-even"></tr>
+</thead>
+<tbody valign="top">
+<tr class="row-odd"><td colspan="2">_id <a class="reference internal" href="#h" id="id15">[h]</a></td>
+<td>entryUUID <a class="reference internal" href="#i" id="id16">[i]</a></td>
+</tr>
+<tr class="row-even"><td colspan="2">_rev <a class="reference internal" href="#h" id="id17">[h]</a></td>
+<td>etag</td>
+</tr>
+<tr class="row-odd"><td colspan="2">id</td>
+<td>entryUUID <a class="reference internal" href="#i" id="id18">[i]</a></td>
+</tr>
+<tr class="row-even"><td colspan="2">externalId</td>
+<td>cn</td>
+</tr>
+<tr class="row-odd"><td colspan="2">displayName</td>
+<td>description</td>
+</tr>
+<tr class="row-even"><td rowspan="3">members</td>
+<td>value</td>
+<td>user の entryUUID</td>
+</tr>
+<tr class="row-odd"><td>_value</td>
+<td>user の uid <a class="reference internal" href="#j" id="id19">[j]</a></td>
+</tr>
+<tr class="row-even"><td>display</td>
+<td>user の description</td>
+</tr>
+<tr class="row-odd"><td rowspan="4">meta</td>
+<td>resourceType</td>
+<td>&#8220;Group&#8221; <a class="reference internal" href="#k" id="id20">[k]</a></td>
+</tr>
+<tr class="row-even"><td>create</td>
+<td>createTimestamp</td>
+</tr>
+<tr class="row-odd"><td>lastModified</td>
+<td>modifyTimestamp</td>
+</tr>
+<tr class="row-even"><td>version</td>
+<td>etag</td>
+</tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="h" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[h]</td><td><em>(<a class="fn-backref" href="#id15">1</a>, <a class="fn-backref" href="#id17">2</a>)</em> &#8220;_id&#8221;, &#8220;_rev&#8221; はOpenDJが固有に使用する属性値である。</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="i" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[i]</td><td><em>(<a class="fn-backref" href="#id16">1</a>, <a class="fn-backref" href="#id18">2</a>)</em> 今回はリソースIDにサーバーが生成する値を使用するように構成した。</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="j" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id19">[j]</a></td><td>LDAP側のユーザーオブジェクトのキー属性が必要なため、補助属性を定義した。</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="k" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id20">[k]</a></td><td>固定値として &#8220;User&#8221; を設定した。</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="id21">
+<h2>HTTP Connection Handlerを構成する</h2>
+<div class="section" id="http-config-json">
+<h3>http-config.jsonを配置する</h3>
+<p><span class="docutils literal"><span class="pre">http-config.json</span></span> ファイルを設定ディレクトリに配置する。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo cp http-config.json /usr/share/tomcat8/openam/opends/config/
+</pre></div>
+</div>
+</div>
+<div class="section" id="id22">
+<h3>HTTP Connection Handlerを有効にする</h3>
+<p>HTTP Connection Handlerを <span class="docutils literal"><span class="pre">58080</span></span> ポートで動作させる。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ cd /usr/share/tomcat8/openam/opends/bin
+
+$ sudo ./dsconfig -n -X -h localhost -p 4444 -D &quot;cn=Directory Manager&quot;  \
+-w &lt;amadminのパスワード&gt; set-connection-handler-prop \
+--handler-name &quot;HTTP Connection Handler&quot; --set listen-port:58080
+
+$ sudo ./dsconfig -n -X -h localhost -p 4444 -D &quot;cn=Directory Manager&quot; \
+-w &lt;amadminのパスワード&gt; set-connection-handler-prop \
+--handler-name &quot;HTTP Connection Handler&quot; --set enabled:true
+</pre></div>
+</div>
+</div>
+<div class="section" id="scim">
+<h3>SCIMアクセス用のユーザーを作成する</h3>
+<p>SCIMアクセス用のユーザー <span class="docutils literal"><span class="pre">scim_user</span></span> を作成する。このユーザーが
+SCIMアクセス時に含まれないようにするため、OpenAMのユーザーが格納
+されいてるツリーとは異なる位置に作成する。ここでは、
+<span class="docutils literal"><span class="pre">dc=openam,dc=forgerock,dc=org</span></span> に作成している。</p>
+<p><span class="docutils literal"><span class="pre">add_scim_user.ldif</span></span> を用意する。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">dn</span><span class="p">:</span> <span class="n">uid</span><span class="o">=</span><span class="n">scim_user</span><span class="p">,</span><span class="n">dc</span><span class="o">=</span><span class="n">openam</span><span class="p">,</span><span class="n">dc</span><span class="o">=</span><span class="n">forgerock</span><span class="p">,</span><span class="n">dc</span><span class="o">=</span><span class="n">org</span>
+<span class="n">objectClass</span><span class="p">:</span> <span class="n">top</span>
+<span class="n">objectClass</span><span class="p">:</span> <span class="n">person</span>
+<span class="n">objectClass</span><span class="p">:</span> <span class="n">organizationalPerson</span>
+<span class="n">objectClass</span><span class="p">:</span> <span class="n">inetOrgPerson</span>
+<span class="n">uid</span><span class="p">:</span> <span class="n">scim_user</span>
+<span class="n">sn</span><span class="p">:</span> <span class="n">scim_user</span>
+<span class="n">cn</span><span class="p">:</span> <span class="n">scim_user</span>
+</pre></div>
+</div>
+<p><span class="docutils literal"><span class="pre">scim_user</span></span> を作成し、パスワードを設定する。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ ldapadd -h localhost -p 50389 -D &#39;cn=Directory Manager&#39; -W \
+-f add_scim_user.ldif
+
+Enter LDAP Password: &lt;amadminのパスワード&gt;
+adding new entry &quot;uid=scim_user,dc=openam,dc=forgerock,dc=org&quot;
+
+$ ldappasswd -h localhost -p 50389 -D &#39;cn=Directory Manager&#39; -W \
+&#39;uid=scim_user,dc=openam,dc=forgerock,dc=org&#39; -S
+
+New password: &lt;scim_userのパスワード&gt;
+Re-enter new password: &lt;scim_userのパスワード&gt;
+Enter LDAP Password: &lt;scim_userのパスワード&gt;
+$
+</pre></div>
+</div>
+</div>
+<div class="section" id="scim-user">
+<h3>scim_userのデーターへのアクセス権を設定する</h3>
+<p>OpenAMの初期設定では、ユーザーによる属性へのアクセスができないように
+なっている。&#8221;scim_user&#8221; にSCIMアクセスで必要なアクセス権を設定する。</p>
+<p><span class="docutils literal"><span class="pre">modify_aci.ldif</span></span> を用意する。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>dn: dc=openam,dc=forgerock,dc=org
+changetype: modify
+replace: aci
+aci: (target=&quot;ldap:///dc=openam,dc=forgerock,dc=org&quot;)(targetattr != &quot;userPassw
+ ord&quot;)(version 3.0; acl &quot;OpenSSO-FAM Services anonymous access&quot;; deny (all) (u
+ serdn != &quot;ldap:///uid=scim_user,dc=openam,dc=forgerock,dc=org&quot; and userdn = &quot;
+ ldap:///anyone&quot;);)
+aci: (targetattr = &quot;objectclass || inetuserstatus || iplanet-am-user-login-sta
+ tus || iplanet-am-user-account-life || iplanet-am-session-quota-limit || ipla
+ net-am-user-alias-list ||  iplanet-am-session-max-session-time || iplanet-am-
+ session-max-idle-time || iplanet-am-session-get-valid-sessions || iplanet-am-
+ session-destroy-sessions || iplanet-am-session-add-session-listener-on-all-se
+ ssions || iplanet-am-user-admin-start-dn || iplanet-am-auth-post-login-proces
+ s-class || iplanet-am-user-federation-info || iplanet-am-user-federation-info
+ -key || ds-pwp-account-disabled || sun-fm-saml2-nameid-info || sun-fm-saml2-n
+ ameid-infokey || sunAMAuthInvalidAttemptsData || memberof || member&quot;)(version
+  3.0; acl &quot;OpenAM User self modification denied for these attributes&quot;; deny (
+ write) userdn =&quot;ldap:///self&quot;;)
+aci: (target=&quot;ldap:///ou=people,dc=openam,dc=forgerock,dc=org&quot;)(targetattr = &quot;
+ uid || cn || givenName || sn || description || title || mail || telephoneNumb
+ er || inetUserStatus || employeeNumber&quot;)(version 3.0; acl &quot;access permission
+ for scim_user&quot;; allow (all) userdn = &quot;ldap:///uid=scim_user,dc=openam,dc=forg
+ erock,dc=org&quot;;)
+aci: (target=&quot;ldap:///ou=groups,dc=openam,dc=forgerock,dc=org&quot;)(targetattr = &quot;
+ cn || description || uniqueMember&quot;)(version 3.0; acl &quot;access permission for s
+ cim_user&quot;; allow (all) userdn = &quot;ldap:///uid=scim_user,dc=openam,dc=forgerock
+ ,dc=org&quot;;)
+</pre></div>
+</div>
+<p>アクセス権設定を更新する。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ ldapmodify -h localhost -p 50389 -D &#39;cn=Directory Manager&#39; -W \
+-f modify_aci.ldif
+
+Enter LDAP Password: &lt;amadminのパスワード&gt;
+modifying entry &quot;dc=openam,dc=forgerock,dc=org&quot;
+
+$
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="id23">
+<h2>SCIMでアクセスしてみる</h2>
+<div class="section" id="id24">
+<h3>ユーザーを作成する</h3>
+<p>ユーザーリソース <span class="docutils literal"><span class="pre">sample_test_user1.json</span></span> を用意する。</p>
+<div class="highlight-json"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;schemas&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="s2">&quot;urn:ietf:params:scim:schemas:core:2.0:User&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;urn:ietf:params:scim:schemas:extension:enterprise:2.0:User&quot;</span>
+  <span class="p">],</span>
+  <span class="nt">&quot;externalId&quot;</span><span class="p">:</span> <span class="s2">&quot;u0001&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;userName&quot;</span><span class="p">:</span> <span class="s2">&quot;test_user1@mx.example.com&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;familyName&quot;</span><span class="p">:</span> <span class="s2">&quot;テスト&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;formatted&quot;</span><span class="p">:</span> <span class="s2">&quot;テスト ユーザー1&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;givenName&quot;</span><span class="p">:</span> <span class="s2">&quot;ユーザー1&quot;</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;displayName&quot;</span><span class="p">:</span> <span class="s2">&quot;テスト ユーザー1&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;emails&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;test_user1@mx.example.com&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;primary&quot;</span><span class="p">:</span> <span class="kc">true</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;phoneNumbers&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;03-1234-5678&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;primary&quot;</span><span class="p">:</span> <span class="kc">true</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;active&quot;</span><span class="p">:</span> <span class="s2">&quot;Active&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;urn:ietf:params:scim:schemas:extension:enterprise:2.0:User&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;employeeNumber&quot;</span><span class="p">:</span> <span class="s2">&quot;0001&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><span class="docutils literal"><span class="pre">/Users</span></span> エンドポイントへPOSTしてユーザーを作成する。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ curl -u scim_user:&lt;scim_userのパスワード&gt; -X POST \
+-H &quot;Content-Type: application/json&quot; -d @- \
+http://localhost:58080/Users?_action=create \
+&lt; sample_test_user1.json | jq .
+
+{
+  &quot;_id&quot;: &quot;c9c361b0-5327-4f1a-976d-7bd58b66a52e&quot;,
+  &quot;_rev&quot;: &quot;00000000b7a31b45&quot;,
+  &quot;schemas&quot;: [
+    &quot;urn:ietf:params:scim:schemas:core:2.0:User&quot;,
+    &quot;urn:ietf:params:scim:schemas:extension:enterprise:2.0:User&quot;
+  ],
+  &quot;id&quot;: &quot;c9c361b0-5327-4f1a-976d-7bd58b66a52e&quot;,
+  &quot;externalId&quot;: &quot;u0001&quot;,
+  &quot;userName&quot;: &quot;test_user1@mx.example.com&quot;,
+  &quot;name&quot;: {
+    &quot;formatted&quot;: &quot;テスト ユーザー1&quot;,
+    &quot;givenName&quot;: &quot;ユーザー1&quot;,
+    &quot;familyName&quot;: &quot;テスト&quot;
+  },
+  &quot;displayName&quot;: &quot;テスト ユーザー1&quot;,
+  &quot;emails&quot;: {
+    &quot;value&quot;: &quot;test_user1@mx.example.com&quot;,
+    &quot;primary&quot;: true
+  },
+  &quot;phoneNumbers&quot;: {
+    &quot;value&quot;: &quot;03-1234-5678&quot;,
+    &quot;primary&quot;: true
+  },
+  &quot;active&quot;: &quot;Active&quot;,
+  &quot;urn:ietf:params:scim:schemas:extension:enterprise:2.0:User&quot;: {
+    &quot;employeeNumber&quot;: &quot;0001&quot;
+  },
+  &quot;meta&quot;: {
+    &quot;resourceType&quot;: &quot;User&quot;,
+    &quot;created&quot;: &quot;2016-06-05T10:22:43Z&quot;,
+    &quot;version&quot;: &quot;00000000b7a31b45&quot;
+  }
+}
+$
+</pre></div>
+</div>
+</div>
+<div class="section" id="id25">
+<h3>グループを作成する</h3>
+<p>グループリソース <span class="docutils literal"><span class="pre">sample_ou1010.json</span></span> を用意する。</p>
+<div class="highlight-json"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;schemas&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="s2">&quot;urn:ietf:params:scim:schemas:core:2.0:Group&quot;</span>
+  <span class="p">],</span>
+  <span class="nt">&quot;externalId&quot;</span><span class="p">:</span> <span class="s2">&quot;ou1010&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;displayName&quot;</span><span class="p">:</span> <span class="s2">&quot;営業部営業第一課&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><span class="docutils literal"><span class="pre">/Groups</span></span> エンドポイントへPOSTしてグループを作成する。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ curl -u scim_user:&lt;scim_userのパスワード&gt; -X POST \
+-H &quot;Content-Type: application/json&quot; -d @- \
+http://localhost:58080/Groups?_action=create \
+&lt; sample_ou1010.json | jq .
+
+{
+  &quot;_id&quot;: &quot;0fe79d8c-5af7-45fa-8331-909650aa5427&quot;,
+  &quot;_rev&quot;: &quot;00000000674150c8&quot;,
+  &quot;schemas&quot;: [
+    &quot;urn:ietf:params:scim:schemas:core:2.0:Group&quot;
+  ],
+  &quot;id&quot;: &quot;0fe79d8c-5af7-45fa-8331-909650aa5427&quot;,
+  &quot;externalId&quot;: &quot;ou1010&quot;,
+  &quot;displayName&quot;: &quot;営業部営業第一課&quot;,
+  &quot;meta&quot;: {
+    &quot;resourceType&quot;: &quot;Group&quot;,
+    &quot;created&quot;: &quot;2016-06-05T10:24:39Z&quot;,
+    &quot;version&quot;: &quot;00000000674150c8&quot;
+  }
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="id26">
+<h3>グループのメンバーにユーザーを追加する</h3>
+<p>更新されたグループリソース <span class="docutils literal"><span class="pre">sample_ou1010-2.json</span></span> を作成する。</p>
+<div class="highlight-json"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;_id&quot;</span><span class="p">:</span> <span class="s2">&quot;0fe79d8c-5af7-45fa-8331-909650aa5427&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;_rev&quot;</span><span class="p">:</span> <span class="s2">&quot;00000000674150c8&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;schemas&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="s2">&quot;urn:ietf:params:scim:schemas:core:2.0:Group&quot;</span>
+  <span class="p">],</span>
+  <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="s2">&quot;0fe79d8c-5af7-45fa-8331-909650aa5427&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;externalId&quot;</span><span class="p">:</span> <span class="s2">&quot;ou1010&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;displayName&quot;</span><span class="p">:</span> <span class="s2">&quot;営業部営業第一課&quot;</span><span class="p">,</span>
+  <span class="nt">&quot;members&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="nt">&quot;value&quot;</span><span class="p">:</span> <span class="s2">&quot;c3a4fc0b-070b-44c8-929a-5039cb45e6b5&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;_value&quot;</span><span class="p">:</span> <span class="s2">&quot;u0001&quot;</span><span class="p">,</span>
+      <span class="nt">&quot;display&quot;</span><span class="p">:</span> <span class="s2">&quot;テスト ユーザー1&quot;</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
+  <span class="nt">&quot;meta&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;resourceType&quot;</span><span class="p">:</span> <span class="s2">&quot;Group&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="s2">&quot;2016-06-05T10:24:39Z&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;00000000674150c8&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><span class="docutils literal"><span class="pre">_id</span></span>, <span class="docutils literal"><span class="pre">_rev</span></span>, <span class="docutils literal"><span class="pre">id</span></span>, <span class="docutils literal"><span class="pre">meta.version</span></span> の各値は、グループを
+作成したときのレスポンスの値に合わせておく。</p>
+<p><span class="docutils literal"><span class="pre">members</span></span> に指定する値は、ユーザーを作成したときのレスポンスの
+値を用いる。<span class="docutils literal"><span class="pre">value</span></span> にはユーザーの &#8220;id&#8221; の値を、<span class="docutils literal"><span class="pre">_value</span></span> には
+ユーザーの &#8220;externalId&#8221; の値を指定する。<span class="docutils literal"><span class="pre">display</span></span> は更新には
+用いないため、指定しても指定しなくてもよい。</p>
+<p>このリソースを <span class="docutils literal"><span class="pre">/Groups/{id}</span></span> エンドポイントへPUTしてグループを
+更新する。</p>
+<p>リクエストをする際、<span class="docutils literal"><span class="pre">If-Match</span></span> ヘッダーの値は、グループを
+作成したときのレスポンスの &#8220;meta.version&#8221; の値を指定する
+必要がある。</p>
+<p>URL <span class="docutils literal"><span class="pre">/Groups/{id}</span></span> の <span class="docutils literal"><span class="pre">{id}</span></span> の部分には、グループを
+作成したときのレスポンスの &#8220;id&#8221; の値を指定する。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ curl -u scim_user:&lt;scim_userのパスワード&gt; -X PUT \
+-H &quot;Content-Type: application/json&quot; \
+-H &#39;If-Match: 00000000674150c8&#39; \-d @- \
+http://localhost:58080/Groups/0fe79d8c-5af7-45fa-8331-909650aa5427 \
+&lt; sample_ou1010-2.json | jq .
+
+{
+  &quot;_id&quot;: &quot;0fe79d8c-5af7-45fa-8331-909650aa5427&quot;,
+  &quot;_rev&quot;: &quot;000000009345865f&quot;,
+  &quot;schemas&quot;: [
+    &quot;urn:ietf:params:scim:schemas:core:2.0:Group&quot;
+  ],
+  &quot;id&quot;: &quot;0fe79d8c-5af7-45fa-8331-909650aa5427&quot;,
+  &quot;externalId&quot;: &quot;ou1010&quot;,
+  &quot;displayName&quot;: &quot;営業部営業第一課&quot;,
+  &quot;members&quot;: [
+    {
+      &quot;value&quot;: &quot;c9c361b0-5327-4f1a-976d-7bd58b66a52e&quot;,
+      &quot;_value&quot;: &quot;u0001&quot;,
+      &quot;display&quot;: &quot;テスト ユーザー1&quot;
+    }
+  ],
+  &quot;meta&quot;: {
+    &quot;resourceType&quot;: &quot;Group&quot;,
+    &quot;created&quot;: &quot;2016-06-05T10:24:39Z&quot;,
+    &quot;lastModified&quot;: &quot;2016-06-05T10:28:57Z&quot;,
+    &quot;version&quot;: &quot;000000009345865f&quot;
+  }
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="id27">
+<h3>ユーザーを検索してグループメンバーとなっていることを確認する</h3>
+<p>ここでは、検索を使って最初に登録したユーザー「テスト ユーザー1」を
+<span class="docutils literal"><span class="pre">externalId</span></span> をキーに検索して、データーを確認してみる。</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ curl -u scim_user:&lt;scim_userのパスワード&gt; \
+http://localhost:58080/Users?_queryFilter=externalId+eq+&#39;&quot;u0001&quot;&#39; \
+| jq .
+
+{
+  &quot;result&quot;: [
+    {
+      &quot;_id&quot;: &quot;c9c361b0-5327-4f1a-976d-7bd58b66a52e&quot;,
+      &quot;_rev&quot;: &quot;00000000b7a31b45&quot;,
+      &quot;schemas&quot;: [
+        &quot;urn:ietf:params:scim:schemas:core:2.0:User&quot;,
+        &quot;urn:ietf:params:scim:schemas:extension:enterprise:2.0:User&quot;
+      ],
+      &quot;id&quot;: &quot;c9c361b0-5327-4f1a-976d-7bd58b66a52e&quot;,
+      &quot;externalId&quot;: &quot;u0001&quot;,
+      &quot;userName&quot;: &quot;test_user1@mx.example.com&quot;,
+      &quot;name&quot;: {
+        &quot;formatted&quot;: &quot;テスト ユーザー1&quot;,
+        &quot;givenName&quot;: &quot;ユーザー1&quot;,
+        &quot;familyName&quot;: &quot;テスト&quot;
+      },
+      &quot;displayName&quot;: &quot;テスト ユーザー1&quot;,
+      &quot;emails&quot;: {
+        &quot;value&quot;: &quot;test_user1@mx.example.com&quot;,
+        &quot;primary&quot;: true
+      },
+      &quot;phoneNumbers&quot;: {
+        &quot;value&quot;: &quot;03-1234-5678&quot;,
+        &quot;primary&quot;: true
+      },
+      &quot;active&quot;: &quot;Active&quot;,
+      &quot;urn:ietf:params:scim:schemas:extension:enterprise:2.0:User&quot;: {
+        &quot;employeeNumber&quot;: &quot;0001&quot;
+      },
+      &quot;meta&quot;: {
+        &quot;resourceType&quot;: &quot;User&quot;,
+        &quot;created&quot;: &quot;2016-06-05T10:22:43Z&quot;,
+        &quot;version&quot;: &quot;00000000b7a31b45&quot;
+      },
+      &quot;groups&quot;: [
+        {
+          &quot;value&quot;: &quot;0fe79d8c-5af7-45fa-8331-909650aa5427&quot;,
+          &quot;_value&quot;: &quot;ou1010&quot;,
+          &quot;display&quot;: &quot;営業部営業第一課&quot;
+        }
+      ]
+    }
+  ],
+  &quot;resultCount&quot;: 1,
+  &quot;pagedResultsCookie&quot;: null,
+  &quot;totalPagedResultsPolicy&quot;: &quot;NONE&quot;,
+  &quot;totalPagedResults&quot;: -1,
+  &quot;remainingPagedResults&quot;: -1
+}
+$
+</pre></div>
+</div>
+<p>「groups」属性のところに、メンバーとして登録されたグループ
+「営業部営業第一課」が出力されている。</p>
+</div>
+</div>
+<div class="section" id="scim-2-0">
+<h2>SCIM 2.0との互換性に関する考察</h2>
+<p>HTTP Connection Handlerのマッピング機能の制約により、SCIM 2.0の仕様に
+完全に互換とすることはできなさそうである。今回気づいた点を列挙する。</p>
+<ol class="arabic simple">
+<li>Createを行なうときのエンドポイント名に <span class="docutils literal"><span class="pre">?_action=create</span></span> を付ける
+必要がある。</li>
+<li>emails, phoneNumbers属性は Multi-Valued 属性のため、属性値はリスト型
+であるべきであるが、OpenDJの設定では単一のオブジェクト型となる。</li>
+<li>active属性は真偽型であるべきであるが、OpenAMのユーザーの場合はLDAPの
+inetUserStatus属性を使う必要があるため、&#8221;Active&#8221; or &#8220;InActive&#8221; を値と
+する文字列となる。</li>
+<li>OpenAM側でユーザーのキー属性 uid、グループのキー属性 cn が必要となる
+ため、externalId属性を必須属性として、これらの属性の値を渡す必要がある。</li>
+<li>Userリソースのgroups属性、Groupリソースのmembers属性について、キー属性の
+指定が必要なため、サブ属性として_value補助属性が必要になる。</li>
+<li>Userリソースのgroups属性、Groupリソースのmembers属性のサブ属性である
+$ref を出力することができない。</li>
+<li>Groupリソースのmembers属性にUserリソースしか指定できない。</li>
+<li>検索はGETによるQueryが使えるが、SCIMの仕様に似ているもののパラメータ名や
+レスポンスの属性名等に違いがある。</li>
+<li>password属性を扱うことができない。passwordを更新するOpenDJの別のAPIを
+使う必要がある。</li>
+</ol>
+<p>など。</p>
+</div>
+<div class="section" id="id28">
+<h2>付録</h2>
+<div class="section" id="id29">
+<h3>http-config.json</h3>
+<div class="highlight-json"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="nt">&quot;authenticationFilter&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;supportHTTPBasicAuthentication&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="nt">&quot;supportAltAuthentication&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+    <span class="nt">&quot;altAuthenticationUsernameHeader&quot;</span><span class="p">:</span> <span class="s2">&quot;X-SCIM-Username&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;altAuthenticationPasswordHeader&quot;</span><span class="p">:</span> <span class="s2">&quot;X-SCIM-Password&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;searchBaseDN&quot;</span><span class="p">:</span> <span class="s2">&quot;dc=openam,dc=forgerock,dc=org&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;searchScope&quot;</span><span class="p">:</span> <span class="s2">&quot;one&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;searchFilterTemplate&quot;</span><span class="p">:</span> <span class="s2">&quot;(&amp;(uid=%s)(objectClass=inetOrgPerson))&quot;</span>
+  <span class="p">},</span>
+  <span class="nt">&quot;servlet&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">&quot;mappings&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="nt">&quot;/Users&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;baseDN&quot;</span><span class="p">:</span> <span class="s2">&quot;ou=people,dc=openam,dc=forgerock,dc=org&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;readOnUpdatePolicy&quot;</span><span class="p">:</span> <span class="s2">&quot;controls&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;useSubtreeDelete&quot;</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+        <span class="nt">&quot;usePermissiveModify&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="nt">&quot;etagAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;etag&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;namingStrategy&quot;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="nt">&quot;strategy&quot;</span><span class="p">:</span> <span class="s2">&quot;serverNaming&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;dnAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;uid&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;idAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;entryUUID&quot;</span>
+        <span class="p">},</span>
+        <span class="nt">&quot;additionalLDAPAttributes&quot;</span><span class="p">:</span> <span class="p">[</span>
+          <span class="p">{</span>
+            <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;objectClass&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;values&quot;</span><span class="p">:</span> <span class="p">[</span>
+              <span class="s2">&quot;top&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;person&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;organizationalPerson&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;inetOrgPerson&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;inetUser&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;iPlanetPreferences&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;iplanet-am-user-service&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;iplanet-am-managed-person&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;iplanet-am-auth-configuration-service&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;sunAMAuthAccountLockout&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;sunIdentityServerLibertyPPService&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;sunFederationManagerDataStore&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;sunFMSAML2NameIdentifier&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;oathDeviceProfilesContainer&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;devicePrintProfilesContainer&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;kbaInfoContainer&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;forgerock-am-dashboard-service&quot;</span>
+            <span class="p">]</span>
+          <span class="p">}</span>
+        <span class="p">],</span>
+        <span class="nt">&quot;attributes&quot;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="nt">&quot;schemas&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;constant&quot;</span><span class="p">:</span> <span class="p">[</span>
+              <span class="s2">&quot;urn:ietf:params:scim:schemas:core:2.0:User&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;urn:ietf:params:scim:schemas:extension:enterprise:2.0:User&quot;</span>
+            <span class="p">]</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;_id&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;entryUUID&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;_rev&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;etag&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;entryUUID&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;externalId&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;uid&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;isRequired&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;createOnlyDiscardWrites&quot;</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;userName&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;mail&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;isRequired&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readWrite&quot;</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;name&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;object&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;formatted&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                  <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;cn&quot;</span><span class="p">,</span>
+                  <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                  <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readWrite&quot;</span>
+                <span class="p">}</span>
+              <span class="p">},</span>
+              <span class="nt">&quot;givenName&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                  <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;givenName&quot;</span><span class="p">,</span>
+                  <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                  <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readWrite&quot;</span>
+                <span class="p">}</span>
+              <span class="p">},</span>
+              <span class="nt">&quot;familyName&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                  <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;sn&quot;</span><span class="p">,</span>
+                  <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                  <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readWrite&quot;</span>
+                <span class="p">}</span>
+              <span class="p">}</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;displayName&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;description&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readWrite&quot;</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;title&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;title&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readWrite&quot;</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;emails&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;object&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;value&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                  <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;mail&quot;</span><span class="p">,</span>
+                  <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                  <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readWrite&quot;</span>
+                <span class="p">}</span>
+              <span class="p">},</span>
+              <span class="nt">&quot;primary&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;constant&quot;</span><span class="p">:</span> <span class="kc">true</span>
+              <span class="p">}</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;phoneNumbers&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;object&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;value&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                  <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;telephoneNumber&quot;</span><span class="p">,</span>
+                  <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                  <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readWrite&quot;</span>
+                <span class="p">}</span>
+              <span class="p">},</span>
+              <span class="nt">&quot;primary&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;constant&quot;</span><span class="p">:</span> <span class="kc">true</span>
+              <span class="p">}</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;active&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;inetUserStatus&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readWrite&quot;</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;groups&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;reference&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;isMemberOf&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;baseDN&quot;</span><span class="p">:</span> <span class="s2">&quot;ou=groups,dc=openam,dc=forgerock,dc=org&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;primaryKey&quot;</span><span class="p">:</span> <span class="s2">&quot;cn&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;mapper&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;object&quot;</span><span class="p">:</span> <span class="p">{</span>
+                  <span class="nt">&quot;value&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                      <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;entryUUID&quot;</span><span class="p">,</span>
+                      <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                      <span class="nt">&quot;isRequired&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                      <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+                    <span class="p">}</span>
+                  <span class="p">},</span>
+                  <span class="nt">&quot;_value&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                      <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;cn&quot;</span><span class="p">,</span>
+                      <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                      <span class="nt">&quot;isRequired&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                      <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+                    <span class="p">}</span>
+                  <span class="p">},</span>
+                  <span class="nt">&quot;display&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                      <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;description&quot;</span><span class="p">,</span>
+                      <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                      <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+                    <span class="p">}</span>
+                  <span class="p">}</span>
+                <span class="p">}</span>
+              <span class="p">}</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;urn:ietf:params:scim:schemas:extension:enterprise:2.0:User&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;object&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;employeeNumber&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                  <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;employeeNumber&quot;</span><span class="p">,</span>
+                  <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                  <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readWrite&quot;</span>
+                <span class="p">}</span>
+              <span class="p">}</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;meta&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;object&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;resourceType&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;constant&quot;</span><span class="p">:</span> <span class="s2">&quot;User&quot;</span>
+              <span class="p">},</span>
+              <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                  <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;createTimestamp&quot;</span><span class="p">,</span>
+                  <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                  <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+                <span class="p">}</span>
+              <span class="p">},</span>
+              <span class="nt">&quot;lastModified&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                  <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;modifyTimestamp&quot;</span><span class="p">,</span>
+                  <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                  <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+                <span class="p">}</span>
+              <span class="p">},</span>
+              <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                  <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;etag&quot;</span><span class="p">,</span>
+                  <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                  <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+                <span class="p">}</span>
+              <span class="p">}</span>
+            <span class="p">}</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">},</span>
+      <span class="nt">&quot;/Groups&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="nt">&quot;baseDN&quot;</span><span class="p">:</span> <span class="s2">&quot;ou=groups,dc=openam,dc=forgerock,dc=org&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;readOnUpdatePolicy&quot;</span><span class="p">:</span> <span class="s2">&quot;controls&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;useSubtreeDelete&quot;</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+        <span class="nt">&quot;usePermissiveModify&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+        <span class="nt">&quot;etagAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;etag&quot;</span><span class="p">,</span>
+        <span class="nt">&quot;namingStrategy&quot;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="nt">&quot;strategy&quot;</span><span class="p">:</span> <span class="s2">&quot;serverNaming&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;dnAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;cn&quot;</span><span class="p">,</span>
+          <span class="nt">&quot;idAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;entryUUID&quot;</span>
+        <span class="p">},</span>
+        <span class="nt">&quot;additionalLDAPAttributes&quot;</span><span class="p">:</span> <span class="p">[</span>
+          <span class="p">{</span>
+            <span class="nt">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;objectClass&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;values&quot;</span><span class="p">:</span> <span class="p">[</span>
+              <span class="s2">&quot;top&quot;</span><span class="p">,</span>
+              <span class="s2">&quot;groupOfUniqueNames&quot;</span>
+            <span class="p">]</span>
+          <span class="p">}</span>
+        <span class="p">],</span>
+        <span class="nt">&quot;attributes&quot;</span><span class="p">:</span> <span class="p">{</span>
+          <span class="nt">&quot;schemas&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;constant&quot;</span><span class="p">:</span> <span class="p">[</span>
+              <span class="s2">&quot;urn:ietf:params:scim:schemas:core:2.0:Group&quot;</span>
+            <span class="p">]</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;_id&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;entryUUID&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;_rev&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;etag&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;id&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;entryUUID&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;externalId&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;cn&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;isRequired&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;createOnlyDiscardWrites&quot;</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;displayName&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;description&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+              <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readWrite&quot;</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;members&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;reference&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;uniqueMember&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;baseDN&quot;</span><span class="p">:</span> <span class="s2">&quot;ou=people,dc=openam,dc=forgerock,dc=org&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;primaryKey&quot;</span><span class="p">:</span> <span class="s2">&quot;uid&quot;</span><span class="p">,</span>
+              <span class="nt">&quot;mapper&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;object&quot;</span><span class="p">:</span> <span class="p">{</span>
+                  <span class="nt">&quot;value&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                      <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;entryUUID&quot;</span><span class="p">,</span>
+                      <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                      <span class="nt">&quot;isRequired&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                      <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+                    <span class="p">}</span>
+                  <span class="p">},</span>
+                  <span class="nt">&quot;_value&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                      <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;uid&quot;</span><span class="p">,</span>
+                      <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                      <span class="nt">&quot;isRequired&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                      <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readWrite&quot;</span>
+                    <span class="p">}</span>
+                  <span class="p">},</span>
+                  <span class="nt">&quot;display&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                      <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;description&quot;</span><span class="p">,</span>
+                      <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                      <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+                    <span class="p">}</span>
+                  <span class="p">}</span>
+                <span class="p">}</span>
+              <span class="p">}</span>
+            <span class="p">}</span>
+          <span class="p">},</span>
+          <span class="nt">&quot;meta&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="nt">&quot;object&quot;</span><span class="p">:</span> <span class="p">{</span>
+              <span class="nt">&quot;resourceType&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;constant&quot;</span><span class="p">:</span> <span class="s2">&quot;Group&quot;</span>
+              <span class="p">},</span>
+              <span class="nt">&quot;created&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                  <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;createTimestamp&quot;</span><span class="p">,</span>
+                  <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                  <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+                <span class="p">}</span>
+              <span class="p">},</span>
+              <span class="nt">&quot;lastModified&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                  <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;modifyTimestamp&quot;</span><span class="p">,</span>
+                  <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                  <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+                <span class="p">}</span>
+              <span class="p">},</span>
+              <span class="nt">&quot;version&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="nt">&quot;simple&quot;</span><span class="p">:</span> <span class="p">{</span>
+                  <span class="nt">&quot;ldapAttribute&quot;</span><span class="p">:</span> <span class="s2">&quot;etag&quot;</span><span class="p">,</span>
+                  <span class="nt">&quot;isSingleValued&quot;</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+                  <span class="nt">&quot;writability&quot;</span><span class="p">:</span> <span class="s2">&quot;readOnlyDiscardWrites&quot;</span>
+                <span class="p">}</span>
+              <span class="p">}</span>
+            <span class="p">}</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p class="rubric">脚注</p>
+<table class="docutils footnote" frame="void" id="id30" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td><a class="reference external" href="https://forgerock.org/opendj/">OpenDJ - Open Source LDAP directory - Project Home Page</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="openam" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td><a class="reference external" href="https://forgerock.org/openam/">OpenAM - OpenAM - Access Management &amp; SSO - Project Home Page</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id31" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[3]</a></td><td><a class="reference external" href="https://datatracker.ietf.org/wg/scim/documents/">System for Cross-domain Identity Management (scim) - Documents</a></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+
+    <div class="postmeta">
+        <div class="author">
+            <span>投稿者 @paoneJP</span>
+        </div>
+        
+        <div class="tags">
+            <span>
+                タグ:
+                <a href="../../../tags/openam.html">openam</a>, <a href="../../../tags/opendj.html">opendj</a>, <a href="../../../tags/scim.html">scim</a></span>
+        </div>
+        </div>
+    <ul class="related clearfix">
+            <li class="left"></li>
+            <li class="right"><a href="../../../2015/07/10/xperia_z4_tablet_projector_output.html">Xperia Z4 Tabletのプロジェクター出力を試す</a> &raquo; </li>
+        </ul></article><aside class="sidebar"><section><div class="widget">
+  <h1>書いてる人</h1>
+  <!--
+  <img src="https://pbs.twimg.com/profile_images/440050792179847168/4OhPuelv.jpeg" width="96" height="96"><br>
+  -->
+  <img src="https://avatars1.githubusercontent.com/u/6633398?v=3&s=460" width="96" height="96"><br>
+  Takashi Yahata
+  (<a href="https://twitter.com/paoneJP">@paoneJP</a>)
+</div></section><section><div class="widget">
+    <h1>最近の投稿</h1>
+    <ul><li>
+            <a href="#">OpenAM内蔵のOpenDJをSCIM 2.0サーバーとして構成する</a>
+        </li><li>
+            <a href="../../../2015/07/10/xperia_z4_tablet_projector_output.html">Xperia Z4 Tabletのプロジェクター出力を試す</a>
+        </li><li>
+            <a href="../../../2015/04/16/building_apache_module_on_various_linux_distro.html">ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</a>
+        </li><li>
+            <a href="../../../2015/02/19/openam_persistent_cookie_auth.html">OpenAMのPersistent Cookie認証モジュールで遊んでみる</a>
+        </li><li>
+            <a href="../../../2015/01/04/openam_wpa_in_same_apache2_instance.html">OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順]</a>
+        </li><li>
+            <a href="../../../2015/01/04/openam_wpa_install_on_debian.html">DebianにOpenAM Web Policy Agentをインストールする [非公式手順]</a>
+        </li><li>
+            <a href="../../../2014/12/21/encrypted_jwt_parsing_trial.html">暗号化されたJWTをパースしてみる</a>
+        </li><li>
+            <a href="../../../2014/12/21/tinker_theme_customize.html">Tinkererのテーマをカスタマイズする</a>
+        </li><li>
+            <a href="../../../2014/12/14/easy_setup_instructions_for_openam.html">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</a>
+        </li><li>
+            <a href="../../../2014/12/14/iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a>
+        </li></ul>
+</div>
+</section><section><div class="widget" id="searchbox" role="search">
+    <h1><a href="#searchbox">Search</a></h1>
+    <form action="../../../search.html" method="get">
+        <input type="text" name="q" />
+        <button type="submit"><span class="fa fa-search"></span></button>
+    </form>
+</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (5), <a href="../../../tags/opendj.html">opendj</a> (1), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/scim.html">scim</a> (1), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
+  <h1>ライセンス</h1>
+  <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
+  <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"
+       src="https://i.creativecommons.org/l/by/4.0/88x31.png"></a><br>
+  <font size="-1">
+  特に表示をしていない限り、このサイトのコンテンツは
+  <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
+  クリエイティブ・コモンズ 表示 4.0 国際ライセンスの下に提供されています。
+  </font></a>
+</div></section></aside></div> <!-- #main --></div> <!-- #main-container -->
+
+        <div class="footer-container" role="contentinfo"><footer class="wrapper">&copy; Copyright 2014-2015, @paoneJP. Powered by <a href="http://www.tinkerer.me/">Tinkerer</a> and <a href="http://sphinx.pocoo.org/">Sphinx</a>.</footer></div> <!-- footer-container -->
+
+      </div> <!--! end of #container --><!--[if lt IE 7 ]>
+          <script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+          <script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+        <![endif]-->
+    </body>
+</html>

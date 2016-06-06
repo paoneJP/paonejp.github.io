@@ -138,51 +138,51 @@ Windows SDKをインストールする。</p>
 <div class="section" id="vcvar32-bat">
 <h3>vcvar32.batへのパッチ</h3>
 <p>vcvarsall.batを実行しても、エラーが出て正しく動作しない。</p>
-<div class="highlight-python"><div class="highlight"><pre>C:\&gt; C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat
-Setting environment for using Microsoft Visual Studio 2010 x86 tools.
-ERROR: Cannot determine the location of the VS Common Tools folder.
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">C</span><span class="p">:</span>\<span class="o">&gt;</span> <span class="n">C</span><span class="p">:</span>\<span class="n">Program</span> <span class="n">Files</span> <span class="p">(</span><span class="n">x86</span><span class="p">)</span>\<span class="n">Microsoft</span> <span class="n">Visual</span> <span class="n">Studio</span> <span class="mf">10.0</span>\<span class="n">VC</span>\<span class="n">vcvarsall</span><span class="o">.</span><span class="n">bat</span>
+<span class="n">Setting</span> <span class="n">environment</span> <span class="k">for</span> <span class="n">using</span> <span class="n">Microsoft</span> <span class="n">Visual</span> <span class="n">Studio</span> <span class="mi">2010</span> <span class="n">x86</span> <span class="n">tools</span><span class="o">.</span>
+<span class="n">ERROR</span><span class="p">:</span> <span class="n">Cannot</span> <span class="n">determine</span> <span class="n">the</span> <span class="n">location</span> <span class="n">of</span> <span class="n">the</span> <span class="n">VS</span> <span class="n">Common</span> <span class="n">Tools</span> <span class="n">folder</span><span class="o">.</span>
 </pre></div>
 </div>
 <p><span class="docutils literal"><span class="pre">C:\Program</span> <span class="pre">Files</span> <span class="pre">(x86)\Microsoft</span> <span class="pre">Visual</span> <span class="pre">Studio</span> <span class="pre">10.0\VC\bin\vcvars32.bat</span></span>
 に次のパッチを当てる。</p>
-<div class="highlight-bat"><div class="highlight"><pre>--- vcvars<span class="m">32</span>.bat.installed      <span class="m">2009-11-15</span> <span class="m">19</span><span class="nl">:52:58</span>.<span class="m">000000000</span> +<span class="m">0900</span>
-+++ vcvars<span class="m">32</span>.bat        <span class="m">2014-09-23</span> <span class="m">21</span><span class="nl">:39:10</span>.<span class="m">844720400</span> +<span class="m">0900</span>
-<span class="p">@</span>@ <span class="m">-5</span><span class="p">,</span><span class="m">7</span> +<span class="m">5</span><span class="p">,</span><span class="m">8</span> @@
+<div class="highlight-bat"><div class="highlight"><pre><span></span>--- vcvars32.bat.installed      2009-11-15 19:52:58.000000000 +0900
++++ vcvars32.bat        2014-09-23 21:39:10.844720400 +0900
+<span class="p">@@</span> -5,7 +5,8 @@
 
-<span class="p"> @</span><span class="k">call</span> <span class="s2">&quot;%VS100COMNTOOLS%VCVarsQueryRegistry.bat&quot;</span> <span class="m">32</span>bit No<span class="m">64</span>bit
+ <span class="p">@</span><span class="k">call</span> <span class="s2">&quot;</span><span class="nv">%VS100COMNTOOLS%</span><span class="s2">VCVarsQueryRegistry.bat&quot;</span> 32bit No64bit
 
--@<span class="k">if</span> <span class="s2">&quot;%VSINSTALLDIR%&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> <span class="k">goto</span> <span class="nl">error_no_VSINSTALLDIR</span>
-+@<span class="k">if</span> <span class="s2">&quot;%VCINSTALLDIR%&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> <span class="k">goto</span> <span class="nl">error_no_VSINSTALLDIR</span>
-+@<span class="k">set</span> &quot;VSINSTALLDIR<span class="o">=</span><span class="nv">%VCINSTALLDIR:~0</span><span class="p">,</span><span class="m">-3</span>%
-<span class="p"> @</span><span class="k">if</span> <span class="s2">&quot;%FrameworkDir32%&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> <span class="k">goto</span> <span class="nl">error_no_FrameworkDIR32</span>
-<span class="p"> @</span><span class="k">if</span> <span class="s2">&quot;%FrameworkVersion32%&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> <span class="k">goto</span> <span class="nl">error_no_FrameworkVer32</span>
-<span class="p"> @</span><span class="k">if</span> <span class="s2">&quot;%Framework35Version%&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> <span class="k">goto</span> <span class="nl">error_no_Framework35Version</span>
-<span class="p">@</span>@ <span class="m">-75</span><span class="p">,</span><span class="m">22</span> +<span class="m">76</span><span class="p">,</span><span class="m">24</span> @@
-<span class="p"> @</span>exit <span class="n">/B</span> <span class="m">0</span>
+-@if <span class="s2">&quot;</span><span class="nv">%VSINSTALLDIR%</span><span class="s2">&quot;</span>==<span class="s2">&quot;&quot;</span> goto error_no_VSINSTALLDIR
++@if <span class="s2">&quot;</span><span class="nv">%VCINSTALLDIR%</span><span class="s2">&quot;</span>==<span class="s2">&quot;&quot;</span> goto error_no_VSINSTALLDIR
++@set <span class="s2">&quot;VSINSTALLDIR=</span><span class="nv">%VCINSTALLDIR:~0,-3%</span>
+ <span class="p">@</span><span class="k">if</span> <span class="s2">&quot;</span><span class="nv">%FrameworkDir32%</span><span class="s2">&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> <span class="k">goto</span> <span class="nl">error_no_FrameworkDIR32</span>
+ <span class="p">@</span><span class="k">if</span> <span class="s2">&quot;</span><span class="nv">%FrameworkVersion32%</span><span class="s2">&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> <span class="k">goto</span> <span class="nl">error_no_FrameworkVer32</span>
+ <span class="p">@</span><span class="k">if</span> <span class="s2">&quot;</span><span class="nv">%Framework35Version%</span><span class="s2">&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> <span class="k">goto</span> <span class="nl">error_no_Framework35Version</span>
+<span class="p">@@</span> -75,22 +76,24 @@
+ <span class="p">@</span><span class="k">exit</span> /B 0
 
- <span class="nl">:GetVSCommonToolsDirHelper32</span>
--@<span class="k">for</span> <span class="n">/F</span> <span class="s2">&quot;tokens=1,2*&quot;</span> <span class="nv">%%i</span> in (<span class="s1">&#39;reg query &quot;%1\SOFTWARE\Microsoft\VisualStudio\SxS\VS7&quot; /v &quot;10.0&quot;&#39;</span>) <span class="k">DO</span> (
-+@<span class="k">for</span> <span class="n">/F</span> <span class="s2">&quot;tokens=1,2*&quot;</span> <span class="nv">%%i</span> in (<span class="s1">&#39;reg query &quot;%1\SOFTWARE\Microsoft\VisualStudio\SxS\VC7&quot; /v &quot;10.0&quot;&#39;</span>) <span class="k">DO</span> (
-<span class="p">        @</span><span class="k">if</span> <span class="s2">&quot;%%i&quot;</span><span class="o">==</span><span class="s2">&quot;10.0&quot;</span> (
-<span class="p">                @</span><span class="k">SET</span> <span class="s2">&quot;VS100COMNTOOLS=%%k&quot;</span>
-        )
- )
-<span class="p"> @</span><span class="k">if</span> <span class="s2">&quot;%VS100COMNTOOLS%&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> exit <span class="n">/B</span> <span class="m">1</span>
-+@<span class="k">SET</span> &quot;VS<span class="m">100</span>COMNTOOLS<span class="o">=</span><span class="nv">%VS100COMNTOOLS:~0</span><span class="p">,</span><span class="m">-3</span>%
-<span class="p"> @</span><span class="k">SET</span> <span class="s2">&quot;VS100COMNTOOLS=%VS100COMNTOOLS%Common7\Tools\&quot;</span>
-<span class="p"> @</span>exit <span class="n">/B</span> <span class="m">0</span>
+ <span class="p">:</span><span class="nl">GetVSCommonToolsDirHelper32</span>
+-@for /F <span class="s2">&quot;tokens=1,2*&quot;</span> <span class="se">%%</span>i in (&#39;reg query <span class="s2">&quot;</span><span class="nv">%1</span><span class="s2">\SOFTWARE\Microsoft\VisualStudio\SxS\VS7&quot;</span> /v <span class="s2">&quot;10.0&quot;</span>&#39;) DO (
++@for /F <span class="s2">&quot;tokens=1,2*&quot;</span> <span class="se">%%</span>i in (&#39;reg query <span class="s2">&quot;</span><span class="nv">%1</span><span class="s2">\SOFTWARE\Microsoft\VisualStudio\SxS\VC7&quot;</span> /v <span class="s2">&quot;10.0&quot;</span>&#39;) DO (
+        <span class="p">@</span><span class="k">if</span> <span class="s2">&quot;</span><span class="se">%%</span><span class="s2">i&quot;</span><span class="o">==</span><span class="s2">&quot;10.0&quot;</span> <span class="p">(</span>
+                <span class="p">@</span><span class="k">SET</span> <span class="s2">&quot;VS100COMNTOOLS=</span><span class="se">%%</span><span class="s2">k&quot;</span>
+        <span class="p">)</span>
+ <span class="c1">)</span>
+ <span class="p">@</span><span class="k">if</span> <span class="s2">&quot;</span><span class="nv">%VS100COMNTOOLS%</span><span class="s2">&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> <span class="k">exit</span> /B 1
++@SET <span class="s2">&quot;VS100COMNTOOLS=</span><span class="nv">%VS100COMNTOOLS:~0,-3%</span>
+ <span class="p">@</span><span class="k">SET</span> <span class="s2">&quot;VS100COMNTOOLS=</span><span class="nv">%VS100COMNTOOLS%</span><span class="s2">Common7\Tools\&quot;</span>
+ <span class="p">@</span><span class="k">exit</span> /B 0
 
- <span class="nl">:GetVSCommonToolsDirHelper64</span>
--@<span class="k">for</span> <span class="n">/F</span> <span class="s2">&quot;tokens=1,2*&quot;</span> <span class="nv">%%i</span> in (<span class="s1">&#39;reg query &quot;%1\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\SxS\VS7&quot; /v &quot;10.0&quot;&#39;</span>) <span class="k">DO</span> (
-+@<span class="k">for</span> <span class="n">/F</span> <span class="s2">&quot;tokens=1,2*&quot;</span> <span class="nv">%%i</span> in (<span class="s1">&#39;reg query &quot;%1\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\SxS\VC7&quot; /v &quot;10.0&quot;&#39;</span>) <span class="k">DO</span> (
-<span class="p">        @</span><span class="k">if</span> <span class="s2">&quot;%%i&quot;</span><span class="o">==</span><span class="s2">&quot;10.0&quot;</span> (
-<span class="p">                @</span><span class="k">SET</span> <span class="s2">&quot;VS100COMNTOOLS=%%k&quot;</span>
-        )
- )
-<span class="p"> @</span><span class="k">if</span> <span class="s2">&quot;%VS100COMNTOOLS%&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> exit <span class="n">/B</span> <span class="m">1</span>
-+@<span class="k">SET</span> &quot;VS<span class="m">100</span>COMNTOOLS<span class="o">=</span><span class="nv">%VS100COMNTOOLS:~0</span><span class="p">,</span><span class="m">-3</span>%
-<span class="p"> @</span><span class="k">SET</span> <span class="s2">&quot;VS100COMNTOOLS=%VS100COMNTOOLS%Common7\Tools\&quot;</span>
-<span class="p"> @</span>exit <span class="n">/B</span> <span class="m">0</span>
+ <span class="p">:</span><span class="nl">GetVSCommonToolsDirHelper64</span>
+-@for /F <span class="s2">&quot;tokens=1,2*&quot;</span> <span class="se">%%</span>i in (&#39;reg query <span class="s2">&quot;</span><span class="nv">%1</span><span class="s2">\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\SxS\VS7&quot;</span> /v <span class="s2">&quot;10.0&quot;</span>&#39;) DO (
++@for /F <span class="s2">&quot;tokens=1,2*&quot;</span> <span class="se">%%</span>i in (&#39;reg query <span class="s2">&quot;</span><span class="nv">%1</span><span class="s2">\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\SxS\VC7&quot;</span> /v <span class="s2">&quot;10.0&quot;</span>&#39;) DO (
+        <span class="p">@</span><span class="k">if</span> <span class="s2">&quot;</span><span class="se">%%</span><span class="s2">i&quot;</span><span class="o">==</span><span class="s2">&quot;10.0&quot;</span> <span class="p">(</span>
+                <span class="p">@</span><span class="k">SET</span> <span class="s2">&quot;VS100COMNTOOLS=</span><span class="se">%%</span><span class="s2">k&quot;</span>
+        <span class="p">)</span>
+ <span class="c1">)</span>
+ <span class="p">@</span><span class="k">if</span> <span class="s2">&quot;</span><span class="nv">%VS100COMNTOOLS%</span><span class="s2">&quot;</span><span class="o">==</span><span class="s2">&quot;&quot;</span> <span class="k">exit</span> /B 1
++@SET <span class="s2">&quot;VS100COMNTOOLS=</span><span class="nv">%VS100COMNTOOLS:~0,-3%</span>
+ <span class="p">@</span><span class="k">SET</span> <span class="s2">&quot;VS100COMNTOOLS=</span><span class="nv">%VS100COMNTOOLS%</span><span class="s2">Common7\Tools\&quot;</span>
+ <span class="p">@</span><span class="k">exit</span> /B 0
 </pre></div>
 </div>
 </div>
@@ -212,30 +212,30 @@ ERROR: Cannot determine the location of the VS Common Tools folder.
 これで VC++ 関係の環境変数は自動的に設定される。</p>
 <p>しかし、実際のコンパイルには <span class="docutils literal"><span class="pre">C:\Program</span> <span class="pre">Files\Microsoft</span> <span class="pre">SDKs</span></span>
 以下のファイルも必要なため、以下の環境変数設定をする。</p>
-<div class="highlight-bat"><div class="highlight"><pre><span class="k">set</span> <span class="nv">PATH</span><span class="o">=</span><span class="nv">%PATH%</span>;C:\Program Files\Microsoft SDKs\Windows\v<span class="m">7</span>.<span class="m">1</span>\Bin
-<span class="k">set</span> <span class="nv">INCLUDE</span><span class="o">=</span>C:\Program Files\Microsoft SDKs\Windows\v<span class="m">7</span>.<span class="m">1</span>\Include
-<span class="k">set</span> <span class="nv">LIB</span><span class="o">=</span>C:\Program Files\Microsoft SDKs\Windows\v<span class="m">7</span>.<span class="m">1</span>\Lib
+<div class="highlight-bat"><div class="highlight"><pre><span></span><span class="k">set</span> <span class="nv">PATH</span><span class="p">=</span><span class="nv">%PATH%</span>;C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin
+<span class="k">set</span> <span class="nv">INCLUDE</span><span class="p">=</span>C:\Program Files\Microsoft SDKs\Windows\v7.1\Include
+<span class="k">set</span> <span class="nv">LIB</span><span class="p">=</span>C:\Program Files\Microsoft SDKs\Windows\v7.1\Lib
 </pre></div>
 </div>
 </div>
 <div class="section" id="id5">
 <h2>動作確認</h2>
 <p>PyCrypto 2.6.1 をインストールしてみる。</p>
-<div class="highlight-python"><div class="highlight"><pre>C:\&gt; pip install pycrypto
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">C</span><span class="p">:</span>\<span class="o">&gt;</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">pycrypto</span>
 
-C:\Users\paone&gt;pip install pycrypto
-Downloading/unpacking pycrypto
-  Running setup.py (path:C:\Users\paone\AppData\Local\Temp\pip_build_paone\pycrypto\setup.py) egg_info for package pycrypto
+<span class="n">C</span><span class="p">:</span>\<span class="n">Users</span>\<span class="n">paone</span><span class="o">&gt;</span><span class="n">pip</span> <span class="n">install</span> <span class="n">pycrypto</span>
+<span class="n">Downloading</span><span class="o">/</span><span class="n">unpacking</span> <span class="n">pycrypto</span>
+  <span class="n">Running</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="p">(</span><span class="n">path</span><span class="p">:</span><span class="n">C</span><span class="p">:</span>\<span class="n">Users</span>\<span class="n">paone</span>\<span class="n">AppData</span>\<span class="n">Local</span>\<span class="n">Temp</span>\<span class="n">pip_build_paone</span>\<span class="n">pycrypto</span>\<span class="n">setup</span><span class="o">.</span><span class="n">py</span><span class="p">)</span> <span class="n">egg_info</span> <span class="k">for</span> <span class="n">package</span> <span class="n">pycrypto</span>
 
-Installing collected packages: pycrypto
-  Running setup.py install for pycrypto
+<span class="n">Installing</span> <span class="n">collected</span> <span class="n">packages</span><span class="p">:</span> <span class="n">pycrypto</span>
+  <span class="n">Running</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span> <span class="k">for</span> <span class="n">pycrypto</span>
 
-...
+<span class="o">...</span>
 
-Successfully installed pycrypto
-Cleaning up...
+<span class="n">Successfully</span> <span class="n">installed</span> <span class="n">pycrypto</span>
+<span class="n">Cleaning</span> <span class="n">up</span><span class="o">...</span>
 
-C:\Users\paone&gt;
+<span class="n">C</span><span class="p">:</span>\<span class="n">Users</span>\<span class="n">paone</span><span class="o">&gt;</span>
 </pre></div>
 </div>
 <p>うまくインストールできた。</p>
@@ -281,6 +281,8 @@ LNK1123: failure during conversion to COFF: file invalid or corrupt</a></td></tr
 </div></section><section><div class="widget">
     <h1>最近の投稿</h1>
     <ul><li>
+            <a href="../../../2016/06/06/config_opendj_as_a_scim_server.html">OpenAM内蔵のOpenDJをSCIM 2.0サーバーとして構成する</a>
+        </li><li>
             <a href="../../../2015/07/10/xperia_z4_tablet_projector_output.html">Xperia Z4 Tabletのプロジェクター出力を試す</a>
         </li><li>
             <a href="../../../2015/04/16/building_apache_module_on_various_linux_distro.html">ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</a>
@@ -298,8 +300,6 @@ LNK1123: failure during conversion to COFF: file invalid or corrupt</a></td></tr
             <a href="../../12/14/easy_setup_instructions_for_openam.html">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</a>
         </li><li>
             <a href="../../12/14/iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a>
-        </li><li>
-            <a href="../../11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
         </li></ul>
 </div>
 </section><section><div class="widget" id="searchbox" role="search">
@@ -309,7 +309,7 @@ LNK1123: failure during conversion to COFF: file invalid or corrupt</a></td></tr
         <button type="submit"><span class="fa fa-search"></span></button>
     </form>
 </div></section><section><div class="widget">
-    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (4), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (5), <a href="../../../tags/opendj.html">opendj</a> (1), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/scim.html">scim</a> (1), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
   <h1>ライセンス</h1>
   <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
   <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"

@@ -122,22 +122,22 @@ Linuxの環境を作る」としてやってみた。</p>
 <h2>VPSをセットアップ</h2>
 <p>今回もDTIのServersMan&#64;VPSのDebianの環境を使う。
 先のエントリに書いた手順で、Debian jessieの環境にする。</p>
-<p><a class="reference internal" href="../../06/10/dti_vps_setup_memo.html"><em>DTIのVPSでDebian6の区画を借りたあとにやったこと</em></a></p>
+<p><a class="reference internal" href="../../06/10/dti_vps_setup_memo.html"><span class="doc">DTIのVPSでDebian6の区画を借りたあとにやったこと</span></a></p>
 </div>
 <div class="section" id="id3">
 <h2>日本語ロケールへ切り替える</h2>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo localedef -i ja_JP -f UTF-8 ja_JP.UTF-8
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo localedef -i ja_JP -f UTF-8 ja_JP.UTF-8
 $ sudo update-locale LANG=ja_JP.UTF-8
 </pre></div>
 </div>
 <p>設定後に再起動をしておく。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo shutdown -r now
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo shutdown -r now
 </pre></div>
 </div>
 </div>
 <div class="section" id="id4">
 <h2>デスクトップ関係のパッケージをインストール</h2>
-<div class="highlight-none"><div class="highlight"><pre>$ sudo apt install fonts-ipafont
+<div class="highlight-none"><div class="highlight"><pre><span></span>$ sudo apt install fonts-ipafont
 $ sudo apt install lightdm
 $ sudo apt install xfce4 xfce4-terminal scim-anthy
 $ sudo apt install xvfb
@@ -149,24 +149,24 @@ $ sudo apt install x11vnc
 <h2>LightDMをXvfb上で動作するように構成</h2>
 <p><span class="docutils literal"><span class="pre">/etc/lightdm/Xvfb.sh</span></span> として次のファイルを作る。
 用意するデスクトップのサイズと色数は、1024x768x24のところで指定している。</p>
-<div class="highlight-none"><div class="highlight"><pre>#! /bin/sh
+<div class="highlight-none"><div class="highlight"><pre><span></span>#! /bin/sh
 
 exec /usr/bin/Xvfb -screen 0 1024x768x24 -nolisten tcp
 </pre></div>
 </div>
 <p>パーミッション等を調整。</p>
-<div class="highlight-none"><div class="highlight"><pre>$ sudo chown root:root /etc/lightdm/Xvfb.sh
+<div class="highlight-none"><div class="highlight"><pre><span></span>$ sudo chown root:root /etc/lightdm/Xvfb.sh
 $ sudo chmod 755 /etc/lightdm/Xvfb.sh
 </pre></div>
 </div>
 <p><span class="docutils literal"><span class="pre">/etc/lightdm/lightdm.conf</span></span> の <span class="docutils literal"><span class="pre">[SeatDefaults]</span></span> セクションの
 <span class="docutils literal"><span class="pre">xserver-command</span></span> を設定する。</p>
-<div class="highlight-none"><div class="highlight"><pre>[SeatDefaults]
+<div class="highlight-none"><div class="highlight"><pre><span></span>[SeatDefaults]
 xserver-command=/etc/lightdm/Xvfb.sh
 </pre></div>
 </div>
 <p>LightDMを再起動する。</p>
-<div class="highlight-none"><div class="highlight"><pre>$ sudo /etc/init.d/lightdm restart
+<div class="highlight-none"><div class="highlight"><pre><span></span>$ sudo /etc/init.d/lightdm restart
 </pre></div>
 </div>
 </div>
@@ -175,20 +175,20 @@ xserver-command=/etc/lightdm/Xvfb.sh
 <p><span class="docutils literal"><span class="pre">/etc/init.d/x11vnc</span></span> として自動起動スクリプトを作る。
 このスクリプトは、このサイト <a class="footnote-reference" href="#linux-org" id="id5">[1]</a> に投稿されているものをベースに、
 実際はx11vncはpidファイルを作らないので、その辺を修正したもの。</p>
-<div class="highlight-sh"><div class="highlight"><pre><span class="c">#! /bin/sh</span>
+<div class="highlight-sh"><div class="highlight"><pre><span></span><span class="ch">#! /bin/sh</span>
 
-<span class="c">### BEGIN INIT INFO</span>
-<span class="c"># Provides:             x11vnc</span>
-<span class="c"># Required-Start:       $syslog $local_fs lightdm</span>
-<span class="c"># Required-Stop:        $syslog $local_fs</span>
-<span class="c"># Default-Start:        2 3 4 5</span>
-<span class="c"># Default-Stop:         0 1 6</span>
-<span class="c"># Short-Description:    x11vnc</span>
-<span class="c"># Description:          x11vnc</span>
-<span class="c">### END INIT INFO</span>
+<span class="c1">### BEGIN INIT INFO</span>
+<span class="c1"># Provides:             x11vnc</span>
+<span class="c1"># Required-Start:       $syslog $local_fs lightdm</span>
+<span class="c1"># Required-Stop:        $syslog $local_fs</span>
+<span class="c1"># Default-Start:        2 3 4 5</span>
+<span class="c1"># Default-Stop:         0 1 6</span>
+<span class="c1"># Short-Description:    x11vnc</span>
+<span class="c1"># Description:          x11vnc</span>
+<span class="c1">### END INIT INFO</span>
 
 <span class="nv">DAEMON</span><span class="o">=</span>/usr/bin/x11vnc
-<span class="nb">test</span> -x <span class="nv">$DAEMON</span> <span class="o">||</span> <span class="nb">exit </span>0
+<span class="nb">test</span> -x <span class="nv">$DAEMON</span> <span class="o">||</span> <span class="nb">exit</span> 0
 
 <span class="nv">DAEMON_OPTS</span><span class="o">=</span><span class="s2">&quot;-loop -reopen -shared -auth /var/run/lightdm/root/:0 -logappend /var/log/x11vnc.log -localhost -rfbport 5900 -rfbportv6 -1 -repeat&quot;</span>
 <span class="nv">NAME</span><span class="o">=</span>x11vnc
@@ -196,41 +196,41 @@ xserver-command=/etc/lightdm/Xvfb.sh
 
 <span class="nb">set</span> -e
 
-<span class="k">case</span> <span class="s2">&quot;$1&quot;</span> in
+<span class="k">case</span> <span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">&quot;</span> in
     start<span class="o">)</span>
-        <span class="nb">echo</span> -n <span class="s2">&quot;Starting $DESC: &quot;</span>
+        <span class="nb">echo</span> -n <span class="s2">&quot;Starting </span><span class="nv">$DESC</span><span class="s2">: &quot;</span>
         start-stop-daemon -b --start --quiet --exec <span class="nv">$DAEMON</span> -- <span class="nv">$DAEMON_OPTS</span>
-        <span class="nb">echo</span> <span class="s2">&quot;$NAME.&quot;</span>
-        ;;
+        <span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$NAME</span><span class="s2">.&quot;</span>
+        <span class="p">;;</span>
     stop<span class="o">)</span>
-        <span class="nb">echo</span> -n <span class="s2">&quot;Stopping $DESC: &quot;</span>
+        <span class="nb">echo</span> -n <span class="s2">&quot;Stopping </span><span class="nv">$DESC</span><span class="s2">: &quot;</span>
         start-stop-daemon --stop --oknodo --quiet --exec <span class="nv">$DAEMON</span>
-        <span class="nb">echo</span> <span class="s2">&quot;$NAME.&quot;</span>
-        ;;
+        <span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$NAME</span><span class="s2">.&quot;</span>
+        <span class="p">;;</span>
     restart<span class="o">)</span>
-        <span class="nb">echo</span> -n <span class="s2">&quot;Restarting $DESC: &quot;</span>
+        <span class="nb">echo</span> -n <span class="s2">&quot;Restarting </span><span class="nv">$DESC</span><span class="s2">: &quot;</span>
         start-stop-daemon --stop --oknodo --quiet --exec <span class="nv">$DAEMON</span>
         sleep 1
         start-stop-daemon -b --start --quiet --exec <span class="nv">$DAEMON</span> -- <span class="nv">$DAEMON_OPTS</span>
-        <span class="nb">echo</span> <span class="s2">&quot;$NAME.&quot;</span>
-        ;;
+        <span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$NAME</span><span class="s2">.&quot;</span>
+        <span class="p">;;</span>
     *<span class="o">)</span>
         <span class="nv">N</span><span class="o">=</span>/etc/init.d/<span class="nv">$NAME</span>
-        <span class="nb">echo</span> <span class="s2">&quot;Usage: $N {start|stop|restart}&quot;</span> &gt;&amp;2
-        <span class="nb">exit </span>1
-        ;;
+        <span class="nb">echo</span> <span class="s2">&quot;Usage: </span><span class="nv">$N</span><span class="s2"> {start|stop|restart}&quot;</span> &gt;<span class="p">&amp;</span>2
+        <span class="nb">exit</span> 1
+        <span class="p">;;</span>
     <span class="k">esac</span>
-<span class="nb">exit </span>0
+<span class="nb">exit</span> 0
 </pre></div>
 </div>
 <p>パーミッション等を調整して、自動起動を設定する。</p>
-<div class="highlight-none"><div class="highlight"><pre>$ sudo chown root:root /etc/init.d/x11vnc
+<div class="highlight-none"><div class="highlight"><pre><span></span>$ sudo chown root:root /etc/init.d/x11vnc
 $ sudo chmod 755 /etc/init.d/x11vnc
 $ sudo update-rc.d x11vnc defaults
 </pre></div>
 </div>
 <p>X11vncを起動する。</p>
-<div class="highlight-none"><div class="highlight"><pre>$ sudo /etc/init.d/x11vnc start
+<div class="highlight-none"><div class="highlight"><pre><span></span>$ sudo /etc/init.d/x11vnc start
 </pre></div>
 </div>
 <div class="section" id="id6">
@@ -295,7 +295,7 @@ LISTENに制限する。</td>
 <div class="section" id="id8">
 <h2>ログファイルのローテーションを設定する</h2>
 <p><span class="docutils literal"><span class="pre">/etc/logrotate.d/x11vnc</span></span> として次のファイルを作る。</p>
-<div class="highlight-none"><div class="highlight"><pre>/var/log/x11vnc.log {
+<div class="highlight-none"><div class="highlight"><pre><span></span>/var/log/x11vnc.log {
   daily
   rotate 14
   delaycompress
@@ -311,7 +311,7 @@ LISTENに制限する。</td>
 </div>
 <div class="section" id="id9">
 <h2>再起動して完成</h2>
-<div class="highlight-none"><div class="highlight"><pre>$ sudo shutdown -r now
+<div class="highlight-none"><div class="highlight"><pre><span></span>$ sudo shutdown -r now
 </pre></div>
 </div>
 </div>
@@ -368,6 +368,8 @@ x11vnc: Option -localhost seems to fail to restrict ipv6 access</a></td></tr>
 </div></section><section><div class="widget">
     <h1>最近の投稿</h1>
     <ul><li>
+            <a href="../../../2016/06/06/config_opendj_as_a_scim_server.html">OpenAM内蔵のOpenDJをSCIM 2.0サーバーとして構成する</a>
+        </li><li>
             <a href="../../../2015/07/10/xperia_z4_tablet_projector_output.html">Xperia Z4 Tabletのプロジェクター出力を試す</a>
         </li><li>
             <a href="../../../2015/04/16/building_apache_module_on_various_linux_distro.html">ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</a>
@@ -385,8 +387,6 @@ x11vnc: Option -localhost seems to fail to restrict ipv6 access</a></td></tr>
             <a href="../../12/14/easy_setup_instructions_for_openam.html">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</a>
         </li><li>
             <a href="../../12/14/iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a>
-        </li><li>
-            <a href="#">DTIのVPS上にデスクトップ環境を作るという試み</a>
         </li></ul>
 </div>
 </section><section><div class="widget" id="searchbox" role="search">
@@ -396,7 +396,7 @@ x11vnc: Option -localhost seems to fail to restrict ipv6 access</a></td></tr>
         <button type="submit"><span class="fa fa-search"></span></button>
     </form>
 </div></section><section><div class="widget">
-    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (4), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (5), <a href="../../../tags/opendj.html">opendj</a> (1), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/scim.html">scim</a> (1), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
   <h1>ライセンス</h1>
   <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
   <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"

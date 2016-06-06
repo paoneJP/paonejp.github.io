@@ -132,26 +132,26 @@ Apacheインスタンスに同居させて構成してみることにした。</
 <h2>構成方法</h2>
 <div class="section" id="openam">
 <h3>OpenAMサーバをセットアップする</h3>
-<p>先に書いたエントリ <a class="reference internal" href="../../../2014/12/14/easy_setup_instructions_for_openam.html"><em>DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</em></a>
+<p>先に書いたエントリ <a class="reference internal" href="../../../2014/12/14/easy_setup_instructions_for_openam.html"><span class="doc">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</span></a>
 の手順でOpenAMサーバをセットアップする。</p>
 </div>
 <div class="section" id="tomcathttp-connector">
 <h3>TomcatのHTTP Connectorを有効にする</h3>
 <p>/etc/tomcat8/server.xmlのHTTP Connectorのコメントアウトを外す。</p>
-<div class="highlight-xml"><div class="highlight"><pre><span class="nt">&lt;Connector</span> <span class="na">port=</span><span class="s">&quot;8080&quot;</span> <span class="na">protocol=</span><span class="s">&quot;HTTP/1.1&quot;</span>
+<div class="highlight-xml"><div class="highlight"><pre><span></span><span class="nt">&lt;Connector</span> <span class="na">port=</span><span class="s">&quot;8080&quot;</span> <span class="na">protocol=</span><span class="s">&quot;HTTP/1.1&quot;</span>
            <span class="na">connectionTimeout=</span><span class="s">&quot;20000&quot;</span>
            <span class="na">URIEncoding=</span><span class="s">&quot;UTF-8&quot;</span>
            <span class="na">redirectPort=</span><span class="s">&quot;8443&quot;</span> <span class="nt">/&gt;</span>
 </pre></div>
 </div>
 <p>Tomcatを再起動して、HTTP Connectorを有効にする。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo service tomcat8 restart
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo service tomcat8 restart
 </pre></div>
 </div>
 </div>
 <div class="section" id="web-policy-agent">
 <h3>Web Policy Agentをインストールする</h3>
-<p>先に書いたエントリ <a class="reference internal" href="openam_wpa_install_on_debian.html"><em>DebianにOpenAM Web Policy Agentをインストールする [非公式手順]</em></a>
+<p>先に書いたエントリ <a class="reference internal" href="openam_wpa_install_on_debian.html"><span class="doc">DebianにOpenAM Web Policy Agentをインストールする [非公式手順]</span></a>
 の手順で、Web Policy Agentをインストールする。(動作確認以外の手順を実行する)</p>
 <p><strong>Agent Profileでの設定値</strong></p>
 <table border="1" class="docutils">
@@ -202,7 +202,7 @@ Apacheインスタンスに同居させて構成してみることにした。</
 <p>この段階では、まだWeb Policy Agentは正しく動作しない。
 このままでは以降の手順を実行するのに支障があるため、
 Web Policy Agentを外してApacheを再起動する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo a2dismod dsame
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo a2dismod dsame
 $ sudo service apache2 restart
 </pre></div>
 </div>
@@ -232,13 +232,13 @@ $ sudo service apache2 restart
 <div class="section" id="web-policy-agentnaming-servicetomcat">
 <h3>Web Policy AgentのNaming ServiceへのアクセスをTomcatに向ける</h3>
 <p>Web Policy Agentの起動用設定ファイルを編集する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ cd /opt/openam/web_agents/apache24_agent/Agent_001/config/
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ cd /opt/openam/web_agents/apache24_agent/Agent_001/config/
 $ sudo vi OpenSSOAgentBootstrap.properties
 </pre></div>
 </div>
 <p>Naming ServiceのURLを指定している箇所のURLを
 <span class="docutils literal"><span class="pre">http://localhost.com:8080/...</span></span> に変更する。</p>
-<div class="highlight-python"><div class="highlight"><pre>com.sun.identity.agents.config.naming.url = http://localhost:8080/openam/namingservice
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">com</span><span class="o">.</span><span class="n">sun</span><span class="o">.</span><span class="n">identity</span><span class="o">.</span><span class="n">agents</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">naming</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">8080</span><span class="o">/</span><span class="n">openam</span><span class="o">/</span><span class="n">namingservice</span>
 </pre></div>
 </div>
 </div>
@@ -281,16 +281,16 @@ Naming Serviceが応答するURLをTomcatに向ける。</p>
 <li>応答に Content-Type が指定されていないので、mod_filterを使って常に書き換えを行なうようにフィルタの登録をする。</li>
 </ul>
 <p>mod_substituteとmod_filterを有効にする。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo a2enmod substitute filter
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo a2enmod substitute filter
 </pre></div>
 </div>
 <p>Apacheの設定ファイルを開く。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo vi /etc/apache2/sites-available/default-ssl.conf
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo vi /etc/apache2/sites-available/default-ssl.conf
 </pre></div>
 </div>
 <p>&lt;Location /openam&gt; ... &lt;/Location&gt; のブロックの後ろに、
 次の6行を書き足す。</p>
-<div class="highlight-apache"><div class="highlight"><pre><span class="nt">&lt;Location</span> <span class="s">/openam/namingservice</span><span class="nt">&gt;</span>
+<div class="highlight-apache"><div class="highlight"><pre><span></span><span class="nt">&lt;Location</span> <span class="s">/openam/namingservice</span><span class="nt">&gt;</span>
         <span class="nb">Substitute</span> s!http://localhost:8080/!https://www.example.com/!
         <span class="nb">FilterDeclare</span> namingrewrite
         <span class="nb">FilterProvider</span> namingrewrite SUBSTITUTE true
@@ -299,7 +299,7 @@ Naming Serviceが応答するURLをTomcatに向ける。</p>
 </pre></div>
 </div>
 <p>書き足した後は、こんな感じになる。</p>
-<div class="highlight-apache"><div class="highlight"><pre>        <span class="nt">&lt;Location</span> <span class="s">/openam</span><span class="nt">&gt;</span>
+<div class="highlight-apache"><div class="highlight"><pre><span></span>        <span class="nt">&lt;Location</span> <span class="s">/openam</span><span class="nt">&gt;</span>
                 <span class="nb">ProxyPass</span> ajp://localhost:8009/openam
         <span class="nt">&lt;/Location&gt;</span>
 
@@ -323,13 +323,13 @@ Debianのインストール直後の状態では、/etc/hostsで自ホストのI
 IPアドレスが127.0.0.1でなければ正しく動作しない。</p>
 <p>/etc/hostsを次のように変更する。</p>
 <p>変更前</p>
-<div class="highlight-python"><div class="highlight"><pre>127.0.0.1       localhost
-127.0.1.1       www.example.com www
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mf">127.0</span><span class="o">.</span><span class="mf">0.1</span>       <span class="n">localhost</span>
+<span class="mf">127.0</span><span class="o">.</span><span class="mf">1.1</span>       <span class="n">www</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span> <span class="n">www</span>
 </pre></div>
 </div>
 <p>変更後</p>
-<div class="highlight-python"><div class="highlight"><pre>127.0.0.1       localhost www.example.com www
-#127.0.1.1      www.example.com www
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mf">127.0</span><span class="o">.</span><span class="mf">0.1</span>       <span class="n">localhost</span> <span class="n">www</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">com</span> <span class="n">www</span>
+<span class="c1">#127.0.1.1      www.example.com www</span>
 </pre></div>
 </div>
 <p><span class="raw-html"></s></span></p>
@@ -341,20 +341,20 @@ Apacheともに自動起動される。実際はApacheの方が起動完了が�
 Web Policy Agentが初期化に失敗し、コンテンツへのアクセスができなくなる。</p>
 <p>Web Policy Agentの初期化のリトライを設定することで、この問題に対処する。</p>
 <p>Web Policy Agentの起動用設定ファイルを編集する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ cd /opt/openam/web_agents/apache24_agent/Agent_001/config/
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ cd /opt/openam/web_agents/apache24_agent/Agent_001/config/
 $ sudo vi OpenSSOAgentBootstrap.properties
 </pre></div>
 </div>
 <p>ファイルの最後の部分にリトライに関する設定項目があるので、次のとおり
 設定を変更する。</p>
-<div class="highlight-text"><div class="highlight"><pre>com.forgerock.agents.init.retry.max = 5
+<div class="highlight-text"><div class="highlight"><pre><span></span>com.forgerock.agents.init.retry.max = 5
 com.forgerock.agents.init.retry.wait = 60
 </pre></div>
 </div>
 </div>
 <div class="section" id="web-policy-agentapache">
 <h3>Web Policy Agentを有効にしてApacheを再起動する</h3>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo a2enmod dsame
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo a2enmod dsame
 $ sudo service apache2 restart
 </pre></div>
 </div>
@@ -524,6 +524,8 @@ Web Policy Agentの動作の理解をいくらか深められたことが収穫�
 </div></section><section><div class="widget">
     <h1>最近の投稿</h1>
     <ul><li>
+            <a href="../../../2016/06/06/config_opendj_as_a_scim_server.html">OpenAM内蔵のOpenDJをSCIM 2.0サーバーとして構成する</a>
+        </li><li>
             <a href="../../07/10/xperia_z4_tablet_projector_output.html">Xperia Z4 Tabletのプロジェクター出力を試す</a>
         </li><li>
             <a href="../../04/16/building_apache_module_on_various_linux_distro.html">ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</a>
@@ -541,8 +543,6 @@ Web Policy Agentの動作の理解をいくらか深められたことが収穫�
             <a href="../../../2014/12/14/easy_setup_instructions_for_openam.html">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</a>
         </li><li>
             <a href="../../../2014/12/14/iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a>
-        </li><li>
-            <a href="../../../2014/11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
         </li></ul>
 </div>
 </section><section><div class="widget" id="searchbox" role="search">
@@ -552,7 +552,7 @@ Web Policy Agentの動作の理解をいくらか深められたことが収穫�
         <button type="submit"><span class="fa fa-search"></span></button>
     </form>
 </div></section><section><div class="widget">
-    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (4), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (5), <a href="../../../tags/opendj.html">opendj</a> (1), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/scim.html">scim</a> (1), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
   <h1>ライセンス</h1>
   <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
   <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"

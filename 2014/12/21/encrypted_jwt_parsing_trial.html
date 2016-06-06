@@ -98,7 +98,7 @@ Appendix A.2に出てくるRSA1_5 and A128CBC-HS256で暗号化されたJWE
 <p>といったところ。</p>
 <p>ただ、&#8221;JOSE Header&#8221; と &#8220;JWE Protected Header&#8221; と &#8220;AAD&#8221; との関係というか
 用語の使い分けがまだしっくりきていない。</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">urlsafe_b64decode</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">urlsafe_b64decode</span>
 
 <span class="kn">from</span> <span class="nn">Crypto.PublicKey</span> <span class="kn">import</span> <span class="n">RSA</span>
 <span class="kn">from</span> <span class="nn">Crypto.Cipher</span> <span class="kn">import</span> <span class="n">PKCS1_v1_5</span>
@@ -108,130 +108,130 @@ Appendix A.2に出てくるRSA1_5 and A128CBC-HS256で暗号化されたJWE
 <span class="kn">from</span> <span class="nn">Crypto.Util.number</span> <span class="kn">import</span> <span class="n">long_to_bytes</span><span class="p">,</span> <span class="n">bytes_to_long</span>
 
 
-<span class="c"># RSA Key described in A.2.3</span>
-<span class="c">#</span>
-<span class="n">jwk_n</span> <span class="o">=</span> <span class="s">&#39;sXchDaQebHnPiGvyDOAT4saGEUetSyo9MKLOoWFsueri23bOdgWp4Dy1Wl&#39;</span> \
-        <span class="s">&#39;UzewbgBHod5pcM9H95GQRV3JDXboIRROSBigeC5yjU1hGzHHyXss8UDpre&#39;</span> \
-        <span class="s">&#39;cbAYxknTcQkhslANGRUZmdTOQ5qTRsLAt6BTYuyvVRdhS8exSZEy_c4gs_&#39;</span> \
-        <span class="s">&#39;7svlJJQ4H9_NxsiIoLwAEk7-Q3UXERGYw_75IDrGA84-lA_-Ct4eTlXHBI&#39;</span> \
-        <span class="s">&#39;Y2EaV7t7LjJaynVJCpkv4LKjTTAumiGUIuQhrNhZLuF_RJLqHpM2kgWFLU&#39;</span> \
-        <span class="s">&#39;7-VTdL1VbC2tejvcI2BlMkEpk1BzBZI0KQB0GaDWFLN-aEAw3vRw&#39;</span>
-<span class="n">jwk_e</span> <span class="o">=</span> <span class="s">&#39;AQAB&#39;</span>
-<span class="n">jwk_d</span> <span class="o">=</span> <span class="s">&#39;VFCWOqXr8nvZNyaaJLXdnNPXZKRaWCjkU5Q2egQQpTBMwhprMzWzpR8Sxq&#39;</span> \
-        <span class="s">&#39;1OPThh_J6MUD8Z35wky9b8eEO0pwNS8xlh1lOFRRBoNqDIKVOku0aZb-ry&#39;</span> \
-        <span class="s">&#39;nq8cxjDTLZQ6Fz7jSjR1Klop-YKaUHc9GsEofQqYruPhzSA-QgajZGPbE_&#39;</span> \
-        <span class="s">&#39;0ZaVDJHfyd7UUBUKunFMScbflYAAOYJqVIVwaYR5zWEEceUjNnTNo_CVSj&#39;</span> \
-        <span class="s">&#39;-VvXLO5VZfCUAVLgW4dpf1SrtZjSt34YLsRarSb127reG_DUwg9Ch-Kyvj&#39;</span> \
-        <span class="s">&#39;T1SkHgUWRVGcyly7uvVGRSDwsXypdrNinPA4jlhoNdizK2zF2CWQ&#39;</span>
-<span class="n">jwk_p</span> <span class="o">=</span> <span class="s">&#39;9gY2w6I6S6L0juEKsbeDAwpd9WMfgqFoeA9vEyEUuk4kLwBKcoe1x4HG68&#39;</span> \
-        <span class="s">&#39;ik918hdDSE9vDQSccA3xXHOAFOPJ8R9EeIAbTi1VwBYnbTp87X-xcPWlEP&#39;</span> \
-        <span class="s">&#39;krdoUKW60tgs1aNd_Nnc9LEVVPMS390zbFxt8TN_biaBgelNgbC95sM&#39;</span>
-<span class="n">jwk_q</span> <span class="o">=</span> <span class="s">&#39;uKlCKvKv_ZJMVcdIs5vVSU_6cPtYI1ljWytExV_skstvRSNi9r66jdd9-y&#39;</span> \
-        <span class="s">&#39;BhVfuG4shsp2j7rGnIio901RBeHo6TPKWVVykPu1iYhQXw1jIABfw-MVsN&#39;</span> \
-        <span class="s">&#39;-3bQ76WLdt2SDxsHs7q7zPyUyHXmps7ycZ5c72wGkUwNOjYelmkiNS0&#39;</span>
-<span class="n">n</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwk_n</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">))</span>
-<span class="n">e</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwk_e</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">))</span>
-<span class="n">d</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwk_d</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">))</span>
-<span class="n">p</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwk_p</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">))</span>
-<span class="n">q</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwk_q</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">))</span>
+<span class="c1"># RSA Key described in A.2.3</span>
+<span class="c1">#</span>
+<span class="n">jwk_n</span> <span class="o">=</span> <span class="s1">&#39;sXchDaQebHnPiGvyDOAT4saGEUetSyo9MKLOoWFsueri23bOdgWp4Dy1Wl&#39;</span> \
+        <span class="s1">&#39;UzewbgBHod5pcM9H95GQRV3JDXboIRROSBigeC5yjU1hGzHHyXss8UDpre&#39;</span> \
+        <span class="s1">&#39;cbAYxknTcQkhslANGRUZmdTOQ5qTRsLAt6BTYuyvVRdhS8exSZEy_c4gs_&#39;</span> \
+        <span class="s1">&#39;7svlJJQ4H9_NxsiIoLwAEk7-Q3UXERGYw_75IDrGA84-lA_-Ct4eTlXHBI&#39;</span> \
+        <span class="s1">&#39;Y2EaV7t7LjJaynVJCpkv4LKjTTAumiGUIuQhrNhZLuF_RJLqHpM2kgWFLU&#39;</span> \
+        <span class="s1">&#39;7-VTdL1VbC2tejvcI2BlMkEpk1BzBZI0KQB0GaDWFLN-aEAw3vRw&#39;</span>
+<span class="n">jwk_e</span> <span class="o">=</span> <span class="s1">&#39;AQAB&#39;</span>
+<span class="n">jwk_d</span> <span class="o">=</span> <span class="s1">&#39;VFCWOqXr8nvZNyaaJLXdnNPXZKRaWCjkU5Q2egQQpTBMwhprMzWzpR8Sxq&#39;</span> \
+        <span class="s1">&#39;1OPThh_J6MUD8Z35wky9b8eEO0pwNS8xlh1lOFRRBoNqDIKVOku0aZb-ry&#39;</span> \
+        <span class="s1">&#39;nq8cxjDTLZQ6Fz7jSjR1Klop-YKaUHc9GsEofQqYruPhzSA-QgajZGPbE_&#39;</span> \
+        <span class="s1">&#39;0ZaVDJHfyd7UUBUKunFMScbflYAAOYJqVIVwaYR5zWEEceUjNnTNo_CVSj&#39;</span> \
+        <span class="s1">&#39;-VvXLO5VZfCUAVLgW4dpf1SrtZjSt34YLsRarSb127reG_DUwg9Ch-Kyvj&#39;</span> \
+        <span class="s1">&#39;T1SkHgUWRVGcyly7uvVGRSDwsXypdrNinPA4jlhoNdizK2zF2CWQ&#39;</span>
+<span class="n">jwk_p</span> <span class="o">=</span> <span class="s1">&#39;9gY2w6I6S6L0juEKsbeDAwpd9WMfgqFoeA9vEyEUuk4kLwBKcoe1x4HG68&#39;</span> \
+        <span class="s1">&#39;ik918hdDSE9vDQSccA3xXHOAFOPJ8R9EeIAbTi1VwBYnbTp87X-xcPWlEP&#39;</span> \
+        <span class="s1">&#39;krdoUKW60tgs1aNd_Nnc9LEVVPMS390zbFxt8TN_biaBgelNgbC95sM&#39;</span>
+<span class="n">jwk_q</span> <span class="o">=</span> <span class="s1">&#39;uKlCKvKv_ZJMVcdIs5vVSU_6cPtYI1ljWytExV_skstvRSNi9r66jdd9-y&#39;</span> \
+        <span class="s1">&#39;BhVfuG4shsp2j7rGnIio901RBeHo6TPKWVVykPu1iYhQXw1jIABfw-MVsN&#39;</span> \
+        <span class="s1">&#39;-3bQ76WLdt2SDxsHs7q7zPyUyHXmps7ycZ5c72wGkUwNOjYelmkiNS0&#39;</span>
+<span class="n">n</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwk_n</span><span class="o">+</span><span class="s1">&#39;==&#39;</span><span class="p">))</span>
+<span class="n">e</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwk_e</span><span class="o">+</span><span class="s1">&#39;==&#39;</span><span class="p">))</span>
+<span class="n">d</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwk_d</span><span class="o">+</span><span class="s1">&#39;==&#39;</span><span class="p">))</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwk_p</span><span class="o">+</span><span class="s1">&#39;==&#39;</span><span class="p">))</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">bytes_to_long</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwk_q</span><span class="o">+</span><span class="s1">&#39;==&#39;</span><span class="p">))</span>
 <span class="n">key</span> <span class="o">=</span> <span class="n">RSA</span><span class="o">.</span><span class="n">construct</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">))</span>
 
 
-<span class="c"># Target JWT described in A.2.7</span>
-<span class="c">#</span>
-<span class="n">jwt</span> <span class="o">=</span> <span class="s">&#39;eyJhbGciOiJSU0ExXzUiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0.&#39;</span> \
-      <span class="s">&#39;UGhIOguC7IuEvf_NPVaXsGMoLOmwvc1GyqlIKOK1nN94nHPoltGRhWhw7Zx0-kFm&#39;</span> \
-      <span class="s">&#39;1NJn8LE9XShH59_i8J0PH5ZZyNfGy2xGdULU7sHNF6Gp2vPLgNZ__deLKxGHZ7Pc&#39;</span> \
-      <span class="s">&#39;HALUzoOegEI-8E66jX2E4zyJKx-YxzZIItRzC5hlRirb6Y5Cl_p-ko3YvkkysZIF&#39;</span> \
-      <span class="s">&#39;NPccxRU7qve1WYPxqbb2Yw8kZqa2rMWI5ng8OtvzlV7elprCbuPhcCdZ6XDP0_F8&#39;</span> \
-      <span class="s">&#39;rkXds2vE4X-ncOIM8hAYHHi29NX0mcKiRaD0-D-ljQTP-cFPgwCp6X-nZZd9OHBv&#39;</span> \
-      <span class="s">&#39;-B3oWh2TbqmScqXMR4gp_A.&#39;</span> \
-      <span class="s">&#39;AxY8DCtDaGlsbGljb3RoZQ.&#39;</span> \
-      <span class="s">&#39;KDlTtXchhZTGufMYmOYGS4HffxPSUrfmqCHXaI9wOGY.&#39;</span> \
-      <span class="s">&#39;9hH0vgRfYgPnAHOd8stkvw&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span>
+<span class="c1"># Target JWT described in A.2.7</span>
+<span class="c1">#</span>
+<span class="n">jwt</span> <span class="o">=</span> <span class="s1">&#39;eyJhbGciOiJSU0ExXzUiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2In0.&#39;</span> \
+      <span class="s1">&#39;UGhIOguC7IuEvf_NPVaXsGMoLOmwvc1GyqlIKOK1nN94nHPoltGRhWhw7Zx0-kFm&#39;</span> \
+      <span class="s1">&#39;1NJn8LE9XShH59_i8J0PH5ZZyNfGy2xGdULU7sHNF6Gp2vPLgNZ__deLKxGHZ7Pc&#39;</span> \
+      <span class="s1">&#39;HALUzoOegEI-8E66jX2E4zyJKx-YxzZIItRzC5hlRirb6Y5Cl_p-ko3YvkkysZIF&#39;</span> \
+      <span class="s1">&#39;NPccxRU7qve1WYPxqbb2Yw8kZqa2rMWI5ng8OtvzlV7elprCbuPhcCdZ6XDP0_F8&#39;</span> \
+      <span class="s1">&#39;rkXds2vE4X-ncOIM8hAYHHi29NX0mcKiRaD0-D-ljQTP-cFPgwCp6X-nZZd9OHBv&#39;</span> \
+      <span class="s1">&#39;-B3oWh2TbqmScqXMR4gp_A.&#39;</span> \
+      <span class="s1">&#39;AxY8DCtDaGlsbGljb3RoZQ.&#39;</span> \
+      <span class="s1">&#39;KDlTtXchhZTGufMYmOYGS4HffxPSUrfmqCHXaI9wOGY.&#39;</span> \
+      <span class="s1">&#39;9hH0vgRfYgPnAHOd8stkvw&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
 
 
-<span class="c"># Decode JOSE Header (JWE Protected Header) [A.2.1]</span>
-<span class="c">#</span>
-<span class="n">header</span> <span class="o">=</span> <span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&#39;## JOSE Header</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span>
+<span class="c1"># Decode JOSE Header (JWE Protected Header) [A.2.1]</span>
+<span class="c1">#</span>
+<span class="n">header</span> <span class="o">=</span> <span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;==&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;## JOSE Header</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span>
 
 
-<span class="c"># Decrypt CEK usign the RSAES-PKCS1-V1_5 algorithm [A.2.3][A.2.2]</span>
-<span class="c">#</span>
-<span class="n">cek</span> <span class="o">=</span> <span class="n">PKCS1_v1_5</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&#39;## CEK</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">cek</span><span class="p">))</span>
+<span class="c1"># Decrypt CEK usign the RSAES-PKCS1-V1_5 algorithm [A.2.3][A.2.2]</span>
+<span class="c1">#</span>
+<span class="n">cek</span> <span class="o">=</span> <span class="n">PKCS1_v1_5</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;==&#39;</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;## CEK</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">cek</span><span class="p">))</span>
 
 
-<span class="c"># Decode Initializtion Vector [A.2.4][B.4]</span>
-<span class="c">#</span>
-<span class="n">iv</span> <span class="o">=</span> <span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&#39;## IV</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">iv</span><span class="p">))</span>
+<span class="c1"># Decode Initializtion Vector [A.2.4][B.4]</span>
+<span class="c1">#</span>
+<span class="n">iv</span> <span class="o">=</span> <span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;==&#39;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;## IV</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">iv</span><span class="p">))</span>
 
 
-<span class="c"># Decode Additional Authenticated Data (use JWE Protected Header) [A.2.5]</span>
-<span class="c">#</span>
+<span class="c1"># Decode Additional Authenticated Data (use JWE Protected Header) [A.2.5]</span>
+<span class="c1">#</span>
 <span class="n">aad</span> <span class="o">=</span> <span class="n">jwt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&#39;## AAD</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">aad</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;## AAD</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">aad</span><span class="p">))</span>
 
 
-<span class="c"># Extract MAC_KEY and ENC_KEY [B.1]</span>
-<span class="c">#</span>
+<span class="c1"># Extract MAC_KEY and ENC_KEY [B.1]</span>
+<span class="c1">#</span>
 <span class="n">mac_key</span> <span class="o">=</span> <span class="n">cek</span><span class="p">[:</span><span class="mi">16</span><span class="p">]</span>
 <span class="n">enc_key</span> <span class="o">=</span> <span class="n">cek</span><span class="p">[</span><span class="mi">16</span><span class="p">:]</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&#39;## MAC_KEY</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">mac_key</span><span class="p">))</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&#39;## ENC_KEY</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">enc_key</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;## MAC_KEY</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">mac_key</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;## ENC_KEY</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">enc_key</span><span class="p">))</span>
 
 
-<span class="c"># Decrypt Ciphertext [B.2]</span>
+<span class="c1"># Decrypt Ciphertext [B.2]</span>
 
-<span class="c">## Decode Ciphertext</span>
-<span class="n">ct</span> <span class="o">=</span> <span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwt</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&#39;## Ciphertext</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">ct</span><span class="p">))</span>
+<span class="c1">## Decode Ciphertext</span>
+<span class="n">ct</span> <span class="o">=</span> <span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwt</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;==&#39;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;## Ciphertext</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">ct</span><span class="p">))</span>
 
-<span class="c">## Decrypt Ciphertext</span>
+<span class="c1">## Decrypt Ciphertext</span>
 <span class="n">aes</span> <span class="o">=</span> <span class="n">AES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">enc_key</span><span class="p">,</span> <span class="n">AES</span><span class="o">.</span><span class="n">MODE_CBC</span><span class="p">,</span> <span class="n">iv</span><span class="p">)</span>
 <span class="n">text</span> <span class="o">=</span> <span class="n">aes</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">ct</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
 
-<span class="c">## Remove PKCS#7 padding</span>
+<span class="c1">## Remove PKCS#7 padding</span>
 <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">aes</span><span class="o">.</span><span class="n">block_size</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
     <span class="n">padding</span> <span class="o">=</span> <span class="nb">chr</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="n">n</span>
     <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">padding</span><span class="p">):</span>
         <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">[:</span><span class="o">-</span><span class="n">n</span><span class="p">]</span>
 
-<span class="k">print</span><span class="p">(</span><span class="s">&#39;## Plaintext</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;## Plaintext</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
 
 
-<span class="c"># AAD Length value [B.3]</span>
-<span class="c">#</span>
+<span class="c1"># AAD Length value [B.3]</span>
+<span class="c1">#</span>
 <span class="n">al</span> <span class="o">=</span> <span class="n">long_to_bytes</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">aad</span><span class="p">)</span><span class="o">*</span><span class="mi">8</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&#39;## AL value</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">al</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;## AL value</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">al</span><span class="p">))</span>
 
 
-<span class="c"># Input to HMAC Computation [B.5]</span>
-<span class="c">#</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&#39;## Input to HMAC Computation (AAD + IV + Ciphertext + AL value)</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span>
+<span class="c1"># Input to HMAC Computation [B.5]</span>
+<span class="c1">#</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;## Input to HMAC Computation (AAD + IV + Ciphertext + AL value)</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span>
       <span class="nb">list</span><span class="p">(</span><span class="n">aad</span><span class="o">+</span><span class="n">iv</span><span class="o">+</span><span class="n">ct</span><span class="o">+</span><span class="n">al</span><span class="p">))</span>
 
 
-<span class="c"># Compute HMAC Value [B.6]</span>
-<span class="c">#</span>
+<span class="c1"># Compute HMAC Value [B.6]</span>
+<span class="c1">#</span>
 <span class="n">m</span> <span class="o">=</span> <span class="n">HMAC</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">mac_key</span><span class="p">,</span> <span class="n">aad</span><span class="o">+</span><span class="n">iv</span><span class="o">+</span><span class="n">ct</span><span class="o">+</span><span class="n">al</span><span class="p">,</span> <span class="n">SHA256</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&#39;## Computed HMAC Value</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;## Computed HMAC Value</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
 
 
-<span class="c"># Compute Authentication Tag [B.7]</span>
-<span class="c">#</span>
+<span class="c1"># Compute Authentication Tag [B.7]</span>
+<span class="c1">#</span>
 <span class="n">t</span> <span class="o">=</span> <span class="n">m</span><span class="p">[:</span><span class="mi">16</span><span class="p">]</span>
-<span class="n">tag</span> <span class="o">=</span> <span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwt</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">+</span><span class="s">&#39;==&#39;</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&#39;## Computed Authentiction Tag</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
-<span class="k">print</span><span class="p">(</span><span class="s">&#39;## Authentication Tag in JWT</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
+<span class="n">tag</span> <span class="o">=</span> <span class="n">urlsafe_b64decode</span><span class="p">(</span><span class="n">jwt</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;==&#39;</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;## Computed Authentiction Tag</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;## Authentication Tag in JWT</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">tag</span><span class="p">))</span>
 </pre></div>
 </div>
 <p><a class="reference external" href="https://gist.github.com/paoneJP/7fa72ab0458091681b30">https://gist.github.com/paoneJP/7fa72ab0458091681b30</a> にも同じものを貼っておく。</p>
 <div class="section" id="id2">
 <h2>実行結果</h2>
-<div class="highlight-python"><div class="highlight"><pre>$ python3 parse_jwe_sample.py
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ python3 parse_jwe_sample.py
 ## JOSE Header
  {&quot;alg&quot;:&quot;RSA1_5&quot;,&quot;enc&quot;:&quot;A128CBC-HS256&quot;}
 ## CEK
@@ -296,6 +296,8 @@ $
 </div></section><section><div class="widget">
     <h1>最近の投稿</h1>
     <ul><li>
+            <a href="../../../2016/06/06/config_opendj_as_a_scim_server.html">OpenAM内蔵のOpenDJをSCIM 2.0サーバーとして構成する</a>
+        </li><li>
             <a href="../../../2015/07/10/xperia_z4_tablet_projector_output.html">Xperia Z4 Tabletのプロジェクター出力を試す</a>
         </li><li>
             <a href="../../../2015/04/16/building_apache_module_on_various_linux_distro.html">ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</a>
@@ -313,8 +315,6 @@ $
             <a href="../14/easy_setup_instructions_for_openam.html">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</a>
         </li><li>
             <a href="../14/iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a>
-        </li><li>
-            <a href="../../11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
         </li></ul>
 </div>
 </section><section><div class="widget" id="searchbox" role="search">
@@ -324,7 +324,7 @@ $
         <button type="submit"><span class="fa fa-search"></span></button>
     </form>
 </div></section><section><div class="widget">
-    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (4), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (5), <a href="../../../tags/opendj.html">opendj</a> (1), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/scim.html">scim</a> (1), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
   <h1>ライセンス</h1>
   <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
   <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"

@@ -130,34 +130,34 @@
 <div class="section" id="tomcat8">
 <h2>Tomcat8のセットアップ</h2>
 <p>tomcat8をインストールする。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo apt install tomcat8
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo apt install tomcat8
 </pre></div>
 </div>
 <p>JavaVMへのメモリ割り当ては、デフォルトの128MBのままだと、OpenAMの設定の途中で
 メモリ不足で止まることがあるので、256MBへ増やしておく。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo vi /etc/default/tomcat8
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo vi /etc/default/tomcat8
 </pre></div>
 </div>
 <p>21行目のJAVA_OPTSの行の <span class="docutils literal"><span class="pre">-Xmx128m</span></span> の箇所を、 <span class="docutils literal"><span class="pre">-Xmx256m</span></span> へ書き換える。</p>
-<div class="highlight-sh"><div class="highlight"><pre><span class="c">#JAVA_OPTS=&quot;-Djava.awt.headless=true -Xmx128m -XX:+UseConcMarkSweepGC&quot;</span>
+<div class="highlight-sh"><div class="highlight"><pre><span></span><span class="c1">#JAVA_OPTS=&quot;-Djava.awt.headless=true -Xmx128m -XX:+UseConcMarkSweepGC&quot;</span>
 <span class="nv">JAVA_OPTS</span><span class="o">=</span><span class="s2">&quot;-Djava.awt.headless=true -Xmx256m -XX:+UseConcMarkSweepGC&quot;</span>
 </pre></div>
 </div>
 <p>Tomcat8へは、Apache経由でAJPを使ってアクセスするため、server.xmlを
 編集して、HTTP Connectorの設定をコメントアウトし、
 AJP 1.3 Connectrの設定はコメントアウトを解除する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo vi /etc/tomcat8/server.xml
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo vi /etc/tomcat8/server.xml
 </pre></div>
 </div>
 <p>95行目から始まるAJP 1.3 Connectorの設定がコメントアウトされているので、
 コメントアウトを解除する。(前後の行の <span class="docutils literal"><span class="pre">&lt;!--</span></span> と <span class="docutils literal"><span class="pre">--&gt;</span></span> を削除する)</p>
-<div class="highlight-xml"><div class="highlight"><pre><span class="c">&lt;!-- Define an AJP 1.3 Connector on port 8009 --&gt;</span>
+<div class="highlight-xml"><div class="highlight"><pre><span></span><span class="c">&lt;!-- Define an AJP 1.3 Connector on port 8009 --&gt;</span>
 <span class="nt">&lt;Connector</span> <span class="na">port=</span><span class="s">&quot;8009&quot;</span> <span class="na">protocol=</span><span class="s">&quot;AJP/1.3&quot;</span> <span class="na">redirectPort=</span><span class="s">&quot;8443&quot;</span> <span class="nt">/&gt;</span>
 </pre></div>
 </div>
 <p>71行目から始まるHTTP Connectorの設定をコメントアウトする。
 (<span class="docutils literal"><span class="pre">&lt;!--</span></span> と <span class="docutils literal"><span class="pre">--&gt;</span></span> で囲む)</p>
-<div class="highlight-xml"><div class="highlight"><pre><span class="c">&lt;!--</span>
+<div class="highlight-xml"><div class="highlight"><pre><span></span><span class="c">&lt;!--</span>
 <span class="c">&lt;Connector port=&quot;8080&quot; protocol=&quot;HTTP/1.1&quot;</span>
 <span class="c">           connectionTimeout=&quot;20000&quot;</span>
 <span class="c">           URIEncoding=&quot;UTF-8&quot;</span>
@@ -166,18 +166,18 @@ AJP 1.3 Connectrの設定はコメントアウトを解除する。</p>
 </pre></div>
 </div>
 <p>Tomcat8を再起動する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo service tomcat8 restart
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo service tomcat8 restart
 </pre></div>
 </div>
 </div>
 <div class="section" id="apache">
 <h2>Apacheのセットアップ</h2>
 <p>apache2をインストールする。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo apt install apache2
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo apt install apache2
 </pre></div>
 </div>
 <p>SSL用のサーバ設定を有効にする。mod_proxy_ajpも有効にしておく。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo a2enmod ssl proxy_ajp
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo a2enmod ssl proxy_ajp
 $ sudo a2ensite default-ssl
 </pre></div>
 </div>
@@ -189,17 +189,17 @@ $ sudo a2ensite default-ssl
 </div>
 <p>https://www.example.com/openam/ へアクセスしたときに、AJPを使ってTomcat8上の
 OpenAMへ中継されるように構成する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo vi /etc/apache2/sites-available/default-ssl.conf
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo vi /etc/apache2/sites-available/default-ssl.conf
 </pre></div>
 </div>
 <p>133行付近、&lt;/VirtualHost&gt; の直前に次の3行を書き足す。</p>
-<div class="highlight-apache"><div class="highlight"><pre><span class="nt">&lt;Location</span> <span class="s">/openam</span><span class="nt">&gt;</span>
+<div class="highlight-apache"><div class="highlight"><pre><span></span><span class="nt">&lt;Location</span> <span class="s">/openam</span><span class="nt">&gt;</span>
         <span class="nb">ProxyPass</span> ajp://localhost:8009/openam
 <span class="nt">&lt;/Location&gt;</span>
 </pre></div>
 </div>
 <p>書き足した後は、こんな感じになる。</p>
-<div class="highlight-apache"><div class="highlight"><pre>                <span class="nb">BrowserMatch</span> <span class="s2">&quot;MSIE [17-9]&quot;</span> ssl-unclean-shutdown
+<div class="highlight-apache"><div class="highlight"><pre><span></span>                <span class="nb">BrowserMatch</span> <span class="s2">&quot;MSIE [17-9]&quot;</span> ssl-unclean-shutdown
 
                 <span class="nt">&lt;Location</span> <span class="s">/openam</span><span class="nt">&gt;</span>
                         <span class="nb">ProxyPass</span> ajp://localhost:8009/openam
@@ -209,7 +209,7 @@ OpenAMへ中継されるように構成する。</p>
 </pre></div>
 </div>
 <p>Apacheを再起動する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo service apache2 restart
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo service apache2 restart
 </pre></div>
 </div>
 </div>
@@ -218,7 +218,7 @@ OpenAMへ中継されるように構成する。</p>
 <p>OpenAM Nightly Builds <a class="footnote-reference" href="#download" id="id3">[2]</a> から [Nightly Build] をダウンロードする。</p>
 <img alt="../../../_images/20141214_easy_setup_instructions_for_openam_1.png" src="../../../_images/20141214_easy_setup_instructions_for_openam_1.png" />
 <p>ダウンロードしたzipファイルを展開する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo apt install unzip
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo apt install unzip
 $ unzip OpenAM-13.0.0-SNAPSHOT_nightly_20141129.zip
 $ ls openam
 ClientSDK-13.0.0-SNAPSHOT.jar
@@ -238,13 +238,13 @@ $
 </div>
 <p>OpenAMのwarファイルをデプロイする。デプロイ先のファイル名は openam.war
 にする。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo cp openam/OpenAM-13.0.0-SNAPSHOT.war /var/lib/tomcat8/webapps/openam.war
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo cp openam/OpenAM-13.0.0-SNAPSHOT.war /var/lib/tomcat8/webapps/openam.war
 $ sudo chown tomcat8:tomcat8 /var/lib/tomcat8/webapps/openam.war
 </pre></div>
 </div>
 <p>Tomcat8がデプロイを完了するのを待つ。Tomcat8のログファイルを見て、
 &#8220;Deployment of ... openam.war has finished ...&#8221; が表示されたらデプロイ完了。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo tail -f /var/log/tomcat8/catalina.out
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo tail -f /var/log/tomcat8/catalina.out
 ...
 Dec 14, 2014 8:53:00 PM org.apache.catalina.startup.HostConfig deployWAR
 INFO: Deploying web application archive /var/lib/tomcat8/webapps/openam.war
@@ -260,7 +260,7 @@ INFO: Deployment of web application archive /var/lib/tomcat8/webapps/openam.war 
 <p>セットアップを行なう前に、OpenAMをセットアップするサーバ自身で、
 www.example.comの名前解決ができていることを確認する。
 (名前解決ができないとセットアップが途中でエラーとなる)</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo ping -c 1 www.example.com
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo ping -c 1 www.example.com
 PING debian.example.com (nnn.nnn.nnn.nnn) 56(84) bytes of data.
 64 bytes from debian.example.com (nnn.nnn.nnn.nnn): icmp_seq=1 ttl=64 time=0.305 ms
 
@@ -271,7 +271,7 @@ $
 </pre></div>
 </div>
 <p>この後のセットアップで必要となるディレクトリを作成する。</p>
-<div class="highlight-python"><div class="highlight"><pre>$ sudo mkdir /usr/share/tomcat8/openam
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo mkdir /usr/share/tomcat8/openam
 $ sudo chown tomcat8:tomcat8 /usr/share/tomcat8/openam
 $ sudo mkdir /usr/share/tomcat8/.openamcfg
 $ sudo chown tomcat8:tomcat8 /usr/share/tomcat8/.openamcfg
@@ -369,6 +369,8 @@ VPS上でセットアップする場合は、これらのポートへのアク�
 </div></section><section><div class="widget">
     <h1>最近の投稿</h1>
     <ul><li>
+            <a href="../../../2016/06/06/config_opendj_as_a_scim_server.html">OpenAM内蔵のOpenDJをSCIM 2.0サーバーとして構成する</a>
+        </li><li>
             <a href="../../../2015/07/10/xperia_z4_tablet_projector_output.html">Xperia Z4 Tabletのプロジェクター出力を試す</a>
         </li><li>
             <a href="../../../2015/04/16/building_apache_module_on_various_linux_distro.html">ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする</a>
@@ -386,8 +388,6 @@ VPS上でセットアップする場合は、これらのポートへのアク�
             <a href="#">DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]</a>
         </li><li>
             <a href="iptables_setup_memo.html">DTIのVPS上でiptablesを設定しておく</a>
-        </li><li>
-            <a href="../../11/28/dti_vps_as_vdi_memo.html">DTIのVPS上にデスクトップ環境を作るという試み</a>
         </li></ul>
 </div>
 </section><section><div class="widget" id="searchbox" role="search">
@@ -397,7 +397,7 @@ VPS上でセットアップする場合は、これらのポートへのアク�
         <button type="submit"><span class="fa fa-search"></span></button>
     </form>
 </div></section><section><div class="widget">
-    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (4), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
+    <h1>タグ</h1><a href="../../../tags/apache_module.html">apache module</a> (1), <a href="../../../tags/centos.html">centos</a> (1), <a href="../../../tags/debian.html">debian</a> (8), <a href="../../../tags/idcon.html">idcon</a> (1), <a href="../../../tags/jwt.html">jwt</a> (2), <a href="../../../tags/openam.html">openam</a> (5), <a href="../../../tags/opendj.html">opendj</a> (1), <a href="../../../tags/openid.html">openid</a> (1), <a href="../../../tags/python.html">python</a> (2), <a href="../../../tags/scim.html">scim</a> (1), <a href="../../../tags/tinkerer.html">tinkerer</a> (1), <a href="../../../tags/vps.html">vps</a> (4), <a href="../../../tags/xperia.html">xperia</a> (1)</div></section><section><div class="widget">
   <h1>ライセンス</h1>
   <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"> 
   <img alt="クリエイティブ・コモンズ・ライセンス" style="border-width:0"

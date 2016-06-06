@@ -1,0 +1,973 @@
+OpenAM内蔵のOpenDJをSCIM 2.0サーバーとして構成する
+==================================================
+
+OpenAMに内蔵されているOpenDJ (Embedded OpenDJ) がSCIMサーバーとして
+動きそうだったので、ついでにSCIM 2.0サーバーとして構成してみた、という話。
+
+.. more::
+
+
+OpenDJとは
+----------
+
+OpenDJ [#opendj]_ は、ForgeRockのプロジェクトで開発されている
+LDAPサーバーである。バージョン2.6からRESTアクセスの機能が実装されている。
+
+RESTアクセスではJSONで表現されたデーターが使用されるのだが、簡単な
+設定ファイルを書くことで、JSONデーターをLDAPのオブジェクトにマッピング
+できる。デフォルトの設定ファイルはSCIM 1.0スキーマが扱えるような定義
+になっている。
+
+OpenDJは、Embedded OpenDJとしてOpenAM [#openam]_ にも内蔵されており、
+OpenAMの設定情報を格納したり、小規模向けに構成する際にユーザー情報や
+グループ情報を保管するデーターストアとして使われる。
+
+このEmbedded OpenDJでもRESTアクセスの機能を使えるっぽい感じなので、
+OpenAMのユーザーとグループをSCIMで操作するイメージで構成をしてみる。
+
+SCIMは、SCIM 2.0にあたる仕様が昨年9月 (2015年9月) にRFC [#scim]_ 
+化されたので、せっかくなので、できるだけSCIM 2.0スキーマを扱えるように
+構成してみることにした。
+
+
+HTTP Connection Handlerの設定を書く
+-----------------------------------
+
+HTTP Connection Hanlderの設定は ``http-config.json`` ファイルに書く。
+今回使う設定をこのページの最後に掲載する。また同じものは
+`こちらからダウンロード <https://gist.githubusercontent.com/paoneJP/4917b107eb49e75fd3b5a58e6a3295e3/raw/71e6fc3ba9af77d2934e83c057898806b2c9487f/http-config.json>`_
+できる。
+
+この設定では以下のような属性マッピングを行なっている。
+
+
+Userリソース (/Usersエンドポイント)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
++-------------------------+--------------------+
++JSON (SCIMリソース) 属性 |LDAPオブジェクト属性|
++=========================+====================+
+|_id [a]_                 |entryUUID [b]_      |
++-------------------------+--------------------+
+|_rev [a]_                |etag                |
++-------------------------+--------------------+
+|id                       |entryUUID [b]_      |
++-------------------------+--------------------+
+|externalId               |uid                 |
++-------------------------+--------------------+
+|userName                 |mail [c]_           |
++------------+------------+--------------------+
+|name        |formatted   |cn                  |
+|            +------------+--------------------+
+|            |givenName   |givenName           |
+|            +------------+--------------------+
+|            |familyName  |sn                  |
++------------+------------+--------------------+
+|displayName              |description         |
++-------------------------+--------------------+
+|title                    |title               |
++------------+------------+--------------------+
+|emails      |value       |mail                |
+|            +------------+--------------------+
+|            |primary     |"true" [d]_         |
++------------+------------+--------------------+
+|phoneNumbers|value       |mail                |
+|            +------------+--------------------+
+|            |primary     |"true" [d]_         |
++------------+------------+--------------------+
+|active                   |inetUserStatus [e]_ |
++------------+------------+--------------------+
+|groups      |value       |group の entryUUID  |
+|            +------------+--------------------+
+|            |_value [f]_ |group の cn         |
+|            +------------+--------------------+
+|            |display     |group の description|
++------------+------------+--------------------+
+|employeeNumber           |employeeNumber      |
++------------+------------+--------------------+
+|meta        |resourceType|"User" [g]_         |
+|            +------------+--------------------+
+|            |create      |createTimestamp     |
+|            +------------+--------------------+
+|            |lastModified|modifyTimestamp     |
+|            +------------+--------------------+
+|            |version     |etag                |
++------------+------------+--------------------+
+
+.. [a] "_id", "_rev" はOpenDJが固有に使用する属性値である。
+.. [b] 今回はリソースIDにサーバーが生成する値を使用するように構成した。
+.. [c] ログインIDにメールアドレスを使用する想定をして設定した。
+.. [d] 固定値として "true" を設定した。
+.. [e] SCIMスキーマではBooleanだが、LDAP側の制約で "Active" or "InActive" 
+        のいずれかの値をとる。
+.. [f] LDAP側のグループオブジェクトのキー属性が必要なため、補助属性を定義した。
+.. [g] 固定値として "User" を設定した。
+
+
+Groupリソース (/Groupsエンドポイント)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
++-------------------------+--------------------+
++SCIM 2.0 Core Schema 属性|LDAP 属性           |
++=========================+====================+
+|_id [h]_                 |entryUUID [i]_      |
++-------------------------+--------------------+
+|_rev [h]_                |etag                |
++-------------------------+--------------------+
+|id                       |entryUUID [i]_      |
++-------------------------+--------------------+
+|externalId               |cn                  |
++-------------------------+--------------------+
+|displayName              |description         |
++------------+------------+--------------------+
+|members     |value       |user の entryUUID   |
+|            +------------+--------------------+
+|            |_value      |user の uid [j]_    |
+|            +------------+--------------------+
+|            |display     |user の description |
++------------+------------+--------------------+
+|meta        |resourceType|"Group" [k]_        |
+|            +------------+--------------------+
+|            |create      |createTimestamp     |
+|            +------------+--------------------+
+|            |lastModified|modifyTimestamp     |
+|            +------------+--------------------+
+|            |version     |etag                |
++------------+------------+--------------------+
+
+.. [h] "_id", "_rev" はOpenDJが固有に使用する属性値である。
+.. [i] 今回はリソースIDにサーバーが生成する値を使用するように構成した。
+.. [j] LDAP側のユーザーオブジェクトのキー属性が必要なため、補助属性を定義した。
+.. [k] 固定値として "User" を設定した。
+
+
+
+HTTP Connection Handlerを構成する
+---------------------------------
+
+http-config.jsonを配置する
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``http-config.json`` ファイルを設定ディレクトリに配置する。
+
+::
+
+  $ sudo cp http-config.json /usr/share/tomcat8/openam/opends/config/
+
+
+
+HTTP Connection Handlerを有効にする
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+HTTP Connection Handlerを ``58080`` ポートで動作させる。
+
+::
+
+  $ cd /usr/share/tomcat8/openam/opends/bin
+  
+  $ sudo ./dsconfig -n -X -h localhost -p 4444 -D "cn=Directory Manager"  \
+  -w <amadminのパスワード> set-connection-handler-prop \
+  --handler-name "HTTP Connection Handler" --set listen-port:58080
+  
+  $ sudo ./dsconfig -n -X -h localhost -p 4444 -D "cn=Directory Manager" \
+  -w <amadminのパスワード> set-connection-handler-prop \
+  --handler-name "HTTP Connection Handler" --set enabled:true
+
+
+SCIMアクセス用のユーザーを作成する
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+SCIMアクセス用のユーザー ``scim_user`` を作成する。このユーザーが
+SCIMアクセス時に含まれないようにするため、OpenAMのユーザーが格納
+されいてるツリーとは異なる位置に作成する。ここでは、
+``dc=openam,dc=forgerock,dc=org`` に作成している。
+
+``add_scim_user.ldif`` を用意する。
+
+::
+
+  dn: uid=scim_user,dc=openam,dc=forgerock,dc=org
+  objectClass: top
+  objectClass: person
+  objectClass: organizationalPerson
+  objectClass: inetOrgPerson
+  uid: scim_user
+  sn: scim_user
+  cn: scim_user
+
+
+``scim_user`` を作成し、パスワードを設定する。
+
+::
+
+  $ ldapadd -h localhost -p 50389 -D 'cn=Directory Manager' -W \
+  -f add_scim_user.ldif
+  
+  Enter LDAP Password: <amadminのパスワード>
+  adding new entry "uid=scim_user,dc=openam,dc=forgerock,dc=org"
+  
+  $ ldappasswd -h localhost -p 50389 -D 'cn=Directory Manager' -W \
+  'uid=scim_user,dc=openam,dc=forgerock,dc=org' -S
+  
+  New password: <scim_userのパスワード>
+  Re-enter new password: <scim_userのパスワード>
+  Enter LDAP Password: <scim_userのパスワード>
+  $
+
+
+scim_userのデーターへのアクセス権を設定する
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+OpenAMの初期設定では、ユーザーによる属性へのアクセスができないように
+なっている。"scim_user" にSCIMアクセスで必要なアクセス権を設定する。
+
+``modify_aci.ldif`` を用意する。
+
+::
+
+  dn: dc=openam,dc=forgerock,dc=org
+  changetype: modify
+  replace: aci
+  aci: (target="ldap:///dc=openam,dc=forgerock,dc=org")(targetattr != "userPassw
+   ord")(version 3.0; acl "OpenSSO-FAM Services anonymous access"; deny (all) (u
+   serdn != "ldap:///uid=scim_user,dc=openam,dc=forgerock,dc=org" and userdn = "
+   ldap:///anyone");)
+  aci: (targetattr = "objectclass || inetuserstatus || iplanet-am-user-login-sta
+   tus || iplanet-am-user-account-life || iplanet-am-session-quota-limit || ipla
+   net-am-user-alias-list ||  iplanet-am-session-max-session-time || iplanet-am-
+   session-max-idle-time || iplanet-am-session-get-valid-sessions || iplanet-am-
+   session-destroy-sessions || iplanet-am-session-add-session-listener-on-all-se
+   ssions || iplanet-am-user-admin-start-dn || iplanet-am-auth-post-login-proces
+   s-class || iplanet-am-user-federation-info || iplanet-am-user-federation-info
+   -key || ds-pwp-account-disabled || sun-fm-saml2-nameid-info || sun-fm-saml2-n
+   ameid-infokey || sunAMAuthInvalidAttemptsData || memberof || member")(version
+    3.0; acl "OpenAM User self modification denied for these attributes"; deny (
+   write) userdn ="ldap:///self";)
+  aci: (target="ldap:///ou=people,dc=openam,dc=forgerock,dc=org")(targetattr = "
+   uid || cn || givenName || sn || description || title || mail || telephoneNumb
+   er || inetUserStatus || employeeNumber")(version 3.0; acl "access permission 
+   for scim_user"; allow (all) userdn = "ldap:///uid=scim_user,dc=openam,dc=forg
+   erock,dc=org";)
+  aci: (target="ldap:///ou=groups,dc=openam,dc=forgerock,dc=org")(targetattr = "
+   cn || description || uniqueMember")(version 3.0; acl "access permission for s
+   cim_user"; allow (all) userdn = "ldap:///uid=scim_user,dc=openam,dc=forgerock
+   ,dc=org";)
+
+
+アクセス権設定を更新する。
+
+::
+
+  $ ldapmodify -h localhost -p 50389 -D 'cn=Directory Manager' -W \
+  -f modify_aci.ldif
+  
+  Enter LDAP Password: <amadminのパスワード>
+  modifying entry "dc=openam,dc=forgerock,dc=org"
+  
+  $ 
+
+
+SCIMでアクセスしてみる
+----------------------
+
+ユーザーを作成する
+^^^^^^^^^^^^^^^^^^
+
+ユーザーリソース ``sample_test_user1.json`` を用意する。
+
+.. code-block:: json
+
+  {
+    "schemas": [
+      "urn:ietf:params:scim:schemas:core:2.0:User",
+      "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
+    ],
+    "externalId": "u0001",
+    "userName": "test_user1@mx.example.com",
+    "name": {
+      "familyName": "テスト",
+      "formatted": "テスト ユーザー1",
+      "givenName": "ユーザー1"
+    },
+    "displayName": "テスト ユーザー1",
+    "emails": {
+      "value": "test_user1@mx.example.com",
+      "primary": true
+    },
+    "phoneNumbers": {
+      "value": "03-1234-5678",
+      "primary": true
+    },
+    "active": "Active",
+    "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+      "employeeNumber": "0001"
+    }
+  }
+
+
+``/Users`` エンドポイントへPOSTしてユーザーを作成する。
+
+::
+
+  $ curl -u scim_user:<scim_userのパスワード> -X POST \
+  -H "Content-Type: application/json" -d @- \
+  http://localhost:58080/Users?_action=create \
+  < sample_test_user1.json | jq .
+  
+  {
+    "_id": "c9c361b0-5327-4f1a-976d-7bd58b66a52e",
+    "_rev": "00000000b7a31b45",
+    "schemas": [
+      "urn:ietf:params:scim:schemas:core:2.0:User",
+      "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
+    ],
+    "id": "c9c361b0-5327-4f1a-976d-7bd58b66a52e",
+    "externalId": "u0001",
+    "userName": "test_user1@mx.example.com",
+    "name": {
+      "formatted": "テスト ユーザー1",
+      "givenName": "ユーザー1",
+      "familyName": "テスト"
+    },
+    "displayName": "テスト ユーザー1",
+    "emails": {
+      "value": "test_user1@mx.example.com",
+      "primary": true
+    },
+    "phoneNumbers": {
+      "value": "03-1234-5678",
+      "primary": true
+    },
+    "active": "Active",
+    "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+      "employeeNumber": "0001"
+    },
+    "meta": {
+      "resourceType": "User",
+      "created": "2016-06-05T10:22:43Z",
+      "version": "00000000b7a31b45"
+    }
+  }
+  $ 
+
+
+グループを作成する
+^^^^^^^^^^^^^^^^^^
+
+グループリソース ``sample_ou1010.json`` を用意する。
+
+.. code-block:: json
+
+  {
+    "schemas": [
+      "urn:ietf:params:scim:schemas:core:2.0:Group"
+    ],
+    "externalId": "ou1010",
+    "displayName": "営業部営業第一課"
+  }
+
+
+``/Groups`` エンドポイントへPOSTしてグループを作成する。
+
+::
+
+  $ curl -u scim_user:<scim_userのパスワード> -X POST \
+  -H "Content-Type: application/json" -d @- \
+  http://localhost:58080/Groups?_action=create \
+  < sample_ou1010.json | jq .
+  
+  {
+    "_id": "0fe79d8c-5af7-45fa-8331-909650aa5427",
+    "_rev": "00000000674150c8",
+    "schemas": [
+      "urn:ietf:params:scim:schemas:core:2.0:Group"
+    ],
+    "id": "0fe79d8c-5af7-45fa-8331-909650aa5427",
+    "externalId": "ou1010",
+    "displayName": "営業部営業第一課",
+    "meta": {
+      "resourceType": "Group",
+      "created": "2016-06-05T10:24:39Z",
+      "version": "00000000674150c8"
+    }
+  }
+
+
+グループのメンバーにユーザーを追加する
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+更新されたグループリソース ``sample_ou1010-2.json`` を作成する。
+
+.. code-block:: json
+
+  {
+    "_id": "0fe79d8c-5af7-45fa-8331-909650aa5427",
+    "_rev": "00000000674150c8",
+    "schemas": [
+      "urn:ietf:params:scim:schemas:core:2.0:Group"
+    ],
+    "id": "0fe79d8c-5af7-45fa-8331-909650aa5427",
+    "externalId": "ou1010",
+    "displayName": "営業部営業第一課",
+    "members": [
+      {
+        "value": "c3a4fc0b-070b-44c8-929a-5039cb45e6b5",
+        "_value": "u0001",
+        "display": "テスト ユーザー1"
+      }
+    ],
+    "meta": {
+      "resourceType": "Group",
+      "created": "2016-06-05T10:24:39Z",
+      "version": "00000000674150c8"
+    }
+  }
+
+
+``_id``, ``_rev``, ``id``, ``meta.version`` の各値は、グループを
+作成したときのレスポンスの値に合わせておく。
+
+``members`` に指定する値は、ユーザーを作成したときのレスポンスの
+値を用いる。``value`` にはユーザーの "id" の値を、``_value`` には
+ユーザーの "externalId" の値を指定する。``display`` は更新には
+用いないため、指定しても指定しなくてもよい。
+
+このリソースを ``/Groups/{id}`` エンドポイントへPUTしてグループを
+更新する。
+
+リクエストをする際、``If-Match`` ヘッダーの値は、グループを
+作成したときのレスポンスの "meta.version" の値を指定する
+必要がある。
+
+URL ``/Groups/{id}`` の ``{id}`` の部分には、グループを
+作成したときのレスポンスの "id" の値を指定する。
+
+::
+
+  $ curl -u scim_user:<scim_userのパスワード> -X PUT \
+  -H "Content-Type: application/json" \
+  -H 'If-Match: 00000000674150c8' \-d @- \
+  http://localhost:58080/Groups/0fe79d8c-5af7-45fa-8331-909650aa5427 \
+  < sample_ou1010-2.json | jq .
+
+  {
+    "_id": "0fe79d8c-5af7-45fa-8331-909650aa5427",
+    "_rev": "000000009345865f",
+    "schemas": [
+      "urn:ietf:params:scim:schemas:core:2.0:Group"
+    ],
+    "id": "0fe79d8c-5af7-45fa-8331-909650aa5427",
+    "externalId": "ou1010",
+    "displayName": "営業部営業第一課",
+    "members": [
+      {
+        "value": "c9c361b0-5327-4f1a-976d-7bd58b66a52e",
+        "_value": "u0001",
+        "display": "テスト ユーザー1"
+      }
+    ],
+    "meta": {
+      "resourceType": "Group",
+      "created": "2016-06-05T10:24:39Z",
+      "lastModified": "2016-06-05T10:28:57Z",
+      "version": "000000009345865f"
+    }
+  }
+
+
+ユーザーを検索してグループメンバーとなっていることを確認する
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ここでは、検索を使って最初に登録したユーザー「テスト ユーザー1」を
+``externalId`` をキーに検索して、データーを確認してみる。
+
+::
+
+  $ curl -u scim_user:<scim_userのパスワード> \
+  http://localhost:58080/Users?_queryFilter=externalId+eq+'"u0001"' \
+  | jq .
+
+  {
+    "result": [
+      {
+        "_id": "c9c361b0-5327-4f1a-976d-7bd58b66a52e",
+        "_rev": "00000000b7a31b45",
+        "schemas": [
+          "urn:ietf:params:scim:schemas:core:2.0:User",
+          "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
+        ],
+        "id": "c9c361b0-5327-4f1a-976d-7bd58b66a52e",
+        "externalId": "u0001",
+        "userName": "test_user1@mx.example.com",
+        "name": {
+          "formatted": "テスト ユーザー1",
+          "givenName": "ユーザー1",
+          "familyName": "テスト"
+        },
+        "displayName": "テスト ユーザー1",
+        "emails": {
+          "value": "test_user1@mx.example.com",
+          "primary": true
+        },
+        "phoneNumbers": {
+          "value": "03-1234-5678",
+          "primary": true
+        },
+        "active": "Active",
+        "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+          "employeeNumber": "0001"
+        },
+        "meta": {
+          "resourceType": "User",
+          "created": "2016-06-05T10:22:43Z",
+          "version": "00000000b7a31b45"
+        },
+        "groups": [
+          {
+            "value": "0fe79d8c-5af7-45fa-8331-909650aa5427",
+            "_value": "ou1010",
+            "display": "営業部営業第一課"
+          }
+        ]
+      }
+    ],
+    "resultCount": 1,
+    "pagedResultsCookie": null,
+    "totalPagedResultsPolicy": "NONE",
+    "totalPagedResults": -1,
+    "remainingPagedResults": -1
+  }
+  $ 
+
+「groups」属性のところに、メンバーとして登録されたグループ
+「営業部営業第一課」が出力されている。
+
+
+SCIM 2.0との互換性に関する考察
+------------------------------
+
+HTTP Connection Handlerのマッピング機能の制約により、SCIM 2.0の仕様に
+完全に互換とすることはできなさそうである。今回気づいた点を列挙する。
+
+1. Createを行なうときのエンドポイント名に ``?_action=create`` を付ける
+   必要がある。
+
+2. emails, phoneNumbers属性は Multi-Valued 属性のため、属性値はリスト型
+   であるべきであるが、OpenDJの設定では単一のオブジェクト型となる。
+
+3. active属性は真偽型であるべきであるが、OpenAMのユーザーの場合はLDAPの
+   inetUserStatus属性を使う必要があるため、"Active" or "InActive" を値と
+   する文字列となる。
+
+4. OpenAM側でユーザーのキー属性 uid、グループのキー属性 cn が必要となる
+   ため、externalId属性を必須属性として、これらの属性の値を渡す必要がある。
+
+5. Userリソースのgroups属性、Groupリソースのmembers属性について、キー属性の
+   指定が必要なため、サブ属性として_value補助属性が必要になる。
+
+6. Userリソースのgroups属性、Groupリソースのmembers属性のサブ属性である 
+   $ref を出力することができない。
+
+7. Groupリソースのmembers属性にUserリソースしか指定できない。
+
+8. 検索はGETによるQueryが使えるが、SCIMの仕様に似ているもののパラメータ名や
+   レスポンスの属性名等に違いがある。
+
+9. password属性を扱うことができない。passwordを更新するOpenDJの別のAPIを
+   使う必要がある。
+
+など。
+
+
+付録
+----
+
+http-config.json
+^^^^^^^^^^^^^^^^
+
+.. code-block:: json
+
+  {
+    "authenticationFilter": {
+      "supportHTTPBasicAuthentication": true,
+      "supportAltAuthentication": true,
+      "altAuthenticationUsernameHeader": "X-SCIM-Username",
+      "altAuthenticationPasswordHeader": "X-SCIM-Password",
+      "searchBaseDN": "dc=openam,dc=forgerock,dc=org",
+      "searchScope": "one",
+      "searchFilterTemplate": "(&(uid=%s)(objectClass=inetOrgPerson))"
+    },
+    "servlet": {
+      "mappings": {
+        "/Users": {
+          "baseDN": "ou=people,dc=openam,dc=forgerock,dc=org",
+          "readOnUpdatePolicy": "controls",
+          "useSubtreeDelete": false,
+          "usePermissiveModify": true,
+          "etagAttribute": "etag",
+          "namingStrategy": {
+            "strategy": "serverNaming",
+            "dnAttribute": "uid",
+            "idAttribute": "entryUUID"
+          },
+          "additionalLDAPAttributes": [
+            {
+              "type": "objectClass",
+              "values": [
+                "top",
+                "person",
+                "organizationalPerson",
+                "inetOrgPerson",
+                "inetUser",
+                "iPlanetPreferences",
+                "iplanet-am-user-service",
+                "iplanet-am-managed-person",
+                "iplanet-am-auth-configuration-service",
+                "sunAMAuthAccountLockout",
+                "sunIdentityServerLibertyPPService",
+                "sunFederationManagerDataStore",
+                "sunFMSAML2NameIdentifier",
+                "oathDeviceProfilesContainer",
+                "devicePrintProfilesContainer",
+                "kbaInfoContainer",
+                "forgerock-am-dashboard-service"
+              ]
+            }
+          ],
+          "attributes": {
+            "schemas": {
+              "constant": [
+                "urn:ietf:params:scim:schemas:core:2.0:User",
+                "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User"
+              ]
+            },
+            "_id": {
+              "simple": {
+                "ldapAttribute": "entryUUID",
+                "isSingleValued": true,
+                "writability": "readOnlyDiscardWrites"
+              }
+            },
+            "_rev": {
+              "simple": {
+                "ldapAttribute": "etag",
+                "isSingleValued": true,
+                "writability": "readOnlyDiscardWrites"
+              }
+            },
+            "id": {
+              "simple": {
+                "ldapAttribute": "entryUUID",
+                "isSingleValued": true,
+                "writability": "readOnlyDiscardWrites"
+              }
+            },
+            "externalId": {
+              "simple": {
+                "ldapAttribute": "uid",
+                "isSingleValued": true,
+                "isRequired": true,
+                "writability": "createOnlyDiscardWrites"
+              }
+            },
+            "userName": {
+              "simple": {
+                "ldapAttribute": "mail",
+                "isSingleValued": true,
+                "isRequired": true,
+                "writability": "readWrite"
+              }
+            },
+            "name": {
+              "object": {
+                "formatted": {
+                  "simple": {
+                    "ldapAttribute": "cn",
+                    "isSingleValued": true,
+                    "writability": "readWrite"
+                  }
+                },
+                "givenName": {
+                  "simple": {
+                    "ldapAttribute": "givenName",
+                    "isSingleValued": true,
+                    "writability": "readWrite"
+                  }
+                },
+                "familyName": {
+                  "simple": {
+                    "ldapAttribute": "sn",
+                    "isSingleValued": true,
+                    "writability": "readWrite"
+                  }
+                }
+              }
+            },
+            "displayName": {
+              "simple": {
+                "ldapAttribute": "description",
+                "isSingleValued": true,
+                "writability": "readWrite"
+              }
+            },
+            "title": {
+              "simple": {
+                "ldapAttribute": "title",
+                "isSingleValued": true,
+                "writability": "readWrite"
+              }
+            },
+            "emails": {
+              "object": {
+                "value": {
+                  "simple": {
+                    "ldapAttribute": "mail",
+                    "isSingleValued": true,
+                    "writability": "readWrite"
+                  }
+                },
+                "primary": {
+                  "constant": true
+                }
+              }
+            },
+            "phoneNumbers": {
+              "object": {
+                "value": {
+                  "simple": {
+                    "ldapAttribute": "telephoneNumber",
+                    "isSingleValued": true,
+                    "writability": "readWrite"
+                  }
+                },
+                "primary": {
+                  "constant": true
+                }
+              }
+            },
+            "active": {
+              "simple": {
+                "ldapAttribute": "inetUserStatus",
+                "isSingleValued": true,
+                "writability": "readWrite"
+              }
+            },
+            "groups": {
+              "reference": {
+                "ldapAttribute": "isMemberOf",
+                "baseDN": "ou=groups,dc=openam,dc=forgerock,dc=org",
+                "primaryKey": "cn",
+                "mapper": {
+                  "object": {
+                    "value": {
+                      "simple": {
+                        "ldapAttribute": "entryUUID",
+                        "isSingleValued": true,
+                        "isRequired": true,
+                        "writability": "readOnlyDiscardWrites"
+                      }
+                    },
+                    "_value": {
+                      "simple": {
+                        "ldapAttribute": "cn",
+                        "isSingleValued": true,
+                        "isRequired": true,
+                        "writability": "readOnlyDiscardWrites"
+                      }
+                    },
+                    "display": {
+                      "simple": {
+                        "ldapAttribute": "description",
+                        "isSingleValued": true,
+                        "writability": "readOnlyDiscardWrites"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "urn:ietf:params:scim:schemas:extension:enterprise:2.0:User": {
+              "object": {
+                "employeeNumber": {
+                  "simple": {
+                    "ldapAttribute": "employeeNumber",
+                    "isSingleValued": true,
+                    "writability": "readWrite"
+                  }
+                }
+              }
+            },
+            "meta": {
+              "object": {
+                "resourceType": {
+                  "constant": "User"
+                },
+                "created": {
+                  "simple": {
+                    "ldapAttribute": "createTimestamp",
+                    "isSingleValued": true,
+                    "writability": "readOnlyDiscardWrites"
+                  }
+                },
+                "lastModified": {
+                  "simple": {
+                    "ldapAttribute": "modifyTimestamp",
+                    "isSingleValued": true,
+                    "writability": "readOnlyDiscardWrites"
+                  }
+                },
+                "version": {
+                  "simple": {
+                    "ldapAttribute": "etag",
+                    "isSingleValued": true,
+                    "writability": "readOnlyDiscardWrites"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "/Groups": {
+          "baseDN": "ou=groups,dc=openam,dc=forgerock,dc=org",
+          "readOnUpdatePolicy": "controls",
+          "useSubtreeDelete": false,
+          "usePermissiveModify": true,
+          "etagAttribute": "etag",
+          "namingStrategy": {
+            "strategy": "serverNaming",
+            "dnAttribute": "cn",
+            "idAttribute": "entryUUID"
+          },
+          "additionalLDAPAttributes": [
+            {
+              "type": "objectClass",
+              "values": [
+                "top",
+                "groupOfUniqueNames"
+              ]
+            }
+          ],
+          "attributes": {
+            "schemas": {
+              "constant": [
+                "urn:ietf:params:scim:schemas:core:2.0:Group"
+              ]
+            },
+            "_id": {
+              "simple": {
+                "ldapAttribute": "entryUUID",
+                "isSingleValued": true,
+                "writability": "readOnlyDiscardWrites"
+              }
+            },
+            "_rev": {
+              "simple": {
+                "ldapAttribute": "etag",
+                "isSingleValued": true,
+                "writability": "readOnlyDiscardWrites"
+              }
+            },
+            "id": {
+              "simple": {
+                "ldapAttribute": "entryUUID",
+                "isSingleValued": true,
+                "writability": "readOnlyDiscardWrites"
+              }
+            },
+            "externalId": {
+              "simple": {
+                "ldapAttribute": "cn",
+                "isSingleValued": true,
+                "isRequired": true,
+                "writability": "createOnlyDiscardWrites"
+              }
+            },
+            "displayName": {
+              "simple": {
+                "ldapAttribute": "description",
+                "isSingleValued": true,
+                "writability": "readWrite"
+              }
+            },
+            "members": {
+              "reference": {
+                "ldapAttribute": "uniqueMember",
+                "baseDN": "ou=people,dc=openam,dc=forgerock,dc=org",
+                "primaryKey": "uid",
+                "mapper": {
+                  "object": {
+                    "value": {
+                      "simple": {
+                        "ldapAttribute": "entryUUID",
+                        "isSingleValued": true,
+                        "isRequired": true,
+                        "writability": "readOnlyDiscardWrites"
+                      }
+                    },
+                    "_value": {
+                      "simple": {
+                        "ldapAttribute": "uid",
+                        "isSingleValued": true,
+                        "isRequired": true,
+                        "writability": "readWrite"
+                      }
+                    },
+                    "display": {
+                      "simple": {
+                        "ldapAttribute": "description",
+                        "isSingleValued": true,
+                        "writability": "readOnlyDiscardWrites"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "meta": {
+              "object": {
+                "resourceType": {
+                  "constant": "Group"
+                },
+                "created": {
+                  "simple": {
+                    "ldapAttribute": "createTimestamp",
+                    "isSingleValued": true,
+                    "writability": "readOnlyDiscardWrites"
+                  }
+                },
+                "lastModified": {
+                  "simple": {
+                    "ldapAttribute": "modifyTimestamp",
+                    "isSingleValued": true,
+                    "writability": "readOnlyDiscardWrites"
+                  }
+                },
+                "version": {
+                  "simple": {
+                    "ldapAttribute": "etag",
+                    "isSingleValued": true,
+                    "writability": "readOnlyDiscardWrites"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+.. rubric:: 脚注
+
+.. [#opendj] `OpenDJ - Open Source LDAP directory - Project Home Page <https://forgerock.org/opendj/>`_
+
+.. [#openam] `OpenAM - OpenAM - Access Management & SSO - Project Home Page <https://forgerock.org/openam/>`_
+
+.. [#scim] `System for Cross-domain Identity Management (scim) - Documents <https://datatracker.ietf.org/wg/scim/documents/>`_
+
+
+.. author:: default
+.. categories:: none
+.. tags:: openam, opendj, scim
+.. comments::

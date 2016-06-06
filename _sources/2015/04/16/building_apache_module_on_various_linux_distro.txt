@@ -86,7 +86,7 @@ distro_support.mkを使うように、apxsが生成したMakefileの先頭部分
 
 **変更前**
 
-.. code-block:: make
+.. code-block:: text
 
   ##
   ##  Makefile -- Build procedure for sample your_module Apache module
@@ -97,14 +97,14 @@ distro_support.mkを使うように、apxsが生成したMakefileの先頭部分
   top_srcdir=/usr/share/apache2
   top_builddir=/usr/share/apache2
   include /usr/share/apache2/build/special.mk
-   
+  
   #   the used tools
   ...
 
 
 **変更後**
 
-.. code-block:: make
+.. code-block:: text
 
   ##
   ##  Makefile -- Build procedure for sample your_module Apache module
@@ -116,7 +116,7 @@ distro_support.mkを使うように、apxsが生成したMakefileの先頭部分
   #top_builddir=/usr/share/apache2
   #include /usr/share/apache2/build/special.mk
   include distro_support.mk
-   
+  
   #   the used tools
   ...
 
