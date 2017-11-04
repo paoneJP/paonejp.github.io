@@ -4,6 +4,7 @@ Sitemap
 .. toctree::
    :maxdepth: 1
 
+   2017/11/04/making_kotlin_appauth_android_demo_application
    2016/06/06/config_opendj_as_a_scim_server
    2015/07/10/xperia_z4_tablet_projector_output
    2015/04/16/building_apache_module_on_various_linux_distro

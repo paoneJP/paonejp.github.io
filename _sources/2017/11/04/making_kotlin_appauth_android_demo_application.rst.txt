@@ -1,0 +1,611 @@
+Kotlin と AppAuth for Android でネイティブアプリの実装サンプルを作ってみた
+==========================================================================
+
+スマホ、タブレット向けにネイティブアプリを提供する場合、ほとんどの場合は何かしらのバックエンドAPIを使用していることでしょう。
+
+バックエンドAPIアクセス時の認証・アクセス認可の実装には様々な方法がありますが、今後は OAuth 2.0 の仕様群に準じたものになっていくものと思います。
+
+ネイティブアプリでの OAuth 2.0 の実装については [RFC 8252][BCP 212] OAuth 2.0 for Native Apps として現時点のベストプラクティスがまとめられています。
+また、そのプラクティスに沿った実装を支援するオープンソースライブラリ AppAuth が公開されています。
+
+今回はその Android 版のライブラリ AppAuth for Android を用いて実装サンプルを作ってみました。
+
+.. more::
+
+.. contents:: もくじ
+   :local:
+   :backlinks: top
+
+
+作った実装サンプル
+------------------
+
+この実装サンプルは、ネイティブアプリで必要となるであろう「サインイン」、「バックエンドAPIアクセス」、「サインアウト」の機能について、 AppAuth での実装方法と動きを確認するために作ったものです。
+
+.. figure:: ./20171030_making_kotlin_appauth_android_demo_application_1.png
+   :scale: 25%
+   :align: right
+   :alt: **図1: 画面イメージ**
+
+   **図1: 画面イメージ**
+
+Google Accounts の UserInfo エンドポイントをバックエンドAPIに見立て、そのアクセスのための認証・アクセス認可を Google Accounts で行ないます。
+
+画面上部の「サインイン」、「API呼出し」、「サインアウト」の各ボタンをタップすることでそれぞれの動作を確認できます。
+動作の結果やそれに伴い変化する AppAuth の内部状態を、下部の「appAuthState (Summary)」、「Response」、「appAuthState (Full)」の各テキストエリアに表示します。
+
+この実装サンプルのソースコードは、 GitHub 上で MIT License で公開しています。
+ビルド済みのAPKファイルも収録してます。早速コードを見てみたい、動かしてみたいという方はこちらをどうぞ。
+
+-  Kotlin + AppAuth for Android ネイティブアプリ実装サンプル :raw-html:`<br>`
+   https://github.com/paoneJP/AppAuthDemo-Android
+
+以下では、実装する上でポイントとなる点について、いくつか書いてみたいと思います。
+
+
+なぜ OAuth 2.0 になっていくのか？
+---------------------------------
+
+現在のネイティブアプリでのサインインの実装は、アプリの画面にユーザーIDとパスワードを入力するフォームを作り、独自に認証とバックエンドAPIへのアクセス認可を処理する方式が主流になっています。
+
+アプリの利用を広げていく上で、この方式には次の2つの観点で課題があります。
+
+1. 複数のネイティブアプリを提供していく場合、ユーザーはアプリごとにサインインを行なう必要があり、使ってもらう際の操作が煩雑である。
+
+2. ソーシャルアカウントを使った登録や認証、パスワード以外の認証方式への対応などを進める場合、個別にかつ独自の設計をアプリごとに行ない、実装する必要がある。
+
+これらの課題は、 OAuth 2.0 の仕様群に準じた実装を適用することで、次のように解決してくことができます。
+
+1. OAuth 2.0 の Implicit Grant, Authroization Code Grant といったブラウザを介する認証・アクセス認可方式を適用することで、認証状態がブラウザで管理され、ネイティブアプリ間、ネイティブアプリとWebアプリ間でのシングルサインオンが実現できる。
+
+2. 認証機能はブラウザ側のUIで提供されるようになるため、認証方式の追加、変更についてネイティブアプリ側で個別に実装することなく対応ができる。
+
+一方で、 OAuth 2.0 の実装は、これまでのような『ユーザーIDとパスワードを POST して、APIアクセスのキーを受け取る』といった単純なリクエスト・レスポンスではなく、仕様に沿って正しく実装するには手間もかかり、少々ハードルが高いことも事実です。
+
+
+AppAuth for Android を使って簡単に実装する
+------------------------------------------
+
+ネイティブアプリでの OAuth 2.0 の実装については [RFC 8252][BCP 212] OAuth 2.0 for Native Apps として現時点のベストプラクティスがまとめられています。
+また、そのプラクティスに沿った実装を支援するオープンソースライブラリ AppAuth が公開されています。
+
+-  [RFC 8252][BCP 212] OAuth 2.0 for Native Apps
+
+   -  https://datatracker.ietf.org/doc/rfc8252/
+   -  https://datatracker.ietf.org/doc/bcp212/
+
+-  AppAuth for Android
+
+   -  https://openid.net/code/AppAuth
+   -  https://openid.net/code/AppAuth-Android
+
+AppAuth のライブラリは Bintray からビルド済みのものを入手することができます。 
+Android Studio の File > Project Structure... を開き、以下の2つの設定を行なうことで、プロジェクトに組み込むことができます。
+
+-  Library Repository に ``'https://dl.bintray.com/openid/net.openid'`` を追加
+-  Dependencies に ``net.openid:appauth:0.7.0`` を追加
+
+.. figure:: ./20171030_making_kotlin_appauth_android_demo_application_2.png
+   :scale: 25%
+   :align: center
+   :alt: **図2: AppAuth ライブラリの組み込み**
+
+   **図2: AppAuth ライブラリの組み込み**
+
+
+.. note::
+
+   ビルド済み AppAuth ライブラリ バージョン 0.7.0 は com.android.support:customtabs バージョン 25.3.1 を使っています。（当記事執筆時点）
+
+   そのため、ネイティブアプリのプロジェクトが使用する com.android.support ライブラリも同じバージョンとなるように調整をしておく必要があります。
+
+
+AppAuth を利用すれば、ネイティブアプリの開発者はいくつかのメソッドを呼び出すだけで、簡単に OAuth 2.0 を使ったバックエンドAPIアクセス時の認証・アクセス認可の機能を自分のアプリケーションに組み込むことができます。
+
+アプリが行なうべき OAuth 2.0 の仕様群に沿った動作のほとんどは AppAuthが適切に実行してくれます。
+このため、ネイティブアプリの開発者は OAuth 2.0 の詳細の技術仕様を意識する必要はなく、大まかな処理のステップを把握しておくだけで実装を進めることができます。
+
+
+アプリから見た処理ステップ
+--------------------------
+
+ネイティブアプリでは「サインイン」、「バックエンドAPIアクセス」、「サインアウト」の機能を実装することになります。
+これを AppAuth を使って OAuth 2.0 に対応するように実装する場合、次の6つのステップを実装していきます。
+
+.. figure:: ./20171030_making_kotlin_appauth_android_demo_application_3.png
+   :scale: 50%
+   :align: center
+   :alt: **図3: アプリから見た処理ステップ**
+
+   **図3: アプリから見た処理ステップ**
+
+
+それぞれのステップでは次のような処理を行ないます。
+
+1. 認証・アクセス認可を要求する
+
+   -  認証・アクセス認可に使用するサーバーの情報を取得する。
+   -  Chrome Custom Tabs などのブラウザを使って認証・アクセス認可のリクエストを行なう。
+
+2. 認証・アクセス認可の結果とアクセストークンを受け取る
+
+   -  カスタムURIスキームへのリダイレクトを介して認証・アクセス認可結果を受け取る。
+   -  サーバーからアクセストークン、リフレッシュトークンを取得する。
+
+3. アクセストークンを更新する
+
+   -  アクセストークンの有効期限が切れている場合は、リフレッシュトークンを使ってサーバーから新しいアクセストークンを取得する。
+
+4. バックエンドAPIにアクセスする
+
+   -  アクセストークンを Authorization ヘッダに付けてAPIにアクセスする。
+
+5. アクセストークンを無効化する
+
+   -  アクセストークンとリフレッシュトークンをアプリ内から破棄する。
+   -  この時、不要となるアクセストークンとリフレッシュトークンをサーバー側でも無効化することが望ましい。
+
+6. アクセストークンを永続データとして保管する
+
+   -  一度サインインを完了した後はその状態を維持するため、アクセストークン、リフレッシュトークンを永続データとして保管する。
+   -  トークン漏洩リスクを軽減するため、暗号化を行なうことが望ましい。
+
+
+「認証・アクセス認可要求」～「バックエンドAPIアクセス」の実装
+-------------------------------------------------------------
+
+アプリの状態は、大きく (1) 未サインイン状態、(2) サインイン状態 の2つがあります。
+それを念頭におくと、「認証・アクセス認可要求」～「バックエンドAPIアクセス」の4ステップの動きは下図のようにするのがよいでしょう。
+
+.. figure:: ./20171030_making_kotlin_appauth_android_demo_application_4.png
+   :scale: 50%
+   :align: center
+   :alt: **図4: アプリの処理の流れ**
+
+   **図4: アプリの処理の流れ**
+
+
+特に注意をしたいのは「アクセストークン更新」の際のエラー処理と「バックエンドAPIアクセス」の際のエラー処理です。
+
+
+アクセストークン更新時のエラー処理の考え方
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+アクセストークンの更新は、「ネイティブアプリ」が「認証・アクセス認可サーバー」にリフレッシュトークンを提示することで、新しいアクセストークンを取得する処理になります。
+この時に生じるエラーの要因として、次の2つが考えられます。
+
+1. ネットワークエラーなどによる一時的な更新エラー
+
+2. リフレッシュトークンが無効になったことによる恒久的な更新エラー
+
+前者の場合は、リトライにより再度APIアクセスが可能な状態であるため、アプリとしてはバックエンドAPIアクセス時の一時的なエラーとして処理を行ない、サインイン状態を保つのが良いでしょう。
+
+一方後者の場合は、リトライをしても正常にアクセスできることはありません。アプリは未サインイン状態に遷移し（必要であればアプリ内のデータを初期化して）ユーザーにはサインインから処理をやり直してもらう必要があります。
+
+
+バックエンドAPIアクセス時のエラー処理の考え方
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+バックエンドAPIアクセス時のエラーの要因は、次の3つが考えられます。
+
+1. APIのアプリロジックとしてのエラー
+
+2. ネットワークエラーなどによる一時的なアクセスエラー
+
+3. アクセストークンが無効化されたことによる恒久的なアクセスエラー
+
+この 1. と 2. のケースは、アプリの設計として取り決めたエラー処理をすれば良いケースです。
+もちろんほとんどの場合でアプリはサインイン状態を保ったままとなります。
+
+一方、3. のアクセストークンが無効化された場合のエラー処理は、慎重に考える必要があります。
+このケースは、次の条件が重なったときに発生します。
+
+-  アプリが持つアクセストークンが有効期限内にある。
+
+-  何かしらの理由により、サーバーサイドではアクセストークンが無効化されている。
+   （ユーザーがアプリの連携を解除したなど）
+
+この状態になるとユーザーは再度サインインを行なう必要があります。
+そのため、アプリは未サインイン状態に遷移し（必要であればアプリ内のデータを初期化して）ユーザーにサインインを促すことになります。
+
+この 3. の状態になっていることは、バックエンドAPIのレスポンスから判断する必要があります。
+アプリの開発においては、バックエンドAPIのエラーレスポンスの仕様をよく確認する必要がありますし、もし自分でバックエンドAPIを開発する際は、3. の状態を検出できるようなエラーレスポンスを仕様に含めて、
+設計と実装を行なう必要があります。
+
+
+「認証・アクセス認可要求」の実装
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+「認証・アクセス認可を要求する」ステップでは、次の2つの処理を行ないます。
+
+-  認証・アクセス認可に使用するサーバーの情報を取得する。
+
+-  Chrome Custom Tabs などのブラウザを使って認証・アクセス認可のリクエストを行なう。
+
+実装サンプルでは ``startAuthorization()`` の中でこの処理を実装しています。
+
+.. code-block:: kotlin
+
+    private fun startAuthorization() {
+        AuthorizationServiceConfiguration.fetchFromIssuer(Uri.parse(ISSUER_URI), { config, ex ->
+            if (config != null) {
+                val req = AuthorizationRequest
+                        .Builder(config, CLIENT_ID, ResponseTypeValues.CODE, Uri.parse(REDIRECT_URI))
+                        .setScope(SCOPE)
+                        .build()
+                val intent = AuthorizationService(this).getAuthorizationRequestIntent(req)
+                startActivityForResult(intent, REQCODE_AUTH)
+            } else {
+                if (ex != null) {
+                    val m = Throwable().stackTrace[0]
+                    Log.e(LOG_TAG, "${m}: ${ex}")
+                }
+                whenAuthorizationFails(ex)
+            }
+        })
+    }
+
+[`⇒GitHubで見る <https://github.com/paoneJP/AppAuthDemo-Android/blob/da5b3ba59bcd6221c1e19df21657f494047385c5/app/src/main/java/net/paonejp/kndzyb/appauthdemo/MainActivity.kt#L126-L143>`__]
+
+AppAuth の ``AuthorizationServiceConfiguration.fetchFromIssuer()`` のエラーは、コールバックの引数 ``ex`` で渡されます。エラーの場合は認証エラー時のアプリ共通処理を書いた ``whenAuthorizationFails(ex)`` を呼び出します。
+
+このステップの処理を行なうと、 AppAuth に実装されている AuthorizationManagementActivity が起動され、 Chrome Custom Tabs などのブラウザを使った認証・アクセス認可のリクエストが行なわれます。
+
+
+「認証・認可結果、アクセストークン受取」の実装
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+「認証・アクセス認可の結果、アクセストークンを受け取る」ステップでは、次の2つの処理を行ないます。
+
+-  カスタムURIスキームへのリダイレクトを介して認証・アクセス認可結果を受け取る。
+
+-  サーバーからアクセストークン、リフレッシュトークンを取得する。
+
+カスタムURIスキームでの結果の受け取りは、前述の AppAuth の AuthorizationManagementActivity がいい感じに処理してくれます。
+その結果が AuthorizationManagementActivity からアプリに返されます。
+その結果の受け取りを ``onActivityResult()`` に実装します。
+
+.. code-block:: kotlin
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQCODE_AUTH) {
+            handleAuthorizationResponse(data)
+        }
+    }
+
+[`⇒GitHubで見る <https://github.com/paoneJP/AppAuthDemo-Android/blob/da5b3ba59bcd6221c1e19df21657f494047385c5/app/src/main/java/net/paonejp/kndzyb/appauthdemo/MainActivity.kt#L78-L83>`__]
+
+受け取った結果は ``handleAuthorizationResponse()`` の前半部分で処理しています。
+AppAuth の状態は appAuthState オブジェクトに格納しており、受け取った結果を引数に入れて ``update()`` を呼び出すことで状態を更新します。
+
+.. code-block:: kotlin
+
+    private fun handleAuthorizationResponse(data: Intent?) {
+        if (data == null) {
+            val m = Throwable().stackTrace[0]
+            Log.e(LOG_TAG, "${m}: unexpected intent call")
+            return
+        }
+
+        val resp = AuthorizationResponse.fromIntent(data)
+        val ex = AuthorizationException.fromIntent(data)
+        appAuthState.update(resp, ex)
+
+        if (ex != null || resp == null) {
+            val m = Throwable().stackTrace[0]
+            Log.e(LOG_TAG, "${m}: ${ex}")
+            whenAuthorizationFails(ex)
+            return
+        }
+
+[`⇒GitHubで見る <https://github.com/paoneJP/AppAuthDemo-Android/blob/da5b3ba59bcd6221c1e19df21657f494047385c5/app/src/main/java/net/paonejp/kndzyb/appauthdemo/MainActivity.kt#L145-L162>`__]
+
+次に、受け取った結果を使い、サーバーからアクセストークン、リフレッシュトークンを取得します。
+これは ``handleAuthorizationResponse()`` の後半部分に実装しています。
+
+.. code-block:: kotlin
+
+
+        AuthorizationService(this)
+                .performTokenRequest(resp.createTokenExchangeRequest(), { resp2, ex2 ->
+                    appAuthState.update(resp2, ex2)
+                    if (resp2 != null) {
+                        whenAuthorizationSucceeds()
+                    } else {
+                        whenAuthorizationFails(ex2)
+                    }
+                })
+    }
+
+[`⇒GitHubで見る <https://github.com/paoneJP/AppAuthDemo-Android/blob/da5b3ba59bcd6221c1e19df21657f494047385c5/app/src/main/java/net/paonejp/kndzyb/appauthdemo/MainActivity.kt#L162-L172>`__]
+
+ここでも、実際のアクセストークン、リフレッシュトークンの取得は、 AppAuth の ``AuthorizationService().performTokenRequest()`` がいい感じに処理をしてくれて、結果がコールバックに返されます。
+
+コールバックの中では ``appAuthState.update()`` を呼び出し、受け取った結果を使って AppAuth の状態を更新します。
+
+前半の処理、後半の処理ともにエラー処理を行ない、エラーの場合は認証エラー時のアプリ共通処理を書いた ``whenAuthorizationFails(ex)`` を呼び出します。
+
+アクセストークンの取得まで処理ができた場合は ``whenAuthorizationSucceeds()`` を呼び出し、以降はサインイン状態としてふるまうことになります。
+
+
+「アクセストークン更新」～「バックエンドAPIアクセス」の実装
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+「アクセストークンを更新する」～「バックエンドAPIにアクセスする」ステップは、AppAuth に実装されている ``performActionWithFreshTokens()`` を使うことで、一連の処理として実装することができます。
+
+``performActionWithFreshTokens()`` は、現在のアクセストークンを引数に付けてコールバックを実行します。アクセストークンの有効期限が切れている場合は、リフレッシュトークンを使って新しいアクセストークンに更新した上でコールバックが実行されます。
+
+通常ネイティブアプリが利用するバックエンドAPIは複数あり、それぞれに結果を処理するコールバックを用意することになります。それを念頭に実装サンプルでは、汎用的な関数を ``httpGetJson()`` として実装し、APIごとに専用のコールバックを指定して実行できるようにしています。
+
+.. code-block:: kotlin
+
+    private fun httpGetJson(uri: String,
+                            callback: (code: Int, json: JSONObject?, ex: Exception?) -> Unit) {
+        val service = AuthorizationService(this)
+        appAuthState.performActionWithFreshTokens(service, { accessToken, _, ex ->
+            if (ex != null) {
+                val m = Throwable().stackTrace[0]
+                Log.e(LOG_TAG, "${m}: ${ex}")
+                if (appAuthState.isAuthorized) {
+                    callback(X_HTTP_ERROR, null, ex)
+                } else {
+                    callback(X_HTTP_NEED_REAUTHZ, null, ex)
+                }
+            } else {
+                if (accessToken == null) {
+                    callback(X_HTTP_ERROR, null, null)
+                } else {
+                    HttpRequestJsonTask(uri, null, accessToken, { code, data, ex2 ->
+                        callback(code, data, ex2)
+                    }).execute()
+                }
+            }
+        })
+    }
+
+[`⇒GitHubで見る <https://github.com/paoneJP/AppAuthDemo-Android/blob/da5b3ba59bcd6221c1e19df21657f494047385c5/app/src/main/java/net/paonejp/kndzyb/appauthdemo/MainActivity.kt#L317-L339>`__]
+
+前半部分で、アクセストークン更新時のエラー処理をしています。エラーが返ってきたとき、もし AppAuth の状態 ``appAuthState`` の認証済み状態 ``isAuthorized`` が ``false`` になっている場合は恒久的な更新エラーが生じたものと判断し、再認証が必要なステータスを返すようにしています。
+
+後半部分で、現在のアクセストークンをつけてAPIアクセスを行なっています。
+この処理は非同期タスクで実行する必要があり、 ``HttpRequestJsonTask`` クラスを実装し処理しています。
+
+実行結果は ``httpGetJson()`` 呼び出すときに引数に渡されたコールバック関数で処理します。
+そのコールバックの実装例は次の通りです。
+
+.. code-block:: kotlin
+
+    private fun showApiResultCallback(code: Int, data: JSONObject?, ex: Exception?) {
+        when (code) {
+            X_HTTP_NEED_REAUTHZ, HTTP_UNAUTHORIZED -> whenReauthorizationRequired(ex)
+
+            HTTP_OK -> {
+                uResponseView.text = "%s\n\n%s"
+                        .format(getText(R.string.msg_api_ok),
+                                data?.toString(2)?.replace("\\/", "/"))
+            }
+
+            else -> {
+                uResponseView.text = "%s\n\n%d\n%s\n%s"
+                        .format(getText(R.string.msg_api_error),
+                                code, data ?: "", ex ?: "")
+            }
+        }
+        doShowAppAuthState()
+    }
+
+[`⇒GitHubで見る <https://github.com/paoneJP/AppAuthDemo-Android/blob/da5b3ba59bcd6221c1e19df21657f494047385c5/app/src/main/java/net/paonejp/kndzyb/appauthdemo/MainActivity.kt#L289-L306>`__]
+
+このコールバックは前述の通りAPIごとに実装されるものと考えられます。
+再サインインが必要なエラーが返されている場合は、その状態を処理するアプリ共通処理 ``whenReauthorizationRequired(ex)`` を呼び出すようにしています。
+
+コード ``X_HTTP_NEED_REAUTHZ`` は先に示した ``httpGetJson()`` でアクセストークンの更新が恒久的な更新エラーが生じたときに返されるものです。
+
+コード ``HTTP_UNAUTHORIZED`` は、実装サンプルが呼び出している Google のAPIがアクセストークンが無効化された状態で呼び出されたときに返されるコードです。
+この部分の条件は呼び出すAPIの仕様に合わせた実装が必要となるでしょう。
+
+
+「アクセストークンの無効化」の実装
+----------------------------------
+
+ネイティブアプリでは、アプリの利用中止やユーザーの切り替えなどを理由に、ユーザー自身がサインアウトの処理を行えるような実装をすることがあります。
+この時にアクセストークンを無効化します。
+
+不要となったアクセストークン、リフレッシュトークンはアプリ内から破棄しますが、この時サーバー側ではトークンが有効なまま残ります。
+
+アクセストークン、リフレッシュトークンを漏らさないように最大限の考慮をしてアプリを作っているという前提で言えば、サーバー側でトークンが有効なまま残っていることは大きな問題ではありませんが、不要となったトークンは明示的にかつ即座に無効化しておくに越したことはありません。
+
+アクセストークンの無効化には、 OAuth 2.0 仕様群の一つである [RFC 7009] OAuth 2.0 Token Revocation に沿ったエンドポイントを利用します。
+
+-  [RFC 7009] OAuth 2.0 Token Revocation
+
+   -  https://datatracker.ietf.org/doc/rfc7009/
+
+当記事の執筆時点では AppAuth にはアクセストークン無効化の機能が実装されていないため、この部分は個別に実装を行ないます。実装サンプルでは ``revokeAuthorization()`` で実装しています。
+
+``revokeAuthorization()`` の前半部分では、サーバーが Token Revocation をサポートしているかどうかの判定と、未サポートの場合のアプリ内のアクセストークンの破棄を行なっています。
+
+.. code-block:: kotlin
+
+    private fun revokeAuthorization() {
+        val uri = appAuthState.authorizationServiceConfiguration?.discoveryDoc?.docJson
+                ?.opt("revocation_endpoint") as String?
+
+        if (uri == null) {
+            appAuthState = AuthState()
+            whenRevokeAuthorizationSucceeds()
+            return
+        }
+
+[`⇒GitHubで見る <https://github.com/paoneJP/AppAuthDemo-Android/blob/da5b3ba59bcd6221c1e19df21657f494047385c5/app/src/main/java/net/paonejp/kndzyb/appauthdemo/MainActivity.kt#L189-L198>`__]
+
+サーバーが Token Revocation をサポートしてるかどうかは、サーバーの情報 (``/.well-known/openid-configuration`` で提供される JSON ドキュメント) に、``revocation_endpoint`` が記載されているかどうかで判定できます。
+
+続いて ``revokeAuthorization()`` の後半部分ですが、ここでは OAuth 2.0 Token Revocation の仕様に従い、無効化するアクセストークンを ``revocation_endpoint`` に POST し、サーバーにアクセストークンの無効化をリクエストしています。
+
+.. code-block:: kotlin
+
+
+        val param = "token=${appAuthState.refreshToken}&token_type_hint=refresh_token"
+        HttpRequestJsonTask(uri, param, null, { code, data, ex ->
+            when (code) {
+                HTTP_OK -> {
+                    appAuthState = AuthState()
+                    whenRevokeAuthorizationSucceeds()
+                }
+
+                HTTP_BAD_REQUEST -> {
+
+                    // RFC 7009 に示されているように、すでに無効なトークンの無効化リクエストに
+                    // 対しサーバーは HTTP 200 を応答するが、一部のサーバーはエラーを応答する
+                    // ことがある。Google Accounts の場合、 HTTP 400 で "invalid_token" エラー
+                    // を返すため、それを成功応答として処理する。
+                    // As described in RFC 7009, the server responds with HTTP 200 for revocation
+                    // request to already invalidated token, but some servers may respond with an
+                    // error. Google Accounts returns "invalid_token" error with HTTP 400, it must
+                    // be treated as a successful response.
+                    if (data?.optString("error") == "invalid_token") {
+                        appAuthState = AuthState()
+                        whenRevokeAuthorizationSucceeds()
+                        return@HttpRequestJsonTask
+                    }
+
+                    val msg = "Server returned HTTP response code: %d for URL: %s with message: %s"
+                            .format(code, uri, data.toString())
+                    whenRevokeAuthorizationFails(IOException(msg))
+                }
+
+                else -> whenRevokeAuthorizationFails(ex)
+            }
+        }).execute()
+    }
+
+[`⇒GitHubで見る <https://github.com/paoneJP/AppAuthDemo-Android/blob/da5b3ba59bcd6221c1e19df21657f494047385c5/app/src/main/java/net/paonejp/kndzyb/appauthdemo/MainActivity.kt#L198-L231>`__]
+
+実装サンプルでは、
+
+-  サーバー側でアクセストークンの無効化ができれば、アプリ内のアクセストークンを破棄し、未サインイン状態とする
+
+-  サーバー側でアクセストークンの無効化ができなければ、アプリ内のアクセストークンは破棄せず、サインイン状態を維持する
+
+という動作をするようにしています。
+
+Google Accounts の場合、リフレッシュトークンの無効化を行なうと、対となるアクセストークンも無効化されるため、実装サンプルではリフレッシュトークンの無効化のみをリクエストしています。
+
+アプリがアクセストークンの無効化をリクエストした際に、何かしらの理由でサーバー側でそのトークンが無効になっているケースがあり得ます。
+OAuth 2.0 Token Revocation では、このような場合は正常にトークンが無効化できたものとしてHTTPステータス 200 を返すものとされています。
+
+しかし Google Accounts の場合、HTTPステータス 400 で ``invalid_token`` というエラーが返されます。
+実装サンプルではワークアラウンドとして、この時はサーバー側でアクセストークンが無効化できた正常応答として処理するようにしています。
+
+
+「アクセストークンの保管」の実装
+--------------------------------
+
+ネイティブアプリでは、一度サインインを完了すると、ユーザーが明示的にサインアウトするなどのイベントが無い限りは、サインインしたままで利用することになります。
+
+そのため、取得したアクセストークン、リフレッシュトークンは永続データとして保管し、アプリの再起動時やデバイスの再起動時に再ロードして利用するような実装が必要になります。
+
+AppAuth ではアクセストークン、リフレッシュトークンを含め、必要な状態データが ``appAuthState`` オブジェクトに保存されており、これを ``jsonSerializeString()`` で文字列化し、SharedPreferences に書き出すことで永続化ができます。
+永続化された状態は ``AuthState.jsonDeserialize()`` を使い、 ``appAuthState`` オブジェクトに復元できます。
+
+Android での SharedPreferences の利用は、現在 ``MODE_PRIVATE`` だけに限定するようにガイドされており、そのデータには他のアプリからはアクセスできないようになっています。
+
+しかし、保存先がファイルシステムであり、ファイルのパーミッションだけで制御されているため、予期せぬ状況下でこのデータが漏れ出す可能性を考慮すると、アクセストークン、リフレッシュトークンなどの重要な情報は安全な手続きで暗号化を行なったうえで保管することが、より望ましい実装といえます。
+
+実装サンプルでは、 Android KeyStore System を使うことで、安全に暗号鍵を管理しつつ、``appAuthState`` を暗号化して SharedPreferences に保管するように実装をしています。
+
+Android KeyStore System がサポートする暗号化アルゴリズムは、 Android 6.0 以降と 5.x 以下で異なるため、 ``Crypto.kt`` の中で Android のバージョンを判定しそれぞれのバージョンに適した暗号化の処理をする ``encryptString()``, ``decryptString()`` を実装して対応しています。
+
+``onPause()`` の中での ``appAuthState`` の保管
+
+.. code-block:: kotlin
+
+    override fun onPause() {
+        super.onPause()
+
+        getSharedPreferences("appAuthPreference", MODE_PRIVATE)
+                .edit()
+                .putString("appAuthState", encryptString(this, appAuthState.jsonSerializeString()))
+                .apply()
+    }
+
+[`⇒GitHubで見る <https://github.com/paoneJP/AppAuthDemo-Android/blob/da5b3ba59bcd6221c1e19df21657f494047385c5/app/src/main/java/net/paonejp/kndzyb/appauthdemo/MainActivity.kt#L95-L102>`__]
+
+``onCreate()`` の中での ``appAuthState`` の復元（一部）
+
+.. code-block:: kotlin
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+
+        ...
+
+            val prefs = getSharedPreferences("appAuthPreference", MODE_PRIVATE)
+            val data = decryptString(this, prefs.getString("appAuthState", null)) ?: "{}"
+            appAuthState = AuthState.jsonDeserialize(data)
+
+        ...
+
+    }
+
+[`⇒GitHubで見る <https://github.com/paoneJP/AppAuthDemo-Android/blob/da5b3ba59bcd6221c1e19df21657f494047385c5/app/src/main/java/net/paonejp/kndzyb/appauthdemo/MainActivity.kt#L62-L64>`__]
+
+``encryptoString()`` での暗号化
+
+.. code-block:: kotlin
+
+    fun encryptString(context: Context, data: String?): String? {
+        if (data == null) {
+            return null
+        }
+        try {
+            val key = getDataEncryptionKey(context)
+            val c = Cipher.getInstance("AES/CBC/PKCS7Padding")
+            c.init(Cipher.ENCRYPT_MODE, key)
+            return "%s.%s".format(
+                    Base64.encodeToString(c.iv, BASE64_FLAGS),
+                    Base64.encodeToString(c.doFinal(data.toByteArray()), BASE64_FLAGS))
+        } catch (ex: Exception) {
+            val m = Throwable().stackTrace[0]
+            Log.e(LOG_TAG, "${m}: ${ex}")
+            return null
+        }
+    }
+
+[`⇒GitHubで見る <https://github.com/paoneJP/AppAuthDemo-Android/blob/da5b3ba59bcd6221c1e19df21657f494047385c5/app/src/main/java/net/paonejp/kndzyb/appauthdemo/util/Crypto.kt#L45-L61>`__]
+
+
+所感
+----
+
+AppAuth for Android は非常にわかりやすく、OAuth 2.0 の実装が簡単にできるなと感じました。
+今回の実装サンプルのコードも、トータルで600行以下となっていて、少ないコード量で機能を取り込めるところも魅力です。
+
+本文内では触れませんでしたが、 [RFC 8252] OAuth 2.0 for Natvie Apps では、
+
+1. Authorization Code Grant の利用
+2. OAuth 2.0 PKCE ([RFC 7636] Proof Key for Code Exchange by OAuth Public Clients) の利用
+3. Chrome Custom Tabs もしくはデフォルトブラウザの利用
+
+などがベストプラクティスとして示されています。
+PKCE への対応やデバイスの状態に応じて利用するブラウザを切り替える実装はかなり面倒なものですが、 AppAuth を利用すれば、今回作った実装サンプルのコードで、サーバーの PKCE への対応状況やデバイスの状態から自動的により望ましい方法を選択して OAuth 2.0 の処理を行なってくれます。
+
+このような環境を作ってくれた、 William Denniss さん、 John Bradley さんをはじめとする、 OAuth 2.0 for Native Apps の発行に携わった皆さん、 AppAuth の開発と公開に携わった皆さんに、とても感謝なのです。
+
+
+:raw-html:`<br>`
+
+参考文献
+
+[1] `[RFC 8252][BCP 212] OAuth 2.0 for Native Apps <https://datatracker.ietf.org/doc/rfc8252/>`_ :raw-html:`<br>`
+[2] `[RFC 7009] OAuth 2.0 Token Revocation <https://datatracker.ietf.org/doc/rfc7009/>`_ :raw-html:`<br>`
+[3] `[RFC 7636] Proof Key for Code Exchange by OAuth Public Clients <https://datatracker.ietf.org/doc/rfc7636/>`_ :raw-html:`<br>`
+[4] `AppAuth <https://openid.net/code/AppAuth>`_ :raw-html:`<br>`
+[5] `AppAuth for Android <https://openid.net/code/AppAuth-Android>`_ :raw-html:`<br>`
+
+
+.. author:: default
+.. categories:: none
+.. tags:: android, kotlin, appauth, oauth
+.. comments::
