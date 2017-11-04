@@ -1,5 +1,18 @@
 @import url("modern5.css");
-div.section { margin-bottom: 2em; }
-div.admonition { background: #FFFF90; }
-span.pre { font-family: monospace, serif; font-size: 0.9em; }
+body { font-family: sans-serif; }
+article li { margin: 0.5em 0; }
 td { padding-left: 3px; padding-right: 3px; }
+ul.simple { padding: 0 0 0 40px; }
+ul { margin-top: 0; }
+.section { margin-bottom: 2em; }
+.admonition { background-color: #FFFFA0; margin-left: 15px; margin-right: 15px; }
+.docutils.literal { padding: 0.1em 0.3em; font-family: Consolas, "Courier New", monospace; }
+.highlight { overflow: auto; }
+.highlight pre { white-space: pre; word-wrap: normal; word-break: keep-all; font-family: Consolas, "Courier New", monospace; font-size: 1.1em; }
+.contents { background-color: #F8F8F8; padding: 3px 15px 15px 15px; border: 1px solid black; margin: 2em 15px 3em 15px; }
+.contents p { font-size: 1.1em; font-weight: bold; }
+.contents a { font-size: 0.9em; }
+.contents ul { margin: 0 0 5pt 0; }
+.contents li { margin: 0; }
+a.toc-backref { color: #222; }
+.archive h2 { font-size: 1.5em; line-height: 1.2em; }
