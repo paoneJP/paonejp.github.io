@@ -28,12 +28,13 @@
         <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
         <script src="../../../_static/plugins.js"></script>
         <script src="../../../_static/main.js"></script>
-        <link rel="next" title="OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順]" href="../../01/04/openam_wpa_in_same_apache2_instance.html" /><link rel="prev" title="ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする" href="../../04/16/building_apache_module_on_various_linux_distro.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+        <link rel="search" title="Search" href="../../../search.html" /><link rel="next" title="OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順]" href="../../01/04/openam_wpa_in_same_apache2_instance.html" /><link rel="prev" title="ApacheのモジュールをDebian上でもRHEL/CentOS上でもビルドできるようにする" href="../../04/16/building_apache_module_on_various_linux_distro.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5',
+        VERSION:     '1.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
+        SOURCELINK_SUFFIX: '.txt',
         HAS_SOURCE:  true
       };
     </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
@@ -123,9 +124,9 @@ Enter key password for &lt;openam-20150218&gt;
         (RETURN if same as keystore password):
 </pre></div>
 </div>
-<p>&#8220;Enter keystore password&#8221; と聞かれるので、16文字程度の安全なパスワードを
-入力する。&#8221;Re-enter new passowrd&#8221; にも同じパスワードを入力する。</p>
-<p>続いて &#8220;Enter key password for &lt;openam-YYYYMMDD&gt;&#8221; と聞かれるので、ここは
+<p>“Enter keystore password” と聞かれるので、16文字程度の安全なパスワードを
+入力する。”Re-enter new passowrd” にも同じパスワードを入力する。</p>
+<p>続いて “Enter key password for &lt;openam-YYYYMMDD&gt;” と聞かれるので、ここは
 何も入力せずに [ENTER] を押す。</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -170,9 +171,9 @@ Enter destination keystore password:
 Enter source keystore password:
 </pre></div>
 </div>
-<p>&#8220;Enter destination keystore password&#8221;と聞かれるので、OpenAMが参照している
+<p>“Enter destination keystore password”と聞かれるので、OpenAMが参照している
 キーストアのパスワードを入力する。デフォルトは <span class="docutils literal"><span class="pre">changeit</span></span> になっている。</p>
-<p>次に &#8220;Enter source keystore password&#8221; と聞かれるので、先の手順でキーペアを
+<p>次に “Enter source keystore password” と聞かれるので、先の手順でキーペアを
 生成したときに入力したパスワードを入力する。</p>
 <p>キーペアが正しくインポートされたことを確認しておく。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>$ keytool -list -keystore /usr/share/tomcat8/openam/openam/keystore.jks -alias openam-20150218
@@ -204,7 +205,7 @@ INFO: Server startup in 121156 ms
 <h4>OpenAMが参照するキーペアを変更する</h4>
 <p>OpenAMの管理コンソール画面で、 [アクセス制御] → [/ (最上位のレルム)] →
 [認証] とたどる。</p>
-<p>コアの [すべてのコア設定...] をクリックする。</p>
+<p>コアの [すべてのコア設定…] をクリックする。</p>
 <img alt="../../../_images/20150219_openam_persistent_cookie_auth_1.png" src="../../../_images/20150219_openam_persistent_cookie_auth_1.png" />
 <p>セキュリティの [組織認証の証明書のエイリアス] にキーペアの名前 (alias) <span class="docutils literal"><span class="pre">openam-YYYYMMDD</span></span> を入力する。</p>
 <img alt="../../../_images/20150219_openam_persistent_cookie_auth_2.png" src="../../../_images/20150219_openam_persistent_cookie_auth_2.png" />
@@ -281,7 +282,7 @@ INFO: Server startup in 121156 ms
 <h2>動作確認</h2>
 <p>Persistent Cookie認証の設定ができたので、動作を確認してみる。</p>
 <p>動作確認用にセットアップしたサーバは https://www1.example.com/ と
-なるようにしている。テストユーザとして &#8220;test0001&#8221; を作っている。</p>
+なるようにしている。テストユーザとして “test0001” を作っている。</p>
 <div class="section" id="id10">
 <h3>ログイン⇒ブラウザ閉じる⇒再アクセス</h3>
 <p>https://www1.example.com にアクセスする。</p>
@@ -302,9 +303,9 @@ https://www1.example.com にアクセスする。</p>
 <h3>認証後にセットされているCookieの確認</h3>
 <p>ブラウザのデベロッパーツールでCookieを覗いてみる。</p>
 <img alt="../../../_images/20150219_openam_persistent_cookie_auth_24.png" src="../../../_images/20150219_openam_persistent_cookie_auth_24.png" />
-<p>セッション用のCookieである &#8220;iPlanetDirectoryPro&#8221; と、ロードバランス用の
-Cookieである &#8220;amlbcookie&#8221; がブラウザが開いている間だけ有効なCookieとして
-発行されている。Persistent Cookieである &#8220;session-jwt&#8221; が、期限付きの
+<p>セッション用のCookieである “iPlanetDirectoryPro” と、ロードバランス用の
+Cookieである “amlbcookie” がブラウザが開いている間だけ有効なCookieとして
+発行されている。Persistent Cookieである “session-jwt” が、期限付きの
 Cookieとして発行されている。</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
@@ -317,7 +318,7 @@ on になっていないのは、実験用に用意した環境の OpenAM で該
 <h3>サーバを2台用意して実験してみる</h3>
 <p>サーバをもう一台、https://www2.example.com/ となるように準備してみる。
 設定するキーペアは www1 と同じものを設定し、テストユーザも www1 と同じ
-&#8220;test0001&#8221; を作っておく。</p>
+“test0001” を作っておく。</p>
 <p>https://www1.example.com にアクセスする。</p>
 <img alt="../../../_images/20150219_openam_persistent_cookie_auth_20.png" src="../../../_images/20150219_openam_persistent_cookie_auth_20.png" />
 <p>OpenAMの認証画面が表示される。</p>
@@ -338,7 +339,7 @@ on になっていないのは、実験用に用意した環境の OpenAM で該
 <img alt="../../../_images/20150219_openam_persistent_cookie_auth_27.png" src="../../../_images/20150219_openam_persistent_cookie_auth_27.png" />
 <p>細かなロジックは不明であるが、OpenAMが認識していない無効なセッション値を
 持っているためにエラーとしているものと考えられる。</p>
-<p>セッション用のCookie &#8220;iPlanetDirectoryPro&#8221; を消して再アクセスしなおすと、
+<p>セッション用のCookie “iPlanetDirectoryPro” を消して再アクセスしなおすと、
 コンテンツが正しく表示される。</p>
 </div>
 <div class="section" id="authenticate">
@@ -367,12 +368,12 @@ Content-Length: 139
 {&quot;tokenId&quot;:&quot;AQIC5w...MzE5*&quot;,&quot;successUrl&quot;:&quot;/openam/console&quot;}
 </pre></div>
 </div>
-<p>&#8220;session-jwt&#8221; をCookieに設定して、authenticateエンドポイントにPOST
+<p>“session-jwt” をCookieに設定して、authenticateエンドポイントにPOST
 リクエストを送ると、Persistent Cookieを使った認証処理が行なわれる。</p>
-<p>認証が成功すると、JSONの &#8220;tokenId&#8221; 属性でセッションIDが返される。
-この値がセッション用のCookie &#8220;iPlanetDirectoryPro&#8221; にセットされている
+<p>認証が成功すると、JSONの “tokenId” 属性でセッションIDが返される。
+この値がセッション用のCookie “iPlanetDirectoryPro” にセットされている
 値になっている。</p>
-<p>そして、認証が成功したときには、新しい &#8220;session-jwt&#8221; が生成されて
+<p>そして、認証が成功したときには、新しい “session-jwt” が生成されて
 Set-Cookieされるようにもなっている。</p>
 </div>
 </div>
@@ -382,7 +383,7 @@ Set-Cookieされるようにもなっている。</p>
 保ってくれるタイプのサイトをOpenAMで構成することができる。</p>
 <p>しかしそれだけではなく、2台のサーバ間で同一のPersistent Cookie (session-jwt)
 を使って、同じように認証を振舞わせることができる点が興味深い。</p>
-<p>JWT... いろんな想像を掻き立てさせる。(つづく)</p>
+<p>JWT… いろんな想像を掻き立てさせる。(つづく)</p>
 </div>
 </div>
 

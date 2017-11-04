@@ -28,12 +28,13 @@
         <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
         <script src="../../../_static/plugins.js"></script>
         <script src="../../../_static/main.js"></script>
-        <link rel="next" title="Xperia Z4 Tabletのプロジェクター出力を試す" href="../../../2015/07/10/xperia_z4_tablet_projector_output.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+        <link rel="search" title="Search" href="../../../search.html" /><link rel="next" title="Xperia Z4 Tabletのプロジェクター出力を試す" href="../../../2015/07/10/xperia_z4_tablet_projector_output.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5',
+        VERSION:     '1.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
+        SOURCELINK_SUFFIX: '.txt',
         HAS_SOURCE:  true
       };
     </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
@@ -158,14 +159,14 @@ OpenAMのユーザーとグループをSCIMで操作するイメージで構成�
 <td>mail</td>
 </tr>
 <tr class="row-even"><td>primary</td>
-<td>&#8220;true&#8221; <a class="reference internal" href="#d" id="id10">[d]</a></td>
+<td>“true” <a class="reference internal" href="#d" id="id10">[d]</a></td>
 </tr>
 <tr class="row-odd"><td rowspan="2">phoneNumbers</td>
 <td>value</td>
 <td>mail</td>
 </tr>
 <tr class="row-even"><td>primary</td>
-<td>&#8220;true&#8221; <a class="reference internal" href="#d" id="id11">[d]</a></td>
+<td>“true” <a class="reference internal" href="#d" id="id11">[d]</a></td>
 </tr>
 <tr class="row-odd"><td colspan="2">active</td>
 <td>inetUserStatus <a class="reference internal" href="#e" id="id12">[e]</a></td>
@@ -185,7 +186,7 @@ OpenAMのユーザーとグループをSCIMで操作するイメージで構成�
 </tr>
 <tr class="row-even"><td rowspan="4">meta</td>
 <td>resourceType</td>
-<td>&#8220;User&#8221; <a class="reference internal" href="#g" id="id14">[g]</a></td>
+<td>“User” <a class="reference internal" href="#g" id="id14">[g]</a></td>
 </tr>
 <tr class="row-odd"><td>create</td>
 <td>createTimestamp</td>
@@ -201,7 +202,7 @@ OpenAMのユーザーとグループをSCIMで操作するイメージで構成�
 <table class="docutils citation" frame="void" id="a" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[a]</td><td><em>(<a class="fn-backref" href="#id5">1</a>, <a class="fn-backref" href="#id7">2</a>)</em> &#8220;_id&#8221;, &#8220;_rev&#8221; はOpenDJが固有に使用する属性値である。</td></tr>
+<tr><td class="label">[a]</td><td><em>(<a class="fn-backref" href="#id5">1</a>, <a class="fn-backref" href="#id7">2</a>)</em> “_id”, “_rev” はOpenDJが固有に使用する属性値である。</td></tr>
 </tbody>
 </table>
 <table class="docutils citation" frame="void" id="b" rules="none">
@@ -219,13 +220,13 @@ OpenAMのユーザーとグループをSCIMで操作するイメージで構成�
 <table class="docutils citation" frame="void" id="d" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[d]</td><td><em>(<a class="fn-backref" href="#id10">1</a>, <a class="fn-backref" href="#id11">2</a>)</em> 固定値として &#8220;true&#8221; を設定した。</td></tr>
+<tr><td class="label">[d]</td><td><em>(<a class="fn-backref" href="#id10">1</a>, <a class="fn-backref" href="#id11">2</a>)</em> 固定値として “true” を設定した。</td></tr>
 </tbody>
 </table>
 <table class="docutils citation" frame="void" id="e" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id12">[e]</a></td><td>SCIMスキーマではBooleanだが、LDAP側の制約で &#8220;Active&#8221; or &#8220;InActive&#8221;
+<tr><td class="label"><a class="fn-backref" href="#id12">[e]</a></td><td>SCIMスキーマではBooleanだが、LDAP側の制約で “Active” or “InActive”
 のいずれかの値をとる。</td></tr>
 </tbody>
 </table>
@@ -238,7 +239,7 @@ OpenAMのユーザーとグループをSCIMで操作するイメージで構成�
 <table class="docutils citation" frame="void" id="g" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id14">[g]</a></td><td>固定値として &#8220;User&#8221; を設定した。</td></tr>
+<tr><td class="label"><a class="fn-backref" href="#id14">[g]</a></td><td>固定値として “User” を設定した。</td></tr>
 </tbody>
 </table>
 </div>
@@ -284,7 +285,7 @@ OpenAMのユーザーとグループをSCIMで操作するイメージで構成�
 </tr>
 <tr class="row-odd"><td rowspan="4">meta</td>
 <td>resourceType</td>
-<td>&#8220;Group&#8221; <a class="reference internal" href="#k" id="id20">[k]</a></td>
+<td>“Group” <a class="reference internal" href="#k" id="id20">[k]</a></td>
 </tr>
 <tr class="row-even"><td>create</td>
 <td>createTimestamp</td>
@@ -300,7 +301,7 @@ OpenAMのユーザーとグループをSCIMで操作するイメージで構成�
 <table class="docutils citation" frame="void" id="h" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[h]</td><td><em>(<a class="fn-backref" href="#id15">1</a>, <a class="fn-backref" href="#id17">2</a>)</em> &#8220;_id&#8221;, &#8220;_rev&#8221; はOpenDJが固有に使用する属性値である。</td></tr>
+<tr><td class="label">[h]</td><td><em>(<a class="fn-backref" href="#id15">1</a>, <a class="fn-backref" href="#id17">2</a>)</em> “_id”, “_rev” はOpenDJが固有に使用する属性値である。</td></tr>
 </tbody>
 </table>
 <table class="docutils citation" frame="void" id="i" rules="none">
@@ -318,7 +319,7 @@ OpenAMのユーザーとグループをSCIMで操作するイメージで構成�
 <table class="docutils citation" frame="void" id="k" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id20">[k]</a></td><td>固定値として &#8220;User&#8221; を設定した。</td></tr>
+<tr><td class="label"><a class="fn-backref" href="#id20">[k]</a></td><td>固定値として “User” を設定した。</td></tr>
 </tbody>
 </table>
 </div>
@@ -384,7 +385,7 @@ $
 <div class="section" id="scim-user">
 <h3>scim_userのデーターへのアクセス権を設定する</h3>
 <p>OpenAMの初期設定では、ユーザーによる属性へのアクセスができないように
-なっている。&#8221;scim_user&#8221; にSCIMアクセスで必要なアクセス権を設定する。</p>
+なっている。”scim_user” にSCIMアクセスで必要なアクセス権を設定する。</p>
 <p><span class="docutils literal"><span class="pre">modify_aci.ldif</span></span> を用意する。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>dn: dc=openam,dc=forgerock,dc=org
 changetype: modify
@@ -570,16 +571,16 @@ http://localhost:58080/Groups?_action=create \
 <p><span class="docutils literal"><span class="pre">_id</span></span>, <span class="docutils literal"><span class="pre">_rev</span></span>, <span class="docutils literal"><span class="pre">id</span></span>, <span class="docutils literal"><span class="pre">meta.version</span></span> の各値は、グループを
 作成したときのレスポンスの値に合わせておく。</p>
 <p><span class="docutils literal"><span class="pre">members</span></span> に指定する値は、ユーザーを作成したときのレスポンスの
-値を用いる。<span class="docutils literal"><span class="pre">value</span></span> にはユーザーの &#8220;id&#8221; の値を、<span class="docutils literal"><span class="pre">_value</span></span> には
-ユーザーの &#8220;externalId&#8221; の値を指定する。<span class="docutils literal"><span class="pre">display</span></span> は更新には
+値を用いる。<span class="docutils literal"><span class="pre">value</span></span> にはユーザーの “id” の値を、<span class="docutils literal"><span class="pre">_value</span></span> には
+ユーザーの “externalId” の値を指定する。<span class="docutils literal"><span class="pre">display</span></span> は更新には
 用いないため、指定しても指定しなくてもよい。</p>
 <p>このリソースを <span class="docutils literal"><span class="pre">/Groups/{id}</span></span> エンドポイントへPUTしてグループを
 更新する。</p>
 <p>リクエストをする際、<span class="docutils literal"><span class="pre">If-Match</span></span> ヘッダーの値は、グループを
-作成したときのレスポンスの &#8220;meta.version&#8221; の値を指定する
+作成したときのレスポンスの “meta.version” の値を指定する
 必要がある。</p>
 <p>URL <span class="docutils literal"><span class="pre">/Groups/{id}</span></span> の <span class="docutils literal"><span class="pre">{id}</span></span> の部分には、グループを
-作成したときのレスポンスの &#8220;id&#8221; の値を指定する。</p>
+作成したときのレスポンスの “id” の値を指定する。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>$ curl -u scim_user:&lt;scim_userのパスワード&gt; -X PUT \
 -H &quot;Content-Type: application/json&quot; \
 -H &#39;If-Match: 00000000674150c8&#39; \-d @- \
@@ -687,7 +688,7 @@ $
 <li>emails, phoneNumbers属性は Multi-Valued 属性のため、属性値はリスト型
 であるべきであるが、OpenDJの設定では単一のオブジェクト型となる。</li>
 <li>active属性は真偽型であるべきであるが、OpenAMのユーザーの場合はLDAPの
-inetUserStatus属性を使う必要があるため、&#8221;Active&#8221; or &#8220;InActive&#8221; を値と
+inetUserStatus属性を使う必要があるため、”Active” or “InActive” を値と
 する文字列となる。</li>
 <li>OpenAM側でユーザーのキー属性 uid、グループのキー属性 cn が必要となる
 ため、externalId属性を必須属性として、これらの属性の値を渡す必要がある。</li>

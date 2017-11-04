@@ -28,12 +28,13 @@
         <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
         <script src="../../../_static/plugins.js"></script>
         <script src="../../../_static/main.js"></script>
-        <link rel="next" title="Pythonのモジュールインストール用にWindows SDKをセットアップする" href="../../09/24/winsdk_setup_for_python.html" /><link rel="prev" title="DTIのVPS上でiptablesを設定しておく" href="../../12/14/iptables_setup_memo.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+        <link rel="search" title="Search" href="../../../search.html" /><link rel="next" title="Pythonのモジュールインストール用にWindows SDKをセットアップする" href="../../09/24/winsdk_setup_for_python.html" /><link rel="prev" title="DTIのVPS上でiptablesを設定しておく" href="../../12/14/iptables_setup_memo.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5',
+        VERSION:     '1.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
+        SOURCELINK_SUFFIX: '.txt',
         HAS_SOURCE:  true
       };
     </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
@@ -188,7 +189,7 @@ xserver-command=/etc/lightdm/Xvfb.sh
 <span class="c1">### END INIT INFO</span>
 
 <span class="nv">DAEMON</span><span class="o">=</span>/usr/bin/x11vnc
-<span class="nb">test</span> -x <span class="nv">$DAEMON</span> <span class="o">||</span> <span class="nb">exit</span> 0
+<span class="nb">test</span> -x <span class="nv">$DAEMON</span> <span class="o">||</span> <span class="nb">exit</span> <span class="m">0</span>
 
 <span class="nv">DAEMON_OPTS</span><span class="o">=</span><span class="s2">&quot;-loop -reopen -shared -auth /var/run/lightdm/root/:0 -logappend /var/log/x11vnc.log -localhost -rfbport 5900 -rfbportv6 -1 -repeat&quot;</span>
 <span class="nv">NAME</span><span class="o">=</span>x11vnc
@@ -210,17 +211,17 @@ xserver-command=/etc/lightdm/Xvfb.sh
     restart<span class="o">)</span>
         <span class="nb">echo</span> -n <span class="s2">&quot;Restarting </span><span class="nv">$DESC</span><span class="s2">: &quot;</span>
         start-stop-daemon --stop --oknodo --quiet --exec <span class="nv">$DAEMON</span>
-        sleep 1
+        sleep <span class="m">1</span>
         start-stop-daemon -b --start --quiet --exec <span class="nv">$DAEMON</span> -- <span class="nv">$DAEMON_OPTS</span>
         <span class="nb">echo</span> <span class="s2">&quot;</span><span class="nv">$NAME</span><span class="s2">.&quot;</span>
         <span class="p">;;</span>
     *<span class="o">)</span>
         <span class="nv">N</span><span class="o">=</span>/etc/init.d/<span class="nv">$NAME</span>
-        <span class="nb">echo</span> <span class="s2">&quot;Usage: </span><span class="nv">$N</span><span class="s2"> {start|stop|restart}&quot;</span> &gt;<span class="p">&amp;</span>2
-        <span class="nb">exit</span> 1
+        <span class="nb">echo</span> <span class="s2">&quot;Usage: </span><span class="nv">$N</span><span class="s2"> {start|stop|restart}&quot;</span> &gt;<span class="p">&amp;</span><span class="m">2</span>
+        <span class="nb">exit</span> <span class="m">1</span>
         <span class="p">;;</span>
     <span class="k">esac</span>
-<span class="nb">exit</span> 0
+<span class="nb">exit</span> <span class="m">0</span>
 </pre></div>
 </div>
 <p>パーミッション等を調整して、自動起動を設定する。</p>

@@ -28,12 +28,13 @@
         <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
         <script src="../../../_static/plugins.js"></script>
         <script src="../../../_static/main.js"></script>
-        <link rel="next" title="Tinkererのテーマをカスタマイズする" href="tinker_theme_customize.html" /><link rel="prev" title="DebianにOpenAM Web Policy Agentをインストールする [非公式手順]" href="../../../2015/01/04/openam_wpa_install_on_debian.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+        <link rel="search" title="Search" href="../../../search.html" /><link rel="next" title="Tinkererのテーマをカスタマイズする" href="tinker_theme_customize.html" /><link rel="prev" title="DebianにOpenAM Web Policy Agentをインストールする [非公式手順]" href="../../../2015/01/04/openam_wpa_install_on_debian.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5',
+        VERSION:     '1.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
+        SOURCELINK_SUFFIX: '.txt',
         HAS_SOURCE:  true
       };
     </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
@@ -96,7 +97,7 @@ Appendix A.2に出てくるRSA1_5 and A128CBC-HS256で暗号化されたJWE
 <li>AAD Lengthは、バイト長ではなくビット長を値として持つので、変換が必要。</li>
 </ul>
 <p>といったところ。</p>
-<p>ただ、&#8221;JOSE Header&#8221; と &#8220;JWE Protected Header&#8221; と &#8220;AAD&#8221; との関係というか
+<p>ただ、”JOSE Header” と “JWE Protected Header” と “AAD” との関係というか
 用語の使い分けがまだしっくりきていない。</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">urlsafe_b64decode</span>
 

@@ -28,12 +28,13 @@
         <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
         <script src="../../../_static/plugins.js"></script>
         <script src="../../../_static/main.js"></script>
-        <link rel="next" title="DebianにOpenAM Web Policy Agentをインストールする [非公式手順]" href="openam_wpa_install_on_debian.html" /><link rel="prev" title="OpenAMのPersistent Cookie認証モジュールで遊んでみる" href="../../02/19/openam_persistent_cookie_auth.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+        <link rel="search" title="Search" href="../../../search.html" /><link rel="next" title="DebianにOpenAM Web Policy Agentをインストールする [非公式手順]" href="openam_wpa_install_on_debian.html" /><link rel="prev" title="OpenAMのPersistent Cookie認証モジュールで遊んでみる" href="../../02/19/openam_persistent_cookie_auth.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5',
+        VERSION:     '1.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
+        SOURCELINK_SUFFIX: '.txt',
         HAS_SOURCE:  true
       };
     </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
@@ -288,7 +289,7 @@ Naming Serviceが応答するURLをTomcatに向ける。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo vi /etc/apache2/sites-available/default-ssl.conf
 </pre></div>
 </div>
-<p>&lt;Location /openam&gt; ... &lt;/Location&gt; のブロックの後ろに、
+<p>&lt;Location /openam&gt; … &lt;/Location&gt; のブロックの後ろに、
 次の6行を書き足す。</p>
 <div class="highlight-apache"><div class="highlight"><pre><span></span><span class="nt">&lt;Location</span> <span class="s">/openam/namingservice</span><span class="nt">&gt;</span>
         <span class="nb">Substitute</span> s!http://localhost:8080/!https://www.example.com/!

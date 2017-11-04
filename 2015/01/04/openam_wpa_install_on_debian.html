@@ -28,12 +28,13 @@
         <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
         <script src="../../../_static/plugins.js"></script>
         <script src="../../../_static/main.js"></script>
-        <link rel="next" title="暗号化されたJWTをパースしてみる" href="../../../2014/12/21/encrypted_jwt_parsing_trial.html" /><link rel="prev" title="OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順]" href="openam_wpa_in_same_apache2_instance.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+        <link rel="search" title="Search" href="../../../search.html" /><link rel="next" title="暗号化されたJWTをパースしてみる" href="../../../2014/12/21/encrypted_jwt_parsing_trial.html" /><link rel="prev" title="OpenAMとWeb Policy Agentを同じApacheインスタンスに同居させる [非公式手順]" href="openam_wpa_in_same_apache2_instance.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5',
+        VERSION:     '1.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
+        SOURCELINK_SUFFIX: '.txt',
         HAS_SOURCE:  true
       };
     </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
@@ -107,7 +108,7 @@
 <p>OpenAMの管理コンソール画面で、
 [アクセス制御] → [/ (最上位のレルム)] → [エージェント] → [Web]
 とたどる。</p>
-<p>エージェント一覧の [新規...] をクリックする。</p>
+<p>エージェント一覧の [新規…] をクリックする。</p>
 <img alt="../../../_images/20150104_openam_wpa_install_on_debian_1.png" src="../../../_images/20150104_openam_wpa_install_on_debian_1.png" />
 <p>エージェントに関する設定を記入し、[作成] をクリックする。</p>
 <img alt="../../../_images/20150104_openam_wpa_install_on_debian_2.png" src="../../../_images/20150104_openam_wpa_install_on_debian_2.png" />
@@ -199,20 +200,20 @@ OpenAMサーバーからエージェントに設定やポリシーの更新を
 <tr class="row-odd"><td>Subjects</td>
 <td><div class="first last line-block">
 <div class="line">{</div>
-<div class="line">&#8220;type&#8221;: &#8220;AuthenticatedUsers&#8221;</div>
+<div class="line">“type”: “AuthenticatedUsers”</div>
 <div class="line">}</div>
 </div>
 </td>
 </tr>
 <tr class="row-even"><td>Environments</td>
-<td>There are no Environment Conditions...</td>
+<td>There are no Environment Conditions…</td>
 </tr>
 <tr class="row-odd"><td>Response attributes</td>
 <td><div class="first last line-block">
 <div class="line">Static attributes</div>
-<div class="line">There are no Static attributes...</div>
+<div class="line">There are no Static attributes…</div>
 <div class="line">Subject attributes</div>
-<div class="line">There are no Subject attributes...</div>
+<div class="line">There are no Subject attributes…</div>
 </div>
 </td>
 </tr>
@@ -252,7 +253,7 @@ apache2のインストール過程で自動生成される自己署名サーバ�
 <p>OpenAM Nightly Builds <a class="footnote-reference" href="#download" id="id4">[1]</a> から [Apache 2.4] の [Linux] の [64bits] 用の
 Web Policy Agentをダウンロードする。</p>
 <img alt="../../../_images/20150104_openam_wpa_install_on_debian_6.png" src="../../../_images/20150104_openam_wpa_install_on_debian_6.png" />
-<p>ダウンロードされたファイルが &#8220;apache_v24_Linux_64_agent_4.0.0-SNAPSHOT.zip&#8221;
+<p>ダウンロードされたファイルが “apache_v24_Linux_64_agent_4.0.0-SNAPSHOT.zip”
 であることを確認する。</p>
 </div>
 <div class="section" id="id5">
@@ -480,7 +481,7 @@ ssl-certパッケージによって自動生成される自己署名証明書を
         Subject: CN=wpa.example.com
 </pre></div>
 </div>
-<p>ここで、&#8221;CN=wpa.examle.com&#8221; になっていることを確認する。
+<p>ここで、”CN=wpa.examle.com” になっていることを確認する。
 もし異なる場合は、サーバ証明書を作り直す。</p>
 <p>ひとつの方法として、サーバ名をwpa.example.comに設定し、snakeoil証明書を
 作り直す方法がある。</p>
@@ -503,7 +504,7 @@ OpenAMサーバ (www.example.com) にwpa.example.com.pemとして転送してお
         Subject: CN=wpa.example.com
 </pre></div>
 </div>
-<p>&#8220;CN=wpa.example.com&#8221;となっていることを確認する。</p>
+<p>“CN=wpa.example.com”となっていることを確認する。</p>
 <p>つぎに、Javaが参照している証明書ストアに、この証明書を信頼できる証明書として
 登録する。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span>$ sudo keytool -keystore /etc/ssl/certs/java/cacerts -importcert -trustcacerts -file wpa.example.com.pem -alias wpa.example.com
@@ -518,7 +519,7 @@ Trust this certificate? [no]: yes
 Certificate was added to keystore
 </pre></div>
 </div>
-<p>証明書の情報が表示される。もう一度 &#8220;CN=wpa.example.com&#8221; となっていることを
+<p>証明書の情報が表示される。もう一度 “CN=wpa.example.com” となっていることを
 確認して、<span class="docutils literal"><span class="pre">yes</span></span> を入力する。</p>
 <p>tomcat8 を再起動し、証明書ストアの内容を反映する。</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">service</span> <span class="n">tomcat8</span> <span class="n">restart</span>

@@ -28,12 +28,13 @@
         <script>window.jQuery || document.write('<script src="../../../_static/vendor/jquery-1.8.2.min.js"><\/script>')</script>
         <script src="../../../_static/plugins.js"></script>
         <script src="../../../_static/main.js"></script>
-        <link rel="next" title="DTIのVPS上にデスクトップ環境を作るという試み" href="../../11/28/dti_vps_as_vdi_memo.html" /><link rel="prev" title="DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]" href="easy_setup_instructions_for_openam.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
+        <link rel="search" title="Search" href="../../../search.html" /><link rel="next" title="DTIのVPS上にデスクトップ環境を作るという試み" href="../../11/28/dti_vps_as_vdi_memo.html" /><link rel="prev" title="DTIのVPS上にOpenAMをセットアップしてみた話 [非公式手順]" href="easy_setup_instructions_for_openam.html" /><link rel="alternate" type="application/rss+xml" title="RSS" href="../../../rss.html" /><script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
-        VERSION:     '1.5',
+        VERSION:     '1.6.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
+        SOURCELINK_SUFFIX: '.txt',
         HAS_SOURCE:  true
       };
     </script><script type="text/javascript" src="../../../_static/underscore.js"></script><script type="text/javascript" src="../../../_static/doctools.js"></script><script type="text/javascript" src="../../../_static/google_analytics.js"></script>
@@ -100,9 +101,9 @@
 <p>DTIのVPS上では、この <span class="docutils literal"><span class="pre">netfilter-persistent</span> <span class="pre">save</span></span> コマンドが
 うまく動かないので、パッチをしておく。
 (modprobeしている行をコメントアウトする)</p>
-<div class="highlight-sh"><div class="highlight"><pre><span></span>diff -u 15-ip4tables.orig 15-ip4tables
---- 15-ip4tables.orig   2014-12-14 11:32:27.000000000 +0900
-+++ 15-ip4tables        2014-12-14 11:31:37.000000000 +0900
+<div class="highlight-sh"><div class="highlight"><pre><span></span>diff -u <span class="m">15</span>-ip4tables.orig <span class="m">15</span>-ip4tables
+--- <span class="m">15</span>-ip4tables.orig   <span class="m">2014</span>-12-14 <span class="m">11</span>:32:27.000000000 +0900
++++ <span class="m">15</span>-ip4tables        <span class="m">2014</span>-12-14 <span class="m">11</span>:31:37.000000000 +0900
 @@ -31,7 +31,7 @@
  <span class="o">{</span>
         <span class="c1">#save IPv4 rules</span>
@@ -112,9 +113,9 @@
         <span class="k">if</span> <span class="o">[</span> ! -f /proc/net/ip_tables_names <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
                 <span class="nb">echo</span> <span class="s2">&quot;Warning: skipping IPv4 (no modules loaded)&quot;</span>
         <span class="k">elif</span> <span class="o">[</span> -x /sbin/iptables-save <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
-diff -u 25-ip6tables.orig 25-ip6tables
---- 25-ip6tables.orig   2014-12-14 11:32:46.000000000 +0900
-+++ 25-ip6tables        2014-12-14 11:31:37.000000000 +0900
+diff -u <span class="m">25</span>-ip6tables.orig <span class="m">25</span>-ip6tables
+--- <span class="m">25</span>-ip6tables.orig   <span class="m">2014</span>-12-14 <span class="m">11</span>:32:46.000000000 +0900
++++ <span class="m">25</span>-ip6tables        <span class="m">2014</span>-12-14 <span class="m">11</span>:31:37.000000000 +0900
 @@ -31,7 +31,7 @@
  <span class="o">{</span>
         <span class="c1">#save IPv6 rules</span>
